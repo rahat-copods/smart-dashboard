@@ -3,12 +3,15 @@
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Loader2, Database, Code, AlertCircle, CheckCircle } from "lucide-react"
+import { Loader2, Database, AlertCircle, CheckCircle, Send } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
+import { useRouter } from "next/navigation"
+import { ChatStorage } from "@/lib/chat-storage"
 
 interface QueryResult {
   sql: string
@@ -26,7 +29,7 @@ interface StreamData {
 
 type ExecutionStatus = "idle" | "executing" | "executed" | "failed"
 
-export default function Component() {
+export default function HomePage() {
   const [userId, setUserId] = useState<string>("")
   const [query, setQuery] = useState<string>("")
   const [result, setResult] = useState<QueryResult | null>(null)
@@ -40,6 +43,7 @@ export default function Component() {
   const [executionStatus, setExecutionStatus] = useState<ExecutionStatus>("idle")
   const [attemptCount, setAttemptCount] = useState<number>(0)
   const [maxAttempts] = useState<number>(3)
+  const router = useRouter()
 
   // Force re-render function
   const [, forceUpdate] = useState({})
@@ -50,7 +54,7 @@ export default function Component() {
   const appendThinkingText = useCallback(
     (text: string) => {
       setThinkingText((prev) => {
-        const newText = prev + text
+        const newText = prev + (prev ? " " : "") + text
         triggerUpdate()
         return newText
       })
@@ -158,71 +162,40 @@ export default function Component() {
 
     setLoading(true)
     setError("")
-    setResult(null)
-    setThinkingText("")
-    setSqlQuery("")
-    setCurrentStatus("")
-    setExecutionStatus("idle")
-    setAttemptCount(1)
 
-    const newSource = new EventSource(
-      `http://localhost:8000/api/query/inference?user_id=${userId}&question=${encodeURIComponent(query)}&messages=${encodeURIComponent(JSON.stringify(messages))}`,
-    )
+    try {
+      // Create new chat
+      const newChat = ChatStorage.createNewChat(query.trim())
 
-    setSource(newSource)
-
-    newSource.onmessage = async (event) => {
-      const data: StreamData = JSON.parse(event.data)
-
-      if (data.status === "initialize") {
-        setCurrentStatus("initialize")
-        appendThinkingText("Initializing...")
-      } else if (data.status === "thinking") {
-        setCurrentStatus("thinking")
-        if (data.message) {
-          appendThinkingText(data.message)
-        }
-      } else if (data.status === "generatingQuery") {
-        setCurrentStatus("generatingQuery")
-        appendThinkingText("Generating SQL query...")
-      } else if (data.status === "inference_complete") {
-        if (data.error) {
-          setError(data.error)
-          newSource.close()
-          setSource(null)
-          setLoading(false)
-          return
-        }
-
-        if (data.query) {
-          setSqlQuery(data.query)
-          setMessages(data.messages || [])
-          setCurrentStatus("sqlGenerated")
-          appendThinkingText("Generated SQL query.")
-
-          const success = await executeQuery(data.query, 1)
-          if (success || attemptCount >= maxAttempts) {
-            setLoading(false)
-          }
-        }
-
-        newSource.close()
-        setSource(null)
-      } else if (data.status === "error") {
-        setError(data.error || "Inference failed")
-        appendThinkingText(`Error: ${data.error}`)
-        newSource.close()
-        setSource(null)
-        setLoading(false)
+      // Add user message to chat
+      const userMessage = {
+        id: Date.now().toString(),
+        role: "user" as const,
+        content: query.trim(),
+        timestamp: new Date(),
       }
-    }
 
-    newSource.onerror = () => {
-      setError("Stream error or closed")
-      appendThinkingText("Stream error or closed")
-      newSource.close()
-      setSource(null)
+      newChat.messages.push(userMessage)
+
+      // Save chat to storage
+      ChatStorage.saveChat(newChat)
+
+      // Redirect to chat page with userId as query parameter
+      router.push(`/chat/${newChat.id}?userId=${encodeURIComponent(userId)}`)
+    } catch (err) {
+      setError("Failed to create chat. Please try again.")
       setLoading(false)
+    }
+  }
+
+  const handleExampleClick = (example: string) => {
+    setQuery(example)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      handleSubmit(e as any)
     }
   }
 
@@ -324,166 +297,110 @@ export default function Component() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2 py-8">
-          <h1 className="text-3xl font-bold text-foreground">Natural Language SQL Query</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Ask questions in plain English and get SQL queries with results from your database
-          </p>
-        </div>
-
-        {/* Cards */}
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Query Builder Card */}
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="w-5 h-5" />
-                  Query Builder
-                </CardTitle>
-                <CardDescription>Select a user and ask a question about the data</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="space-y-2 w-full">
-                      <Label htmlFor="userId">User ID</Label>
-                      <Select value={userId} onValueChange={setUserId}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select a user ID" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user01">user01</SelectItem>
-                          <SelectItem value="user02">user02</SelectItem>
-                          <SelectItem value="user03">user03</SelectItem>
-                          <SelectItem value="user04">user04</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="query">Ask a question</Label>
-                      <Textarea
-                        id="query"
-                        placeholder="e.g., Show me the top 10 customers by revenue"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        disabled={loading}
-                        rows={3}
-                        className="resize-none"
-                      />
-                    </div>
-                  </div>
-                  {error && (
-                    <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
-                      {error}
-                    </div>
-                  )}
-                  <Button type="submit" disabled={loading || !userId || !query.trim()} className="w-full">
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      "Run Query"
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            {/* SQL Display Card */}
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Code className="w-5 h-5" />
-                  Generated SQL
-                  {getStatusIcon()}
-                </CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                  {loading && (
-                    <span className="text-sm font-medium">
-                      {getStatusMessage()} {getExecutionMessage() && `• ${getExecutionMessage()}`}
-                    </span>
-                  )}
-                  {!loading && "The SQL query and AI reasoning process"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-full">
-                <div className="bg-muted p-4 rounded-lg overflow-x-auto min-h-[150px] flex flex-col">
-                  {thinkingText || sqlQuery ? (
-                    <div className="flex-1 overflow-y-auto space-y-4">
-                      {thinkingText && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            {loading && <Loader2 className="w-3 h-3 animate-spin" />}
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                              AI Process
-                            </span>
-                          </div>
-                          <StreamingText text={thinkingText} />
-                        </div>
-                      )}
-                      {sqlQuery && (
-                        <div className="p-3 bg-background rounded border">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Code className="w-4 h-4" />
-                            <span className="text-sm font-semibold">Generated SQL:</span>
-                          </div>
-                          <pre className="text-sm font-mono text-foreground whitespace-pre-wrap bg-muted p-2 rounded">
-                            {sqlQuery}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center w-full text-muted-foreground flex-1 flex flex-col justify-center">
-                      <Code className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">AI reasoning and SQL query will appear here</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex items-center space-x-2">
+            <Database className="w-5 h-5" />
+            <span className="font-semibold">SQL Chat</span>
           </div>
+        </header>
 
-          {/* Result Table Card */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="w-5 h-5" />
-                Query Results
-                {executionStatus === "executing" && <Loader2 className="w-4 h-4 animate-spin" />}
-                {executionStatus === "executed" && <CheckCircle className="w-4 h-4 text-green-500" />}
-                {executionStatus === "failed" && <AlertCircle className="w-4 h-4 text-orange-500" />}
-              </CardTitle>
-              <CardDescription>
-                {loading && executionStatus === "executing"
-                  ? "Executing query..."
-                  : loading
-                    ? "Processing query..."
-                    : result && result.data?.length > 0
-                      ? `Found ${result.data.length} result${result.data.length === 1 ? "" : "s"}`
-                      : "Results will appear here after query execution"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {result?.data ? (
-                renderTable(result.data)
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Database className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">No data available</h3>
-                  <p className="text-sm">Please run a query to see results here</p>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="w-full max-w-2xl space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center space-x-3">
+                <Database className="w-12 h-12 text-blue-600" />
+                <h1 className="text-4xl font-bold text-gray-900">SQL Chat</h1>
+              </div>
+              <p className="text-xl text-gray-600">Ask questions about your data in natural language</p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="userId" className="text-base font-medium">
+                    Select User ID
+                  </Label>
+                  <Select value={userId} onValueChange={setUserId}>
+                    <SelectTrigger className="h-12 text-base">
+                      <SelectValue placeholder="Choose a user ID to query data for" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user01">user01</SelectItem>
+                      <SelectItem value="user02">user02</SelectItem>
+                      <SelectItem value="user03">user03</SelectItem>
+                      <SelectItem value="user04">user04</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="query" className="text-base font-medium">
+                    Ask a question
+                  </Label>
+                  <div className="relative">
+                    <Textarea
+                      id="query"
+                      placeholder="e.g., Show me the top 10 customers by revenue this month"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      disabled={loading}
+                      rows={4}
+                      className="resize-none text-base pr-12 min-h-[120px]"
+                    />
+                    <Button
+                      type="submit"
+                      disabled={loading || !userId || !query.trim()}
+                      size="icon"
+                      className="absolute bottom-3 right-3 h-8 w-8"
+                    >
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
+                  {error}
                 </div>
               )}
-            </CardContent>
-          </Card>
+
+              <div className="text-center">
+              </div>
+            </form>
+
+            {/* Examples */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 text-center">Try asking:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[
+                  "Show me all customers from California",
+                  "What's the total revenue for last month?",
+                  "List the top 5 products by sales",
+                  "Find customers who haven't ordered recently",
+                ].map((example, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleExampleClick(example)}
+                    disabled={loading}
+                    className="p-3 text-left text-sm bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
