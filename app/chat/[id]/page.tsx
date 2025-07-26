@@ -18,7 +18,7 @@ export default function ChatPage() {
   const userId = searchParams.get("userId") || ""
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const { chat, isLoading, currentThinking, error, loadChat, sendMessage, processMessage } = useChat(chatId, userId)
+  const { chat, isLoading, currentThinking, error, loadChat, sendMessage } = useChat(chatId, userId)
 
   useEffect(() => {
     loadChat()
@@ -35,10 +35,10 @@ export default function ChatPage() {
       // Use processMessage directly to avoid creating duplicate user message
       const userQuestion = chat.messages[0].question;
       if (userQuestion) {
-        processMessage(userQuestion, 1);
+        sendMessage(userQuestion);
       }
     }
-  }, [chat, isLoading, processMessage])
+  }, [chat, isLoading, sendMessage])
 
   const handleCopy = async (text: string) => {
     try {

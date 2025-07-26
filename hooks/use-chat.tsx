@@ -161,15 +161,15 @@ export function useChat(chatId: string, userId: string) {
               updateThinking("generating", "Generating SQL query...", true);
               break;
             case "inference_complete":
-              if (data.query) {
+              if (data.sql_query) {
                 updateThinking(
                   "generating",
                   "Generated SQL query.",
                   true,
-                  data.query
+                  data.sql_query
                 );
                 
-                const queryResult = await executeQuery(data.query, attempt);
+                const queryResult = await executeQuery(data.sql_query, attempt);
                 
                 if (!queryResult.success && attempt < 3) {
                   // Create developer message with the error
@@ -203,7 +203,7 @@ export function useChat(chatId: string, userId: string) {
                     role: "assistant",
                     question: "", // Empty for assistant messages
                     thought_process: currentThinking?.text || "",
-                    sql_query: data.query,
+                    sql_query: data.sql_query,
                     error: errorExplanation,
                   };
 
@@ -275,6 +275,5 @@ export function useChat(chatId: string, userId: string) {
     error,
     loadChat,
     sendMessage,
-    processMessage, // Expose processMessage for auto-start
   };
 }
