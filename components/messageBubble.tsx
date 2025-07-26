@@ -71,14 +71,14 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
                 isUser ? "bg-primary text-primary-foreground" : "bg-muted border"
               }`}
             >
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.question}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Thinking Process */}
-      {!isUser && message.thinkingProcess && (
+      {!isUser && message.thought_process && (
         <div className="flex justify-start">
           <div className="flex space-x-3 max-w-4xl">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
@@ -93,7 +93,7 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
                   </span>
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-purple-800 dark:text-purple-200">
-                  {message.thinkingProcess}
+                  {message.thought_process}
                 </p>
               </div>
             </div>
@@ -102,7 +102,7 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
       )}
 
       {/* SQL Query */}
-      {message.sqlQuery && (
+      {message.sql_query && (
         <div className="flex justify-start">
           <div className="flex space-x-3 max-w-4xl">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
@@ -117,12 +117,12 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
                       <span className="text-sm font-semibold">Generated SQL</span>
                     </div>
                     {onCopy && (
-                      <Button variant="ghost" size="sm" onClick={() => onCopy(message.sqlQuery!)}>
+                      <Button variant="ghost" size="sm" onClick={() => onCopy(message.sql_query!)}>
                         <Copy className="w-4 h-4" />
                       </Button>
                     )}
                   </div>
-                  <pre className="text-sm font-mono bg-muted p-3 rounded overflow-x-auto">{message.sqlQuery}</pre>
+                  <pre className="text-sm font-mono bg-muted p-3 rounded overflow-x-auto">{message.sql_query}</pre>
                 </CardContent>
               </Card>
             </div>
@@ -131,7 +131,7 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
       )}
 
       {/* Query Results */}
-      {message.queryResult && (
+      {message.query_result && (
         <div className="flex justify-start">
           <div className="flex space-x-3 max-w-4xl">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center">
@@ -142,9 +142,9 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2 mb-3">
                     <Database className="w-4 h-4 text-orange-600" />
-                    <span className="text-sm font-semibold">Query Results ({message.queryResult.length} rows)</span>
+                    <span className="text-sm font-semibold">Query Results ({message.query_result.length} rows)</span>
                   </div>
-                  {renderTable(message.queryResult)}
+                  {renderTable(message.query_result)}
                 </CardContent>
               </Card>
             </div>

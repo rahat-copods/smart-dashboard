@@ -1,67 +1,75 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Database, Send, Loader2 } from "lucide-react"
-import { ChatLayout } from "@/components/chatLayout"
-import { ChatHeader } from "@/components/chatHeader"
-import { ChatStorage } from "@/lib/chat-storage"
+import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Database, Send, Loader2 } from "lucide-react";
+import { ChatLayout } from "@/components/chatLayout";
+import { ChatHeader } from "@/components/chatHeader";
+import { ChatStorage } from "@/lib/chat-storage";
 
 export default function HomePage() {
-  const [userId, setUserId] = useState("")
-  const [query, setQuery] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [userId, setUserId] = useState("");
+  const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!userId || !query.trim() || isLoading) return
+    e.preventDefault();
 
-    setIsLoading(true)
+    if (!userId || !query.trim() || isLoading) {
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      const newChat = ChatStorage.createNewChat(query.trim())
+      const newChat = ChatStorage.createNewChat(query.trim());
 
       const userMessage = {
         id: Date.now().toString(),
         role: "user" as const,
-        content: query.trim(),
+        question: query.trim(),
         timestamp: new Date(),
-      }
+      };
 
-      newChat.messages.push(userMessage)
-      ChatStorage.saveChat(newChat)
-
-      router.push(`/chat/${newChat.id}?userId=${encodeURIComponent(userId)}`)
+      newChat.messages.push(userMessage);
+      ChatStorage.saveChat(newChat);
+      router.push(`/chat/${newChat.id}?userId=${encodeURIComponent(userId)}`);
     } catch (err) {
-      console.error("Failed to create chat:", err)
+      console.error("Failed to create chat:", err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleExampleClick = (example: string) => {
-    setQuery(example)
-  }
+    setQuery(example);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey && query.trim()) {
-      e.preventDefault()
-      handleSubmit(e as any)
+      e.preventDefault();
+      handleSubmit(e as any);
     }
-  }
+  };
 
   const examples = [
     "Show me all customers from California",
     "What's the total revenue for last month?",
     "List the top 5 products by sales",
     "Find customers who haven't ordered recently",
-  ]
+  ];
 
   return (
     <ChatLayout>
@@ -76,7 +84,9 @@ export default function HomePage() {
                 <Database className="w-12 h-12 text-primary" />
                 <h1 className="text-4xl font-bold">SQL Chat</h1>
               </div>
-              <p className="text-xl text-muted-foreground">Ask questions about your data in natural language</p>
+              <p className="text-xl text-muted-foreground">
+                Ask questions about your data in natural language
+              </p>
             </div>
 
             {/* Form */}
@@ -120,14 +130,20 @@ export default function HomePage() {
                       size="icon"
                       className="absolute bottom-3 right-3 h-8 w-8"
                     >
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">Press Enter to send, or click the send button</p>
+                <p className="text-sm text-muted-foreground">
+                  Press Enter to send, or click the send button
+                </p>
               </div>
             </form>
 
@@ -152,5 +168,5 @@ export default function HomePage() {
         </div>
       </div>
     </ChatLayout>
-  )
+  );
 }
