@@ -73,7 +73,7 @@ export default function HomePage() {
 
   return (
     <ChatLayout>
-      <ChatHeader title="SQL Chat" />
+      <ChatHeader title="Smart Dashboard" />
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex items-center justify-center min-h-full p-8">
@@ -82,7 +82,7 @@ export default function HomePage() {
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center space-x-3">
                 <Database className="w-12 h-12 text-primary" />
-                <h1 className="text-4xl font-bold">SQL Chat</h1>
+                <h1 className="text-4xl font-bold">Smart Dashboard</h1>
               </div>
               <p className="text-xl text-muted-foreground">
                 Ask questions about your data in natural language
@@ -92,19 +92,17 @@ export default function HomePage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
-                <div className="space-y-2">
+                <div className="space-y-2 ">
                   <Label htmlFor="userId" className="text-base font-medium">
-                    Select User ID
+                    Select Test Database
                   </Label>
                   <Select value={userId} onValueChange={setUserId}>
-                    <SelectTrigger className="h-12 text-base">
-                      <SelectValue placeholder="Choose a user ID to query data for" />
+                    <SelectTrigger className="h-12 text-base w-full">
+                      <SelectValue placeholder="Choose a database to query data for"  />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user01">user01</SelectItem>
-                      <SelectItem value="user02">user02</SelectItem>
-                      <SelectItem value="user03">user03</SelectItem>
-                      <SelectItem value="user04">user04</SelectItem>
+                      <SelectItem value="user01">DvdRental Database</SelectItem>
+                      <SelectItem value="user04">Clothing Store Database</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
