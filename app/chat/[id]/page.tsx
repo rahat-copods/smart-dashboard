@@ -18,8 +18,15 @@ export default function ChatPage() {
   const userId = searchParams.get("userId") || "";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { chat, isLoading, currentThinking, error, loadChat, sendMessage } =
-    useChat(chatId, userId);
+  const {
+    chat,
+    isLoading,
+    currentThinking,
+    error,
+    loadChat,
+    sendMessage,
+    processMessage,
+  } = useChat(chatId, userId);
 
   // Generate suggestions based on recent user questions
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -96,20 +103,24 @@ export default function ChatPage() {
   }, [chat?.messages]);
 
   // Auto-start processing for new chats
+  const hasStartedProcessing = useRef(false);
   useEffect(() => {
     if (
       chat &&
       chat.messages.length === 1 &&
       chat.messages[0].role === "user" &&
-      !isLoading
+      !hasStartedProcessing.current // Add this guard
     ) {
-      console.log(chat);
+      hasStartedProcessing.current = true;
       const userQuestion = chat.messages[0].question;
       if (userQuestion) {
-        sendMessage(userQuestion);
+        console.log(
+          `[${new Date().toISOString()}] useChat called for chatId: ${chatId}`
+        );
+        processMessage(userQuestion, chat, 1);
       }
     }
-  }, [chat, isLoading, sendMessage]);
+  }, [processMessage]);
 
   const handleCopy = async (text: string) => {
     try {
@@ -162,7 +173,7 @@ export default function ChatPage() {
           <div className="p-4 space-y-6 pb-6">
             {chat.messages.map((message, index) => (
               <MessageBubble
-                key={message.id}
+                key={index}
                 message={message}
                 onCopy={handleCopy}
                 showSuggestions={
@@ -199,6 +210,8 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
         </div>
+
+        {error}
 
         {/* Fixed Input at Bottom */}
         <MessageInput

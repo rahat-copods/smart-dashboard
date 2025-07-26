@@ -5,18 +5,18 @@ interface BaseMessage {
 }
 
 interface UserMessage extends BaseMessage {
-    role: "user";
-    question: string;
+  role: "user";
+  question: string;
 }
 
 interface AssistantMessage extends BaseMessage {
   role: "assistant";
   error: string | null;
   thought_process: string;
-  partial?: boolean;
-  partial_reason?: string;
+  partial: boolean | null;
+  partial_reason: string | null;
   sql_query: string | null;
-  query_result: any[];
+  query_result: any[] | null;
 }
 
 interface DeveloperMessage extends BaseMessage {
