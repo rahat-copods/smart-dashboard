@@ -1,23 +1,6 @@
-export interface Chat {
-  id: string;
-  title: string;
-  messages: ChatMessage[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Chat, ChatMessage } from "./types";
 
-export interface ChatMessage {
-  id: string;
-  role: "user" | "assistant" | "developer";
-  timestamp: Date;
-  question: string;
-  thought_process?: string;
-  error?: string | null;
-  partial?: boolean;
-  partial_reason?: string | null;
-  sql_query?: string | null;
-  query_result?: any[];
-}
+
 
 export class ChatStorage {
   private static STORAGE_KEY = "sql-chat-history";
@@ -127,13 +110,6 @@ export class ChatStorage {
           return {
             role: msg.role,
             content: msg.error || "" // This will contain the error from the database
-          };
-        
-        default:
-          // Fallback for any unexpected role
-          return {
-            role: msg.role,
-            content: msg.question || ""
           };
       }
     });

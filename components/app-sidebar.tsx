@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { PenSquare, Search, MessageSquare, Trash2, Database, PanelLeft } from "lucide-react"
-import { ChatStorage, type Chat } from "@/lib/chat-storage"
 import { useRouter, usePathname } from "next/navigation"
 import {
   Sidebar,
@@ -20,6 +19,8 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Chat } from "@/lib/types"
+import { ChatStorage } from "@/lib/chat-storage"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   currentChatId?: string

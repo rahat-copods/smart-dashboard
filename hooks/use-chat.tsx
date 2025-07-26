@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { ChatStorage, type Chat, type ChatMessage } from "@/lib/chat-storage";
+import { ChatStorage } from "@/lib/chat-storage";
+import { Chat, ChatMessage } from "@/lib/types";
 
 interface ThinkingState {
   status: "initializing" | "thinking" | "generating" | "executing" | "complete";
@@ -51,7 +52,8 @@ export function useChat(chatId: string, userId: string) {
   );
 
   const executeQuery = useCallback(
-    async (sqlQuery: string, attempt: number): Promise<{ success: boolean; error?: string }> => {
+    async (data: any, attempt: number): Promise<{ success: boolean; error?: string }> => {
+      const sqlQuery = data.sql_query;
       try {
         updateThinking("executing", `Executing query (attempt ${attempt}/3)...`, true, sqlQuery);
 
@@ -72,13 +74,16 @@ export function useChat(chatId: string, userId: string) {
         const resultData = await response.json();
         updateThinking("complete", "Query executed successfully.", true);
 
+
         // Create assistant message with successful result
         const assistantMessage: ChatMessage = {
           id: Date.now().toString(),
           timestamp: new Date(),
           role: "assistant",
-          question: "", // Empty for assistant messages
-          thought_process: currentThinking?.text || "",
+          error: data.error,
+          thought_process: data.thought_process, // Use captured text
+          partial: data.partial,
+          partial_reason: data.partial_reason,
           sql_query: sqlQuery,
           query_result: resultData.data,
         };
@@ -102,26 +107,7 @@ export function useChat(chatId: string, userId: string) {
     [chat, currentThinking, updateThinking, userId]
   );
 
-  const getAIErrorExplanation = useCallback(
-    async (finalError: string): Promise<string> => {
-      try {
-        const response = await fetch(
-          `http://localhost:8000/api/query/explain-error?user_id=${encodeURIComponent(userId)}&error=${encodeURIComponent(finalError)}`
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          return data.explanation || finalError;
-        }
-      } catch (err) {
-        console.error("Failed to get AI error explanation:", err);
-      }
-      
-      // Fallback to original error if explanation fails
-      return finalError;
-    },
-    [userId]
-  );
+
 
   const processMessage = useCallback(
     async (messageContent: string, attempt = 1) => {
@@ -144,9 +130,10 @@ export function useChat(chatId: string, userId: string) {
           `http://localhost:8000/api/query/inference?user_id=${encodeURIComponent(userId)}&messages=${encodeURIComponent(JSON.stringify(apiMessages))}`
         );
 
+        let sourceClosedManually = false;
+
         source.onmessage = async (event) => {
           const data = JSON.parse(event.data);
-          console.log(data);
           
           switch (data.status) {
             case "initialize":
@@ -169,7 +156,7 @@ export function useChat(chatId: string, userId: string) {
                   data.sql_query
                 );
                 
-                const queryResult = await executeQuery(data.sql_query, attempt);
+                const queryResult = await executeQuery(data, attempt);
                 
                 if (!queryResult.success && attempt < 3) {
                   // Create developer message with the error
@@ -177,8 +164,7 @@ export function useChat(chatId: string, userId: string) {
                     id: Date.now().toString(),
                     role: "developer",
                     timestamp: new Date(),
-                    question: "", // Empty for developer messages
-                    error: queryResult.error,
+                    error: queryResult.error || "",
                   };
 
                   const updatedChat = {
@@ -189,22 +175,26 @@ export function useChat(chatId: string, userId: string) {
                   ChatStorage.saveChat(updatedChat);
 
                   // Retry with updated message history
+                  sourceClosedManually = true;
                   source.close();
-                  setCurrentThinking(null);
+                  // Don't clear currentThinking on retry, let it continue
                   await processMessage(messageContent, attempt + 1);
                   return;
                 } else if (!queryResult.success && attempt === 3) {
-                  // Final failure - get AI explanation and create assistant message with error
-                  const errorExplanation = await getAIErrorExplanation(queryResult.error || "Unknown error");
+                  
+                  // Capture the thinking process text BEFORE clearing currentThinking
+                  const thoughtProcessText = currentThinking?.text || "";
                   
                   const assistantMessage: ChatMessage = {
                     id: Date.now().toString(),
                     timestamp: new Date(),
                     role: "assistant",
-                    question: "", // Empty for assistant messages
-                    thought_process: currentThinking?.text || "",
+                    error: data.error,
+                    partial: data.partial,
+                    partial_reason: data.partial_reason,
+                    thought_process: thoughtProcessText, // Use captured text
                     sql_query: data.sql_query,
-                    error: errorExplanation,
+                    query_result: [],
                   };
 
                   const updatedChat = {
@@ -215,14 +205,17 @@ export function useChat(chatId: string, userId: string) {
                   ChatStorage.saveChat(updatedChat);
                 }
                 
-                setCurrentThinking(null);
+                // Clear any previous errors on successful completion
+                setError(null);
                 setIsLoading(false);
               }
+              sourceClosedManually = true;
               source.close();
               break;
             case "error":
               updateThinking("complete", `Error: ${data.error}`, true);
               setError(data.error);
+              sourceClosedManually = true;
               source.close();
               setIsLoading(false);
               break;
@@ -230,9 +223,11 @@ export function useChat(chatId: string, userId: string) {
         };
 
         source.onerror = () => {
+          // Only show connection error if the source wasn't closed manually
+          if (!sourceClosedManually) {
+            setError("Connection error occurred");
+          }
           source.close();
-          setError("Connection error occurred");
-          setCurrentThinking(null);
           setIsLoading(false);
         };
       } catch (err) {
@@ -241,12 +236,16 @@ export function useChat(chatId: string, userId: string) {
         setIsLoading(false);
       }
     },
-    [chat, isLoading, userId, updateThinking, executeQuery, getAIErrorExplanation]
+    [chat, isLoading, userId, updateThinking, executeQuery]
   );
 
   const sendMessage = useCallback(
     async (content: string) => {
       if (!chat) return;
+
+      // Clear any previous errors and thinking state when sending a new message
+      setError(null);
+      setCurrentThinking(null);
 
       const userMessage: ChatMessage = {
         id: Date.now().toString(),

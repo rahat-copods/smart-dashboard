@@ -1,57 +1,133 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
-import { useParams, useSearchParams, useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { ChatLayout } from "@/components/chatLayout"
-import { ChatHeader } from "@/components/chatHeader"
-import { MessageBubble } from "@/components/messageBubble"
-import { MessageInput } from "@/components/messageInput"
-import { ThinkingIndicator } from "@/components/thinkingIndicator"
-import { useChat } from "@/hooks/use-chat"
+import { useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { ChatLayout } from "@/components/chatLayout";
+import { ChatHeader } from "@/components/chatHeader";
+import { MessageBubble } from "@/components/messageBubble";
+import { MessageInput } from "@/components/messageInput";
+import { ThinkingIndicator } from "@/components/thinkingIndicator";
+import { useChat } from "@/hooks/use-chat";
 
 export default function ChatPage() {
-  const params = useParams()
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const chatId = params.id as string
-  const userId = searchParams.get("userId") || ""
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const chatId = params.id as string;
+  const userId = searchParams.get("userId") || "";
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { chat, isLoading, currentThinking, error, loadChat, sendMessage } = useChat(chatId, userId)
+  const { chat, isLoading, currentThinking, error, loadChat, sendMessage } =
+    useChat(chatId, userId);
+
+  // Generate suggestions based on recent user questions
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const shouldShowCurrentThinking = currentThinking && currentThinking.isActive;
 
   useEffect(() => {
-    loadChat()
-  }, [loadChat])
+    loadChat();
+  }, [loadChat]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [chat?.messages, currentThinking])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chat?.messages, currentThinking]);
+
+  // Generate suggestions from recent user messages and results
+  useEffect(() => {
+    if (chat?.messages) {
+      const lastAssistantMessage = chat.messages
+        .filter((msg) => msg.role === "assistant")
+        .slice(-1)[0];
+
+      const lastUserMessage = chat.messages
+        .filter((msg) => msg.role === "user")
+        .slice(-1)[0];
+
+      if (lastAssistantMessage && lastUserMessage) {
+        // Generate contextual suggestions based on the last interaction
+        const userQuestion = lastUserMessage.question.toLowerCase();
+        const hasResults =
+          lastAssistantMessage.query_result &&
+          lastAssistantMessage.query_result.length > 0;
+
+        let generatedSuggestions: string[] = [];
+
+        if (hasResults) {
+          // Suggestions based on successful queries
+          generatedSuggestions = [
+            "Show me the trends for this data over time",
+            "What are the top 10 results from this query?",
+            "Can you group this data differently?",
+            "Export this data to CSV format",
+          ];
+
+          // Add more specific suggestions based on query content
+          if (
+            userQuestion.includes("sales") ||
+            userQuestion.includes("revenue")
+          ) {
+            generatedSuggestions.unshift(
+              "Compare this with last month's sales"
+            );
+          } else if (
+            userQuestion.includes("user") ||
+            userQuestion.includes("customer")
+          ) {
+            generatedSuggestions.unshift(
+              "Show user demographics for this data"
+            );
+          } else if (userQuestion.includes("product")) {
+            generatedSuggestions.unshift("Show product performance metrics");
+          }
+        } else {
+          // Suggestions when no results or errors occurred
+          generatedSuggestions = [
+            "Help me write a different query",
+            "Show me available tables and columns",
+            "What data is available to query?",
+            "Give me some example queries",
+          ];
+        }
+
+        setSuggestions(generatedSuggestions.slice(0, 4)); // Limit to 4 suggestions
+      }
+    }
+  }, [chat?.messages]);
 
   // Auto-start processing for new chats
   useEffect(() => {
-    if (chat && chat.messages.length === 1 && chat.messages[0].role === "user" && !isLoading) {
-      console.log(chat)
-      // Use processMessage directly to avoid creating duplicate user message
+    if (
+      chat &&
+      chat.messages.length === 1 &&
+      chat.messages[0].role === "user" &&
+      !isLoading
+    ) {
+      console.log(chat);
       const userQuestion = chat.messages[0].question;
       if (userQuestion) {
         sendMessage(userQuestion);
       }
     }
-  }, [chat, isLoading, sendMessage])
+  }, [chat, isLoading, sendMessage]);
 
   const handleCopy = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text)
+      await navigator.clipboard.writeText(text);
     } catch (err) {
-      console.error("Failed to copy text:", err)
+      console.error("Failed to copy text:", err);
     }
-  }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    console.log("Suggestion clicked in ChatPage:", suggestion); // Debug log
+    sendMessage(suggestion);
+  };
 
   if (!chat) {
     if (error) {
-      router.push("/")
-      return null
+      router.push("/");
+      return null;
     }
 
     return (
@@ -60,8 +136,21 @@ export default function ChatPage() {
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
       </ChatLayout>
-    )
+    );
   }
+
+  const isLastMessage = (index: number) => {
+    return index === chat.messages.length - 1;
+  };
+
+  const isRetryMessage = (message: any, index: number) => {
+    // Check if previous message was a developer error message
+    if (index > 0) {
+      const prevMessage = chat.messages[index - 1];
+      return prevMessage.role === "developer";
+    }
+    return false;
+  };
 
   return (
     <ChatLayout currentChatId={chatId}>
@@ -71,12 +160,25 @@ export default function ChatPage() {
         {/* Messages Container */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-6 pb-6">
-            {chat.messages.map((message) => (
-              <MessageBubble key={message.id} message={message} onCopy={handleCopy} />
+            {chat.messages.map((message, index) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                onCopy={handleCopy}
+                showSuggestions={
+                  isLastMessage(index) &&
+                  message.role === "user" &&
+                  !isLoading &&
+                  !currentThinking
+                }
+                suggestions={suggestions}
+                onSuggestionClick={handleSuggestionClick}
+                isRetry={isRetryMessage(message, index)}
+              />
             ))}
 
-            {/* Current Thinking */}
-            {currentThinking && (
+            {/* Current Thinking - Only during active streaming */}
+            {shouldShowCurrentThinking && currentThinking && (
               <ThinkingIndicator
                 status={currentThinking.status}
                 text={currentThinking.text}
@@ -85,7 +187,8 @@ export default function ChatPage() {
               />
             )}
 
-            {error && (
+            {/* Only show error if there's an actual error */}
+            {error && !shouldShowCurrentThinking && (
               <div className="text-center p-4">
                 <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
                   {error}
@@ -98,8 +201,12 @@ export default function ChatPage() {
         </div>
 
         {/* Fixed Input at Bottom */}
-        <MessageInput onSubmit={sendMessage} disabled={isLoading} placeholder="Ask a follow-up question..." />
+        <MessageInput
+          onSubmit={sendMessage}
+          disabled={isLoading}
+          placeholder="Ask a follow-up question..."
+        />
       </div>
     </ChatLayout>
-  )
+  );
 }
