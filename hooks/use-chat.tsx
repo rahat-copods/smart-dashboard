@@ -193,19 +193,19 @@ export function useChat(chatId: string, userId: string) {
                 );
 
                 if (!queryResult.success && attempt < 3) {
-                  // Create developer message with the error
-                  const developerMessage: ChatMessage = {
+                  // Create system message with the error
+                  const systemMessage: ChatMessage = {
                     id: Date.now().toString(),
-                    role: "developer",
+                    role: "system",
                     timestamp: new Date(),
-                    error: queryResult.error || "",
+                    error: queryResult.error + "This ERROR is from the db server understand explain in depth and then respond with fixed query" || "",
                   };
 
                   const updatedChat = {
                     ...queryResult.updatedChat,
                     messages: [
                       ...queryResult.updatedChat.messages,
-                      developerMessage,
+                      systemMessage,
                     ],
                   };
                   setChat(updatedChat);

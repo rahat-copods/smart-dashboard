@@ -1,6 +1,6 @@
 interface BaseMessage {
   id: string;
-  role: "user" | "assistant" | "developer";
+  role: "user" | "assistant" | "system";
   timestamp: Date;
 }
 
@@ -19,12 +19,12 @@ interface AssistantMessage extends BaseMessage {
   query_result: any[] | null;
 }
 
-interface DeveloperMessage extends BaseMessage {
-  role: "developer";
+interface SystemMessage extends BaseMessage {
+  role: "system";
   error: string;
 }
 
-export type ChatMessage = UserMessage | AssistantMessage | DeveloperMessage;
+export type ChatMessage = UserMessage | AssistantMessage | SystemMessage;
 
 export interface Chat {
   id: string;

@@ -35,7 +35,7 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
-  const isDeveloper = message.role === "developer";
+  const isSystem = message.role === "system";
 
   const renderTable = (data: Record<string, any>[]) => {
     if (!data || data.length === 0) {
@@ -120,8 +120,8 @@ export function MessageBubble({
     );
   };
 
-  // Don't render developer messages at all
-  if (isDeveloper) {
+  // Don't render system messages at all
+  if (isSystem) {
     return null;
   }
 

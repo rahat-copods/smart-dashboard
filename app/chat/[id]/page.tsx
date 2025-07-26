@@ -155,10 +155,10 @@ export default function ChatPage() {
   };
 
   const isRetryMessage = (message: any, index: number) => {
-    // Check if previous message was a developer error message
+    // Check if previous message was a system error message
     if (index > 0) {
       const prevMessage = chat.messages[index - 1];
-      return prevMessage.role === "developer";
+      return prevMessage.role === "system";
     }
     return false;
   };

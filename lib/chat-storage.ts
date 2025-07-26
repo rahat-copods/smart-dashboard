@@ -85,7 +85,7 @@ export class ChatStorage {
 
   static formatMessagesForAPI(
     messages: ChatMessage[]
-  ): Array<{ role: "user" | "assistant" | "developer"; content: string }> {
+  ): Array<{ role: "user" | "assistant" | "system"; content: string }> {
     return messages.map((msg) => {
       switch (msg.role) {
         case "user":
@@ -106,7 +106,7 @@ export class ChatStorage {
             })
           };
         
-        case "developer":
+        case "system":
           return {
             role: msg.role,
             content: msg.error || "" // This will contain the error from the database
