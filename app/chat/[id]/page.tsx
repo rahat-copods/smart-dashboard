@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ChatLayout } from "@/components/chatLayout";
@@ -28,8 +28,6 @@ export default function ChatPage() {
     processMessage,
   } = useChat(chatId, userId);
 
-  // Generate suggestions based on recent user questions
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const shouldShowCurrentThinking = currentThinking && currentThinking.isActive;
 
   useEffect(() => {
@@ -39,68 +37,6 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages, currentThinking]);
-
-  // Generate suggestions from recent user messages and results
-  useEffect(() => {
-    if (chat?.messages) {
-      const lastAssistantMessage = chat.messages
-        .filter((msg) => msg.role === "assistant")
-        .slice(-1)[0];
-
-      const lastUserMessage = chat.messages
-        .filter((msg) => msg.role === "user")
-        .slice(-1)[0];
-
-      if (lastAssistantMessage && lastUserMessage) {
-        // Generate contextual suggestions based on the last interaction
-        const userQuestion = lastUserMessage.question.toLowerCase();
-        const hasResults =
-          lastAssistantMessage.query_result &&
-          lastAssistantMessage.query_result.length > 0;
-
-        let generatedSuggestions: string[] = [];
-
-        if (hasResults) {
-          // Suggestions based on successful queries
-          generatedSuggestions = [
-            "Show me the trends for this data over time",
-            "What are the top 10 results from this query?",
-            "Can you group this data differently?",
-            "Export this data to CSV format",
-          ];
-
-          // Add more specific suggestions based on query content
-          if (
-            userQuestion.includes("sales") ||
-            userQuestion.includes("revenue")
-          ) {
-            generatedSuggestions.unshift(
-              "Compare this with last month's sales"
-            );
-          } else if (
-            userQuestion.includes("user") ||
-            userQuestion.includes("customer")
-          ) {
-            generatedSuggestions.unshift(
-              "Show user demographics for this data"
-            );
-          } else if (userQuestion.includes("product")) {
-            generatedSuggestions.unshift("Show product performance metrics");
-          }
-        } else {
-          // Suggestions when no results or errors occurred
-          generatedSuggestions = [
-            "Help me write a different query",
-            "Show me available tables and columns",
-            "What data is available to query?",
-            "Give me some example queries",
-          ];
-        }
-
-        setSuggestions(generatedSuggestions.slice(0, 4)); // Limit to 4 suggestions
-      }
-    }
-  }, [chat?.messages]);
 
   // Auto-start processing for new chats
   const hasStartedProcessing = useRef(false);
@@ -128,11 +64,6 @@ export default function ChatPage() {
     } catch (err) {
       console.error("Failed to copy text:", err);
     }
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    console.log("Suggestion clicked in ChatPage:", suggestion); // Debug log
-    sendMessage(suggestion);
   };
 
   if (!chat) {
@@ -178,12 +109,11 @@ export default function ChatPage() {
                 onCopy={handleCopy}
                 showSuggestions={
                   isLastMessage(index) &&
-                  message.role === "user" &&
-                  !isLoading &&
-                  !currentThinking
+                  message.role === "assistant" &&
+                  !shouldShowCurrentThinking &&
+                  !isLoading
                 }
-                suggestions={suggestions}
-                onSuggestionClick={handleSuggestionClick}
+                onSuggestionClick={sendMessage}
                 isRetry={isRetryMessage(message, index)}
               />
             ))}
@@ -198,7 +128,6 @@ export default function ChatPage() {
               />
             )}
 
-            {/* Only show error if there's an actual error */}
             {error && !shouldShowCurrentThinking && (
               <div className="text-center p-4">
                 <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
@@ -211,9 +140,6 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {error}
-
-        {/* Fixed Input at Bottom */}
         <MessageInput
           onSubmit={sendMessage}
           disabled={isLoading}

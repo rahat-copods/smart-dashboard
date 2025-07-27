@@ -17,6 +17,7 @@ interface AssistantMessage extends BaseMessage {
   partial_reason: string | null;
   sql_query: string | null;
   query_result: any[] | null;
+  suggestions: string[];
 }
 
 interface SystemMessage extends BaseMessage {

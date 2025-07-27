@@ -21,7 +21,7 @@ interface MessageBubbleProps {
   onCopy?: (text: string) => void;
   showSuggestions?: boolean;
   suggestions?: string[];
-  onSuggestionClick?: (suggestion: string) => void;
+  onSuggestionClick: (suggestion: string) => void;
   isRetry?: boolean;
 }
 
@@ -29,14 +29,12 @@ export function MessageBubble({
   message,
   onCopy,
   showSuggestions = false,
-  suggestions = [],
   onSuggestionClick,
   isRetry = false,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
   const isSystem = message.role === "system";
-
   const renderTable = (data: Record<string, any>[]) => {
     if (!data || data.length === 0) {
       return (
@@ -92,7 +90,7 @@ export function MessageBubble({
   };
 
   const renderSuggestions = () => {
-    if (!showSuggestions || suggestions.length === 0) return null;
+    if (!isAssistant || !showSuggestions || message.suggestions.length === 0) return null;
 
     return (
       <div className="mt-6 space-y-3">
@@ -101,16 +99,13 @@ export function MessageBubble({
           Suggested follow-ups:
         </div>
         <div className="flex flex-wrap gap-2">
-          {suggestions.map((suggestion, index) => (
+          {message.suggestions.map((suggestion, index) => (
             <Button
               key={index}
               variant="outline"
               size="sm"
               className="text-sm h-auto py-2 px-3 whitespace-normal text-left justify-start hover:bg-primary hover:text-primary-foreground transition-colors bg-transparent"
-              onClick={() => {
-                console.log("Suggestion clicked:", suggestion); // Debug log
-                onSuggestionClick?.(suggestion);
-              }}
+              onClick={()=>onSuggestionClick(suggestion)}
             >
               {suggestion}
             </Button>
@@ -143,13 +138,14 @@ export function MessageBubble({
             </div>
           </div>
         </div>
-        {renderSuggestions()}
       </div>
     );
   }
 
   // Assistant Message (Main AI Response) - Unified Single Bubble
   if (isAssistant) {
+    console.log(message);
+
     return (
       <div className="space-y-4">
         <div className="flex justify-start">

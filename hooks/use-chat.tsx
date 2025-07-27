@@ -94,6 +94,7 @@ export function useChat(chatId: string, userId: string) {
           partial_reason: data.partial_reason,
           sql_query: sqlQuery,
           query_result: resultData.data,
+          suggestions: data.suggestions,
         };
 
         const updatedChat = {
@@ -122,6 +123,7 @@ export function useChat(chatId: string, userId: string) {
           partial_reason: data.partial_reason,
           sql_query: sqlQuery,
           query_result: null,
+          suggestions: data.suggestions,
         };
 
         const updatedChat = {
@@ -235,6 +237,7 @@ export function useChat(chatId: string, userId: string) {
                     thought_process: thoughtProcessText, // Use captured text
                     sql_query: data.sql_query,
                     query_result: [],
+                    suggestions: data.suggestions,
                   };
 
                   const updatedChat = {

@@ -13,7 +13,7 @@ export class ChatStorage {
       if (!stored) return [];
 
       const chats = JSON.parse(stored);
-      return chats.map((chat: any) => ({
+      return chats.map((chat: Chat) => ({
         ...chat,
         createdAt: new Date(chat.createdAt),
         updatedAt: new Date(chat.updatedAt),
@@ -26,6 +26,7 @@ export class ChatStorage {
           partial_reason: msg.partial_reason !== undefined ? msg.partial_reason : null,
           sql_query: msg.sql_query !== undefined ? msg.sql_query : null,
           query_result: msg.query_result || undefined,
+          suggestions: msg.suggestions || [],
         })),
       }));
     } catch (error) {
@@ -103,6 +104,7 @@ export class ChatStorage {
               partial: msg.partial,
               partial_reason: msg.partial_reason,
               sql_query: msg.sql_query,
+              suggestions: msg.suggestions
             })
           };
         
