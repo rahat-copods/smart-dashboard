@@ -72,10 +72,9 @@ export default function HomePage() {
   ];
 
   return (
-    <ChatLayout>
-      <ChatHeader title="Smart Dashboard" />
-
       <div className="flex-1 overflow-y-auto">
+        <ChatHeader title="Smart Dashboard" />
+
         <div className="flex items-center justify-center min-h-full p-8">
           <div className="w-full max-w-2xl space-y-8">
             {/* Header */}
@@ -98,11 +97,13 @@ export default function HomePage() {
                   </Label>
                   <Select value={userId} onValueChange={setUserId}>
                     <SelectTrigger className="h-12 text-base w-full">
-                      <SelectValue placeholder="Choose a database to query data for"  />
+                      <SelectValue placeholder="Choose a database to query data for" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user01">DvdRental Database</SelectItem>
-                      <SelectItem value="user04">Clothing Store Database</SelectItem>
+                      <SelectItem value="user04">
+                        Clothing Store Database
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -165,6 +166,5 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-    </ChatLayout>
   );
 }

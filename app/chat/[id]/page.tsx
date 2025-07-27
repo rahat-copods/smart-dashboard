@@ -73,11 +73,11 @@ export default function ChatPage() {
     }
 
     return (
-      <ChatLayout>
+      <>
         <div className="flex items-center justify-center h-full">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
-      </ChatLayout>
+      </>
     );
   }
 
@@ -95,57 +95,54 @@ export default function ChatPage() {
   };
 
   return (
-    <ChatLayout currentChatId={chatId}>
+    <div className="flex-1 flex flex-col min-h-0 max-w-4xl mx-auto">
       <ChatHeader title={chat.title} />
+      {/* Messages Container */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-6 pb-6">
+          {chat.messages.map((message, index) => (
+            <MessageBubble
+              key={index}
+              message={message}
+              onCopy={handleCopy}
+              showSuggestions={
+                isLastMessage(index) &&
+                message.role === "assistant" &&
+                !shouldShowCurrentThinking &&
+                !isLoading
+              }
+              onSuggestionClick={sendMessage}
+              isRetry={isRetryMessage(message, index)}
+            />
+          ))}
 
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4 space-y-6 pb-6">
-            {chat.messages.map((message, index) => (
-              <MessageBubble
-                key={index}
-                message={message}
-                onCopy={handleCopy}
-                showSuggestions={
-                  isLastMessage(index) &&
-                  message.role === "assistant" &&
-                  !shouldShowCurrentThinking &&
-                  !isLoading
-                }
-                onSuggestionClick={sendMessage}
-                isRetry={isRetryMessage(message, index)}
-              />
-            ))}
+          {/* Current Thinking - Only during active streaming */}
+          {shouldShowCurrentThinking && currentThinking && (
+            <ThinkingIndicator
+              status={currentThinking.status}
+              text={currentThinking.text}
+              isActive={currentThinking.isActive}
+              sqlQuery={currentThinking.sqlQuery}
+            />
+          )}
 
-            {/* Current Thinking - Only during active streaming */}
-            {shouldShowCurrentThinking && currentThinking && (
-              <ThinkingIndicator
-                status={currentThinking.status}
-                text={currentThinking.text}
-                isActive={currentThinking.isActive}
-                sqlQuery={currentThinking.sqlQuery}
-              />
-            )}
-
-            {error && !shouldShowCurrentThinking && (
-              <div className="text-center p-4">
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
-                  {error}
-                </div>
+          {error && !shouldShowCurrentThinking && (
+            <div className="text-center p-4">
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
+                {error}
               </div>
-            )}
+            </div>
+          )}
 
-            <div ref={messagesEndRef} />
-          </div>
+          <div ref={messagesEndRef} />
         </div>
-
-        <MessageInput
-          onSubmit={sendMessage}
-          disabled={isLoading}
-          placeholder="Ask a follow-up question..."
-        />
       </div>
-    </ChatLayout>
+
+      <MessageInput
+        onSubmit={sendMessage}
+        disabled={isLoading}
+        placeholder="Ask a follow-up question..."
+      />
+    </div>
   );
 }
