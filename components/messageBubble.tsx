@@ -10,11 +10,14 @@ import {
   AlertCircle,
   Info,
   RotateCcw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import type { ChatMessage } from "@/lib/types";
+import {format as sqlFormater} from "sql-formatter";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -35,56 +38,135 @@ export function MessageBubble({
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
   const isSystem = message.role === "system";
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
   const renderTable = (data: Record<string, any>[]) => {
     if (!data || data.length === 0) {
       return (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-8 text-muted-foreground border rounded-md">
           No results found
         </div>
       );
     }
 
     const headers = Object.keys(data[0]);
+    
+    // Calculate pagination
+    const totalPages = Math.ceil(data.length / rowsPerPage);
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const currentData = data.slice(startIndex, endIndex);
+    
+    // Calculate dynamic height based on content
+    const headerHeight = 48; // approximately 3rem (p-3)
+    const rowHeight = 40; // approximately 2.5rem (py-2)
+    const currentRows = Math.min(currentData.length, rowsPerPage);
+    const contentHeight = headerHeight + (currentRows * rowHeight);
+    const maxHeight = headerHeight + (8 * rowHeight); // header + 8 rows max
+    const tableHeight = Math.min(contentHeight, maxHeight);
+
     return (
-      <div
-        className="border rounded-md"
-        style={{ height: "400px", width: "100%" }}
-      >
-        <div className="h-full overflow-auto">
-          <table className="w-full border-collapse">
-            <thead className="sticky top-0 bg-background border-b">
-              <tr>
-                {headers.map((header) => (
-                  <th
-                    key={header}
-                    className="font-semibold min-w-[120px] p-3 text-left border-r last:border-r-0"
-                  >
-                    {header
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, index) => (
-                <tr
-                  key={index}
-                  className="hover:bg-muted/50 border-b last:border-b-0"
-                >
+      <div className="space-y-2">
+        <div 
+          className="border rounded-md overflow-hidden w-full"
+          style={{ height: `${tableHeight}px` }}
+        >
+          <div className="h-full overflow-auto">
+            <table className="w-full border-collapse min-w-full">
+              <thead className="sticky top-0 bg-background border-b z-10">
+                <tr>
                   {headers.map((header) => (
-                    <td
+                    <th
                       key={header}
-                      className="font-mono text-sm py-2 px-3 border-r last:border-r-0"
+                      className="font-semibold min-w-[120px] max-w-[200px] p-3 text-left border-r last:border-r-0 truncate"
+                      title={header.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                     >
-                      {row[header]?.toString() || "—"}
-                    </td>
+                      {header
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (l) => l.toUpperCase())}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentData.map((row, index) => (
+                  <tr
+                    key={startIndex + index}
+                    className="hover:bg-muted/50 border-b last:border-b-0"
+                  >
+                    {headers.map((header) => (
+                      <td
+                        key={header}
+                        className="font-mono text-sm py-2 px-3 border-r last:border-r-0 min-w-[120px] max-w-[200px] truncate"
+                        title={row[header]?.toString() || "—"}
+                      >
+                        {row[header]?.toString() || "—"}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-2">
+            <div className="text-sm text-muted-foreground">
+              Showing {startIndex + 1}-{Math.min(endIndex, data.length)} of {data.length} rows
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -93,10 +175,10 @@ export function MessageBubble({
     if (!isAssistant || !showSuggestions || message.suggestions.length === 0) return null;
 
     return (
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-3 max-w-4xl space-x-3">
         <div className="text-sm text-muted-foreground font-medium flex items-center gap-2">
           <Bot className="w-4 h-4" />
-          Suggested follow-ups:
+          Follow-up questions:
         </div>
         <div className="flex flex-wrap gap-2">
           {message.suggestions.map((suggestion, index) => (
@@ -104,7 +186,7 @@ export function MessageBubble({
               key={index}
               variant="outline"
               size="sm"
-              className="text-sm h-auto py-2 px-3 whitespace-normal text-left justify-start hover:bg-primary hover:text-primary-foreground transition-colors bg-transparent"
+              className="text-sm h-auto py-2 px-3 whitespace-normal text-left justify-start transition-colors"
               onClick={()=>onSuggestionClick(suggestion)}
             >
               {suggestion}
@@ -154,7 +236,7 @@ export function MessageBubble({
               <Bot className="w-4 h-4 text-background" />
             </div>
 
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {/* Single Unified Message Bubble */}
               <div className="bg-muted/20 border border-muted rounded-lg p-4 space-y-4">
                 {/* Thinking Process */}
@@ -163,7 +245,7 @@ export function MessageBubble({
                     <div className="flex items-center space-x-2">
                       <Brain className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm font-semibold text-muted-foreground">
-                        AI Thinking Process
+                        Analysis
                       </span>
                     </div>
                     <div className="text-sm leading-relaxed text-muted-foreground">
@@ -171,24 +253,9 @@ export function MessageBubble({
                     </div>
                   </div>
                 )}
-
-                {/* Error Display */}
-                {message.error && (
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <AlertCircle className="w-4 h-4 text-red-500" />
-                      <span className="text-sm font-semibold text-red-700 dark:text-red-400">
-                        Error Occurred
-                      </span>
-                    </div>
-                    <div className="text-sm text-red-800 dark:text-red-200">
-                      {message.error}
-                    </div>
-                  </div>
-                )}
-
-                {/* Partial Reason */}
-                {message.partial && message.partial_reason && (
+                
+                {/* Error or Partial Query Reason Display */}
+                 {message.partial && message.partial_reason ? (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Info className="w-4 h-4 text-yellow-500" />
@@ -203,6 +270,20 @@ export function MessageBubble({
                       {message.partial_reason}
                     </div>
                   </div>
+                ) : (
+                  message.error && (
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                        <span className="text-sm font-semibold text-red-700 dark:text-red-400">
+                          Error Occurred
+                        </span>
+                      </div>
+                      <div className="text-sm text-red-800 dark:text-red-200">
+                        {message.error}
+                      </div>
+                    </div>
+                  )
                 )}
 
                 {/* SQL Query */}
@@ -212,7 +293,7 @@ export function MessageBubble({
                       <div className="flex items-center space-x-2">
                         <Code className="w-4 h-4 text-green-600" />
                         <span className="text-sm font-semibold">
-                          Generated SQL
+                          Query Executed
                         </span>
                         {isRetry && (
                           <Badge variant="outline" className="text-xs">
@@ -230,9 +311,9 @@ export function MessageBubble({
                         </Button>
                       )}
                     </div>
-                    <div className="bg-green-50 border border-green-200 dark:bg-green-950/50 dark:border-green-800 rounded-md p-3">
-                      <pre className="text-sm font-mono text-green-800 dark:text-green-200 overflow-x-auto whitespace-pre-wrap">
-                        {message.sql_query}
+                    <div className="bg-muted border  rounded-md p-3">
+                      <pre className="text-sm font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap">
+                        {sqlFormater(message.sql_query)}
                       </pre>
                     </div>
                   </div>
@@ -244,7 +325,7 @@ export function MessageBubble({
                     <div className="flex items-center space-x-2">
                       <Database className="w-4 h-4 text-blue-600" />
                       <span className="text-sm font-semibold">
-                        Query Results
+                        Results
                       </span>
                       <Badge variant="secondary" className="text-xs">
                         {message.query_result.length} rows
