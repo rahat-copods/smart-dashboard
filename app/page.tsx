@@ -65,7 +65,7 @@ export default function HomePage() {
   };
 
   const examples = [
-    "Show me all customers from California",
+    "Can you explain me the database?",
     "What's the total revenue for last month?",
     "List the top 5 products by sales",
     "Find customers who haven't ordered recently",

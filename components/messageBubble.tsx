@@ -76,7 +76,7 @@ export function MessageBubble({
         >
           <div className="h-full overflow-auto">
             <table className="w-full border-collapse min-w-full">
-              <thead className="sticky top-0 bg-background border-b z-10">
+              <thead className="sticky top-0 bg-background border-b">
                 <tr>
                   {headers.map((header) => (
                     <th
@@ -207,7 +207,7 @@ export function MessageBubble({
     return (
       <div className="space-y-4">
         <div className="flex justify-end">
-          <div className="flex space-x-3 max-w-4xl flex-row-reverse space-x-reverse">
+          <div className="flex space-x-3 w-full flex-row-reverse space-x-reverse">
             <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-primary">
               <User className="w-4 h-4 text-primary-foreground" />
             </div>
@@ -226,12 +226,10 @@ export function MessageBubble({
 
   // Assistant Message (Main AI Response) - Unified Single Bubble
   if (isAssistant) {
-    console.log(message);
-
     return (
       <div className="space-y-4">
         <div className="flex justify-start">
-          <div className="flex space-x-3 max-w-4xl">
+          <div className="flex space-x-3 w-full">
             <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted-foreground">
               <Bot className="w-4 h-4 text-background" />
             </div>
