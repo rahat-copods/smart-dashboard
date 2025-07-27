@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Send } from "lucide-react"
+import { ArrowUp, Loader2, Send } from "lucide-react"
 
 interface MessageInputProps {
   onSubmit: (message: string) => void
@@ -51,12 +51,9 @@ export function MessageInput({ onSubmit, disabled = false, placeholder = "Type y
             size="icon"
             className="absolute bottom-3 right-3 h-8 w-8"
           >
-            {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Press Enter to send • Shift + Enter for new line
-        </p>
       </form>
     </div>
   )
