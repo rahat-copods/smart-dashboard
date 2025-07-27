@@ -95,7 +95,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 max-w-4xl mx-auto">
+    <div className="flex-1 flex flex-col min-h-0 w-3xl">
       <ChatHeader title={chat.title} />
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto">

@@ -50,7 +50,7 @@ export default function RootLayout({
             <main className="container mx-auto max-w-7xl px-6 flex-grow">
               <SidebarProvider defaultOpen={true}>
                 <AppSidebar currentChatId={currentChatId} />
-                <SidebarInset className="flex flex-col min-h-screen">
+                <SidebarInset className="flex flex-col min-h-screen w-full items-center">
                   {children}
                 </SidebarInset>
               </SidebarProvider>
