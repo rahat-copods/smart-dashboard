@@ -30,6 +30,7 @@ export type ChatMessage = UserMessage | AssistantMessage | SystemMessage;
 export interface Chat {
   id: string;
   title: string;
+  user: string;
   messages: ChatMessage[];
   createdAt: Date;
   updatedAt: Date;

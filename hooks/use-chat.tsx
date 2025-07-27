@@ -11,8 +11,9 @@ interface ThinkingState {
   sqlQuery?: string;
 }
 
-export function useChat(chatId: string, userId: string) {
+export function useChat(chatId: string) {
   const [chat, setChat] = useState<Chat | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentThinking, setCurrentThinking] = useState<ThinkingState | null>(
     null
@@ -23,6 +24,7 @@ export function useChat(chatId: string, userId: string) {
     try {
       const loadedChat = ChatStorage.getChat(chatId);
       setChat(loadedChat);
+      setUserId(loadedChat?.user || null);
       setError(null);
     } catch (err) {
       setError("Failed to load chat");
@@ -141,7 +143,7 @@ export function useChat(chatId: string, userId: string) {
 
   const processMessage = useCallback(
     async (messageContent: string, currentChat: Chat, attempt = 1) => {
-      if (isLoading) return;
+      if (isLoading || !userId) return;
 
       setIsLoading(true);
       setError(null);
@@ -200,7 +202,10 @@ export function useChat(chatId: string, userId: string) {
                     id: Date.now().toString(),
                     role: "system",
                     timestamp: new Date(),
-                    error: queryResult.error + "This ERROR is from the db server understand explain in depth and then respond with fixed query" || "",
+                    error:
+                      queryResult.error +
+                        "This ERROR is from the db server understand explain in depth and then respond with fixed query" ||
+                      "",
                   };
 
                   const updatedChat = {

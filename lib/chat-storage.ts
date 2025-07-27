@@ -71,7 +71,7 @@ export class ChatStorage {
     }
   }
 
-  static createNewChat(firstMessage: string): Chat {
+  static createNewChat(firstMessage: string, userId: string): Chat {
     const id = Date.now().toString();
     const title = firstMessage.length > 50 ? firstMessage.substring(0, 50) + "..." : firstMessage;
 
@@ -79,6 +79,7 @@ export class ChatStorage {
       id,
       title,
       messages: [],
+      user: userId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

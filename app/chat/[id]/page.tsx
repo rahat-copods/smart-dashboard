@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { ChatLayout } from "@/components/chatLayout";
 import { ChatHeader } from "@/components/chatHeader";
 import { MessageBubble } from "@/components/messageBubble";
 import { MessageInput } from "@/components/messageInput";
@@ -15,7 +14,6 @@ export default function ChatPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const chatId = params.id as string;
-  const userId = searchParams.get("userId") || "";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -26,7 +24,7 @@ export default function ChatPage() {
     loadChat,
     sendMessage,
     processMessage,
-  } = useChat(chatId, userId);
+  } = useChat(chatId);
 
   const shouldShowCurrentThinking = currentThinking && currentThinking.isActive;
 
@@ -37,7 +35,7 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages, currentThinking]);
-
+console.log(chat)
   // Auto-start processing for new chats
   const hasStartedProcessing = useRef(false);
   useEffect(() => {
@@ -73,11 +71,9 @@ export default function ChatPage() {
     }
 
     return (
-      <>
         <div className="flex items-center justify-center h-full">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
-      </>
     );
   }
 

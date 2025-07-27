@@ -17,6 +17,7 @@ import { Database, Send, Loader2 } from "lucide-react";
 import { ChatLayout } from "@/components/chatLayout";
 import { ChatHeader } from "@/components/chatHeader";
 import { ChatStorage } from "@/lib/chat-storage";
+import { ChatMessage } from "@/lib/types";
 
 export default function HomePage() {
   const [userId, setUserId] = useState("");
@@ -34,9 +35,9 @@ export default function HomePage() {
     setIsLoading(true);
 
     try {
-      const newChat = ChatStorage.createNewChat(query.trim());
+      const newChat = ChatStorage.createNewChat(query.trim(), userId);
 
-      const userMessage = {
+      const userMessage: ChatMessage = {
         id: Date.now().toString(),
         role: "user" as const,
         question: query.trim(),
@@ -45,7 +46,7 @@ export default function HomePage() {
 
       newChat.messages.push(userMessage);
       ChatStorage.saveChat(newChat);
-      router.push(`/chat/${newChat.id}?userId=${encodeURIComponent(userId)}`);
+      router.push(`/chat/${newChat.id}`);
     } catch (err) {
       console.error("Failed to create chat:", err);
     } finally {

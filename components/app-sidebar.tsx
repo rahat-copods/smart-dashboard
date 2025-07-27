@@ -31,19 +31,18 @@ import { Input } from "@/components/ui/input";
 import { Chat } from "@/lib/types";
 import { ChatStorage } from "@/lib/chat-storage";
 import { ThemeSwitch } from "./theme-switch";
+import { useState } from "react";
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  currentChatId?: string;
-}
 
-export function AppSidebar({ currentChatId, ...props }: AppSidebarProps) {
+export function AppSidebar({  ...props }) {
+  const [currentChatId, setCurrentChatId ]=useState<string | null>(null); 
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [searchQuery, setSearchQuery] = React.useState("");
   const router = useRouter();
   const pathname = usePathname();
-  const { toggleSidebar, state } = useSidebar();
-
+  const { state } = useSidebar();
   React.useEffect(() => {
+    setCurrentChatId(pathname.split("/")[2])
     loadChats();
   }, [pathname]);
 
@@ -144,7 +143,7 @@ export function AppSidebar({ currentChatId, ...props }: AppSidebarProps) {
             Recent Chats
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-0.5">
               {filteredChats.length === 0
                 ? !isCollapsed && (
                     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -164,7 +163,7 @@ export function AppSidebar({ currentChatId, ...props }: AppSidebarProps) {
                       <SidebarMenuButton
                         onClick={() => handleChatClick(chat.id)}
                         isActive={currentChatId === chat.id}
-                        className="w-full justify-start py-5"
+                        className="w-full justify-start py-4"
                         tooltip={chat.title}
                       >
                         <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
