@@ -1,7 +1,5 @@
 import { Chat, ChatMessage } from "./types";
 
-
-
 export class ChatStorage {
   private static STORAGE_KEY = "sql-chat-history";
 
@@ -86,35 +84,53 @@ export class ChatStorage {
   }
 
   static formatMessagesForAPI(
-    messages: ChatMessage[]
+    messages: ChatMessage[],
+    includeData: boolean = false
   ): Array<{ role: "user" | "assistant" | "system"; content: string }> {
-    return messages.map((msg) => {
+    const apiMessages: Array<{ role: "user" | "assistant" | "system"; content: string }> = [];
+
+    messages.forEach((msg, index) => {
       switch (msg.role) {
         case "user":
-          return {
+          apiMessages.push({
             role: msg.role,
             content: msg.question || "" // Ensure content is never undefined
-          };
+          });
+          break;
         
         case "assistant":
-          return {
-            role: msg.role,
-            content: JSON.stringify({
-              thought_process: msg.thought_process,
-              error: msg.error,
-              partial: msg.partial,
-              partial_reason: msg.partial_reason,
-              sql_query: msg.sql_query,
-              suggestions: msg.suggestions
-            })
+          const assistantContent: any = {
+            thought_process: msg.thought_process,
+            error: msg.error,
+            partial: msg.partial,
+            partial_reason: msg.partial_reason,
+            sql_query: msg.sql_query,
+            suggestions: msg.suggestions
           };
+
+          apiMessages.push({
+            role: msg.role,
+            content: JSON.stringify(assistantContent)
+          });
+
+          // Add a separate system message with query results if includeData is true
+          if (includeData && msg.query_result !== undefined && msg.query_result !== null) {
+            apiMessages.push({
+              role: "system",
+              content: `Previous query result data: ${JSON.stringify(msg.query_result)}`
+            });
+          }
+          break;
         
         case "system":
-          return {
+          apiMessages.push({
             role: msg.role,
             content: msg.error || "" // This will contain the error from the database
-          };
+          });
+          break;
       }
     });
+
+    return apiMessages;
   }
 }

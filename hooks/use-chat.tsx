@@ -142,7 +142,7 @@ export function useChat(chatId: string) {
   );
 
   const processMessage = useCallback(
-    async (messageContent: string, currentChat: Chat, attempt = 1) => {
+    async (messageContent: string, currentChat: Chat, attempt = 1, includeData = false) => {
       if (isLoading || !userId) return;
 
       setIsLoading(true);
@@ -157,7 +157,8 @@ export function useChat(chatId: string) {
 
       try {
         const apiMessages = ChatStorage.formatMessagesForAPI(
-          currentChat.messages
+          currentChat.messages,
+          includeData
         );
 
         const source = new EventSource(
@@ -225,7 +226,8 @@ export function useChat(chatId: string) {
                   await processMessage(
                     messageContent,
                     updatedChat,
-                    attempt + 1
+                    attempt + 1,
+                    includeData
                   );
                   return;
                 } else if (!queryResult.success && attempt === 3) {
@@ -291,7 +293,7 @@ export function useChat(chatId: string) {
   );
 
   const sendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, includeData = false) => {
       if (!chat) return;
       // Clear any previous errors and thinking state when sending a new message
       setError(null);
@@ -312,7 +314,7 @@ export function useChat(chatId: string) {
       setChat(updatedChat);
       ChatStorage.saveChat(updatedChat);
 
-      await processMessage(content, updatedChat, 1); // Start with attempt 1
+      await processMessage(content, updatedChat, 1, includeData); // Pass includeData to processMessage
     },
     [chat, processMessage]
   );

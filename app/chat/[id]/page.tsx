@@ -35,7 +35,9 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages, currentThinking]);
-console.log(chat)
+
+  console.log(chat);
+
   // Auto-start processing for new chats
   const hasStartedProcessing = useRef(false);
   useEffect(() => {
@@ -51,7 +53,7 @@ console.log(chat)
         console.log(
           `[${new Date().toISOString()}] useChat called for chatId: ${chatId}`
         );
-        processMessage(userQuestion, chat, 1);
+        processMessage(userQuestion, chat, 1, false); // Default to not including data for auto-start
       }
     }
   }, [processMessage]);
@@ -64,6 +66,14 @@ console.log(chat)
     }
   };
 
+  const handleSendMessage = (message: string, includeData?: boolean) => {
+    sendMessage(message, includeData);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    sendMessage(suggestion, false); // Suggestions don't include data by default
+  };
+
   if (!chat) {
     if (error) {
       router.push("/");
@@ -71,9 +81,9 @@ console.log(chat)
     }
 
     return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 animate-spin" />
-        </div>
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
     );
   }
 
@@ -107,7 +117,7 @@ console.log(chat)
                 !shouldShowCurrentThinking &&
                 !isLoading
               }
-              onSuggestionClick={sendMessage}
+              onSuggestionClick={handleSuggestionClick}
               isRetry={isRetryMessage(message, index)}
             />
           ))}
@@ -135,7 +145,7 @@ console.log(chat)
       </div>
 
       <MessageInput
-        onSubmit={sendMessage}
+        onSubmit={handleSendMessage}
         disabled={isLoading}
         placeholder="Ask a follow-up question..."
       />
