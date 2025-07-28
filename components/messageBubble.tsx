@@ -311,7 +311,7 @@ export function MessageBubble({
                     </div>
                     <div className="bg-muted border  rounded-md p-3">
                       <pre className="text-sm font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap">
-                        {sqlFormater(message.sql_query)}
+                        {(message.sql_query)}
                       </pre>
                     </div>
                   </div>
