@@ -1,47 +1,54 @@
-"use client"
+"use client";
 
-import { Loader2, Brain, Code, Database } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Loader2, Brain, Code, Database } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ThinkingIndicatorProps {
-  status: "initializing" | "thinking" | "generating" | "executing" | "complete"
-  text: string
-  isActive: boolean
-  sqlQuery?: string
+  status: "initializing" | "thinking" | "generating" | "executing" | "complete";
+  text: string;
+  isActive: boolean;
+  sqlQuery?: string;
 }
 
-export function ThinkingIndicator({ status, text, isActive, sqlQuery }: ThinkingIndicatorProps) {
+export function ThinkingIndicator({
+  status,
+  text,
+  isActive,
+  sqlQuery,
+}: ThinkingIndicatorProps) {
   const getStatusIcon = () => {
     switch (status) {
       case "initializing":
-        return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        return (
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        );
       case "thinking":
-        return <Brain className="w-4 h-4 text-muted-foreground" />
+        return <Brain className="w-4 h-4 text-muted-foreground" />;
       case "generating":
-        return <Code className="w-4 h-4 text-muted-foreground" />
+        return <Code className="w-4 h-4 text-muted-foreground" />;
       case "executing":
-        return <Database className="w-4 h-4 text-muted-foreground" />
+        return <Database className="w-4 h-4 text-muted-foreground" />;
       default:
-        return <Brain className="w-4 h-4 text-muted-foreground" />
+        return <Brain className="w-4 h-4 text-muted-foreground" />;
     }
-  }
+  };
 
   const getStatusLabel = () => {
     switch (status) {
       case "initializing":
-        return "Initializing..."
+        return "Initializing...";
       case "thinking":
-        return "AI Thinking Process"
+        return "AI Thinking Process";
       case "generating":
-        return "Generating SQL"
+        return "Generating SQL";
       case "executing":
-        return "Executing Query"
+        return "Executing Query";
       case "complete":
-        return "Process Complete"
+        return "Process Complete";
       default:
-        return "Processing..."
+        return "Processing...";
     }
-  }
+  };
 
   return (
     <div className="flex justify-start">
@@ -54,7 +61,6 @@ export function ThinkingIndicator({ status, text, isActive, sqlQuery }: Thinking
           {/* Combined Thinking Block */}
           <Card className="bg-muted/30 border-muted">
             <CardContent className="p-4 space-y-4">
-              
               {/* Current Status and Text */}
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
@@ -63,17 +69,16 @@ export function ThinkingIndicator({ status, text, isActive, sqlQuery }: Thinking
                     {getStatusLabel()}
                   </span>
                 </div>
-                
-                {status === "initializing" && !text ? (
-                  <div className="flex items-center space-x-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Initializing...</span>
-                  </div>
-                ) : text ? (
+
+                {text ? (
                   <div className="p-3 rounded-md bg-muted/50 border border-muted">
                     <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
                       {text}
-                      {isActive && <span className="animate-pulse ml-1 text-primary">▋</span>}
+                      {isActive && (
+                        <span className="animate-pulse ml-1 text-primary">
+                          ▋
+                        </span>
+                      )}
                     </p>
                   </div>
                 ) : null}
@@ -84,7 +89,9 @@ export function ThinkingIndicator({ status, text, isActive, sqlQuery }: Thinking
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Code className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-semibold text-muted-foreground">Current SQL</span>
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      Current SQL
+                    </span>
                   </div>
                   <div className="p-3 rounded-md bg-muted/50 border border-muted">
                     <pre className="text-sm font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap">
@@ -98,5 +105,5 @@ export function ThinkingIndicator({ status, text, isActive, sqlQuery }: Thinking
         </div>
       </div>
     </div>
-  )
+  );
 }

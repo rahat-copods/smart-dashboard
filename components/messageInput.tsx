@@ -54,7 +54,7 @@ export function MessageInput({ onSubmit, disabled = false, placeholder = "Type y
             placeholder={placeholder}
             disabled={disabled}
             rows={3}
-            className="resize-none pr-12 pl-12 min-h-[80px] bg-background"
+            className="resize-none pr-12 pl-3 min-h-[80px] bg-background"
           />
 
           <div className="absolute bottom-3 right-3 space-x-2">
@@ -103,15 +103,15 @@ export function MessageInput({ onSubmit, disabled = false, placeholder = "Type y
             {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
           </Button>
           </div>
-        </div>
-        
         {/* Status indicator when includeData is active */}
         {includeData && (
-          <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+          <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1 absolute bottom-3 left-3">
             <DatabaseZap className="w-3 h-3" />
             <span>Previous query results will be included with your message</span>
           </div>
         )}
+        </div>
+        
       </form>
     </div>
   )
