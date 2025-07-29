@@ -251,7 +251,7 @@ export function MessageBubble({
                     Error Analysis
                   </Badge>
                 </div>
-                <div className="text-sm text-muted-foreground leading-relaxed">
+                <div className="text-sm text-primary leading-relaxed">
                   {message.error}
                 </div>
               </div>
@@ -375,11 +375,11 @@ export function MessageBubble({
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Lightbulb className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-semibold text-muted-foreground">
+                      <span className="text-sm font-semibold text-primary">
                         Explanation
                       </span>
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-primary">
                       {message.explanation}
                     </div>
                   </div>
