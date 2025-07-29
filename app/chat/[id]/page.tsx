@@ -106,6 +106,7 @@ export default function ChatPage() {
             <MessageBubble
               key={index}
               message={message}
+              userId={chat.user}
               onCopy={handleCopy}
               showSuggestions={
                 isLastMessage(index) &&
