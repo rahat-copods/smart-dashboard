@@ -102,8 +102,10 @@ export default function HomePage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user01">DvdRental Database</SelectItem>
+                      <SelectItem value="user02">Clothing Store Database</SelectItem>
+                      <SelectItem value="user03">Hospital Mng</SelectItem>
                       <SelectItem value="user04">
-                        Clothing Store Database
+                        Healthcare patient
                       </SelectItem>
                     </SelectContent>
                   </Select>
