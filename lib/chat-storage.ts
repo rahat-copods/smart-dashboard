@@ -25,6 +25,7 @@ export class ChatStorage {
           sql_query: msg.sql_query !== undefined ? msg.sql_query : null,
           query_result: msg.query_result || undefined,
           suggestions: msg.suggestions || [],
+          show: msg.show !== undefined ? msg.show : undefined, // Handle the new show property
         })),
       }));
     } catch (error) {
@@ -123,10 +124,13 @@ export class ChatStorage {
           break;
         
         case "system":
-          apiMessages.push({
-            role: msg.role,
-            content: msg.error || "" // This will contain the error from the database
-          });
+          // Only include system messages that are not meant to be shown (internal retry messages)
+          if (!msg.show) {
+            apiMessages.push({
+              role: msg.role,
+              content: msg.error || "" // This will contain the error from the database
+            });
+          }
           break;
       }
     });

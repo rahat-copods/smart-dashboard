@@ -23,6 +23,7 @@ interface AssistantMessage extends BaseMessage {
 interface SystemMessage extends BaseMessage {
   role: "system";
   error: string;
+  show?: boolean;
 }
 
 export type ChatMessage = UserMessage | AssistantMessage | SystemMessage;

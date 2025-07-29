@@ -53,6 +53,64 @@ export function useChat(chatId: string) {
     []
   );
 
+  const explainError = useCallback(
+    async (currentChat: Chat): Promise<string> => {
+      if (!userId) {
+        return "User ID not available";
+      }
+      setIsLoading(false);
+
+      try {
+        const apiMessages = ChatStorage.formatMessagesForAPI(
+          currentChat.messages
+        );
+        const source = new EventSource(
+          `http://localhost:8000/api/query/explain-error?user_id=${encodeURIComponent(
+            userId
+          )}&messages=${encodeURIComponent(JSON.stringify(apiMessages))}`
+        );
+
+        let explanation = "";
+        let sourceClosedManually = false;
+
+        return new Promise((resolve, reject) => {
+          source.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            switch (data.status) {
+              case "initializing":
+              case "thinking":
+                updateThinking("thinking", data.message, true);
+                break;
+              case "explanation_complete":
+                explanation = data.thought_process || "No explanation provided";
+                sourceClosedManually = true;
+                source.close();
+                resolve(explanation);
+                break;
+              case "error":
+                sourceClosedManually = true;
+                source.close();
+                reject(new Error(data.message || "Failed to explain error"));
+                break;
+            }
+          };
+
+          source.onerror = () => {
+            if (!sourceClosedManually) {
+              source.close();
+              reject(new Error("Connection error occurred"));
+            }
+          };
+        });
+      } catch (err) {
+        console.error("Error explaining error:", err);
+        return "Unable to explain the error due to a connection issue.";
+      }
+    },
+    [userId, updateThinking]
+  );
+
   const executeQuery = useCallback(
     async (
       data: any,
@@ -91,7 +149,7 @@ export function useChat(chatId: string) {
           timestamp: new Date(),
           role: "assistant",
           error: data.error,
-          thought_process: data.thought_process, // Use captured text
+          thought_process: data.thought_process,
           partial: data.partial,
           partial_reason: data.partial_reason,
           sql_query: sqlQuery,
@@ -115,12 +173,13 @@ export function useChat(chatId: string) {
           `Execution failed (attempt ${attempt}/3): ${errorMsg}`,
           true
         );
+
         const assistantMessage: ChatMessage = {
           id: Date.now().toString(),
           timestamp: new Date(),
           role: "assistant",
           error: data.error,
-          thought_process: data.thought_process, // Use captured text
+          thought_process: data.thought_process,
           partial: data.partial,
           partial_reason: data.partial_reason,
           sql_query: sqlQuery,
@@ -138,11 +197,16 @@ export function useChat(chatId: string) {
         return { success: false, error: errorMsg, updatedChat };
       }
     },
-    [chat, currentThinking, updateThinking, userId]
+    [updateThinking, userId]
   );
 
   const processMessage = useCallback(
-    async (messageContent: string, currentChat: Chat, attempt = 1, includeData = false) => {
+    async (
+      messageContent: string,
+      currentChat: Chat,
+      attempt = 1,
+      includeData = false
+    ) => {
       if (isLoading || !userId) return;
 
       setIsLoading(true);
@@ -198,15 +262,16 @@ export function useChat(chatId: string) {
                 );
 
                 if (!queryResult.success && attempt < 3) {
-                  // Create system message with the error
+                  // Create system message with the error (not shown)
                   const systemMessage: ChatMessage = {
                     id: Date.now().toString(),
                     role: "system",
                     timestamp: new Date(),
                     error:
                       queryResult.error +
-                        "This ERROR is from the db server understand explain in depth and then respond with fixed query" ||
+                        " This ERROR is from the db server understand explain in depth and then respond with fixed query" ||
                       "",
+                    show: false, // Don't show this message
                   };
 
                   const updatedChat = {
@@ -222,7 +287,6 @@ export function useChat(chatId: string) {
                   // Retry with updated message history
                   sourceClosedManually = true;
                   source.close();
-                  // Don't clear currentThinking on retry, let it continue
                   await processMessage(
                     messageContent,
                     updatedChat,
@@ -231,7 +295,37 @@ export function useChat(chatId: string) {
                   );
                   return;
                 } else if (!queryResult.success && attempt === 3) {
-                  // Capture the thinking process text BEFORE clearing currentThinking
+                  // On third attempt failure, explain the error
+                  updateThinking("thinking", "Analyzing error...", true);
+                  setCurrentThinking(null);
+                setError(null);
+                  const errorMsg: ChatMessage = {
+                    id: Date.now().toString(),
+                    role: "system",
+                    timestamp: new Date(),
+                    error:
+                      queryResult.error +
+                      " read last 3 conversations understand what is the possible error explain it in simple terms that a non techincal person can understand",
+                    show: true,
+                  };
+                  const chatWithError: Chat = {
+                    ...currentChat,
+                    messages: [
+                      ...currentChat.messages,
+                      errorMsg, // Add the error explanation message
+                    ],
+                  };
+                  const errorExplanation = await explainError(chatWithError);
+
+                  const systemMessage: ChatMessage = {
+                    id: Date.now().toString(),
+                    role: "system",
+                    timestamp: new Date(),
+                    error: errorExplanation,
+                    show: true, // This message should be displayed
+                  };
+                  // Create system message with error explanation (to be shown)
+
                   const thoughtProcessText = currentThinking?.text || "";
 
                   const assistantMessage: ChatMessage = {
@@ -241,7 +335,7 @@ export function useChat(chatId: string) {
                     error: data.error,
                     partial: data.partial,
                     partial_reason: data.partial_reason,
-                    thought_process: thoughtProcessText, // Use captured text
+                    thought_process: thoughtProcessText,
                     sql_query: data.sql_query,
                     query_result: [],
                     suggestions: data.suggestions,
@@ -252,6 +346,7 @@ export function useChat(chatId: string) {
                     messages: [
                       ...queryResult.updatedChat.messages,
                       assistantMessage,
+                      systemMessage, // Add the error explanation message
                     ],
                   };
                   setChat(updatedChat);
@@ -276,7 +371,6 @@ export function useChat(chatId: string) {
         };
 
         source.onerror = () => {
-          // Only show connection error if the source wasn't closed manually
           if (!sourceClosedManually) {
             setError("Connection error occurred");
           }
@@ -289,20 +383,19 @@ export function useChat(chatId: string) {
         setIsLoading(false);
       }
     },
-    [isLoading, userId, updateThinking, executeQuery]
+    [isLoading, userId, updateThinking, executeQuery, explainError]
   );
 
   const sendMessage = useCallback(
     async (content: string, includeData = false) => {
       if (!chat) return;
-      // Clear any previous errors and thinking state when sending a new message
       setError(null);
       setCurrentThinking(null);
 
       const userMessage: ChatMessage = {
         id: Date.now().toString(),
         role: "user",
-        question: content, // User's question goes in question property
+        question: content,
         timestamp: new Date(),
       };
 
@@ -314,7 +407,7 @@ export function useChat(chatId: string) {
       setChat(updatedChat);
       ChatStorage.saveChat(updatedChat);
 
-      await processMessage(content, updatedChat, 1, includeData); // Pass includeData to processMessage
+      await processMessage(content, updatedChat, 1, includeData);
     },
     [chat, processMessage]
   );

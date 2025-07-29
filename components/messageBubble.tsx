@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -247,8 +248,40 @@ export function MessageBubble({
     );
   };
 
+  // Render system messages only if show is true
   if (isSystem) {
-    return null;
+    if (!message.show) {
+      return null;
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-start">
+          <div className="flex space-x-3 w-full">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ">
+              <XCircle className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="rounded-lg p-4 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 " />
+                  <span className="text-sm font-semibold">
+                    Query Execution Failed
+                  </span>
+                  <Badge variant="default" className="text-xs">
+                    Error Analysis
+                  </Badge>
+                </div>
+                <div className="text-sm  leading-relaxed">
+                  {message.error}
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isUser) {
