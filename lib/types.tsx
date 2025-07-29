@@ -12,11 +12,12 @@ interface UserMessage extends BaseMessage {
 interface AssistantMessage extends BaseMessage {
   role: "assistant";
   error: string | null;
-  thought_process: string;
+  reasoning: string; // Changed from thought_process
   partial: boolean | null;
   partial_reason: string | null;
   sql_query: string | null;
   query_result: any[] | null;
+  explanation: string; // Added to match backend
   suggestions: string[];
 }
 
@@ -35,4 +36,21 @@ export interface Chat {
   messages: ChatMessage[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ThinkingState {
+  status:
+    | "initializing"
+    | "reasoning" 
+    | "generatingQuery" 
+    | "explaining"
+    | "suggesting"
+    | "partial"
+    | "partial_reason"
+    | "executing"
+    | "complete"
+    | "system_error";
+  text: string;
+  isActive: boolean;
+  sqlQuery?: string|null;
 }

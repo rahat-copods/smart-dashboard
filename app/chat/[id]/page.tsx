@@ -36,7 +36,6 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages, currentThinking]);
 
-  console.log(chat);
 
   // Auto-start processing for new chats
   const hasStartedProcessing = useRef(false);
@@ -50,9 +49,6 @@ export default function ChatPage() {
       hasStartedProcessing.current = true;
       const userQuestion = chat.messages[0].question;
       if (userQuestion) {
-        console.log(
-          `[${new Date().toISOString()}] useChat called for chatId: ${chatId}`
-        );
         processMessage(userQuestion, chat, 1, false); // Default to not including data for auto-start
       }
     }

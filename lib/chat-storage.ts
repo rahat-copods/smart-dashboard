@@ -18,14 +18,16 @@ export class ChatStorage {
         messages: chat.messages.map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp),
-          thought_process: msg.thought_process || undefined,
+          // Map thought_process to reasoning for backward compatibility
+          reasoning: typeof msg.reasoning === "string" ? msg.reasoning : msg.thought_process || "",
           error: msg.error !== undefined ? msg.error : null,
-          partial: msg.partial !== undefined ? msg.partial : undefined,
+          partial: msg.partial !== undefined ? msg.partial : null,
           partial_reason: msg.partial_reason !== undefined ? msg.partial_reason : null,
           sql_query: msg.sql_query !== undefined ? msg.sql_query : null,
-          query_result: msg.query_result || undefined,
-          suggestions: msg.suggestions || [],
-          show: msg.show !== undefined ? msg.show : undefined, // Handle the new show property
+          query_result: msg.query_result || null,
+          explanation: typeof msg.explanation === "string" ? msg.explanation : "",
+          suggestions: Array.isArray(msg.suggestions) ? msg.suggestions : [],
+          show: msg.show !== undefined ? msg.show : undefined,
         })),
       }));
     } catch (error) {
@@ -90,45 +92,44 @@ export class ChatStorage {
   ): Array<{ role: "user" | "assistant" | "system"; content: string }> {
     const apiMessages: Array<{ role: "user" | "assistant" | "system"; content: string }> = [];
 
-    messages.forEach((msg, index) => {
+    messages.forEach((msg) => {
       switch (msg.role) {
         case "user":
           apiMessages.push({
             role: msg.role,
-            content: msg.question || "" // Ensure content is never undefined
+            content: msg.question || "",
           });
           break;
-        
+
         case "assistant":
-          const assistantContent: any = {
-            thought_process: msg.thought_process,
+          const assistantContent = {
+            reasoning: msg.reasoning || "",
             error: msg.error,
             partial: msg.partial,
             partial_reason: msg.partial_reason,
             sql_query: msg.sql_query,
-            suggestions: msg.suggestions
+            explanation: msg.explanation || "",
+            suggestions: Array.isArray(msg.suggestions) ? msg.suggestions : [],
           };
 
           apiMessages.push({
             role: msg.role,
-            content: JSON.stringify(assistantContent)
+            content: JSON.stringify(assistantContent),
           });
 
-          // Add a separate system message with query results if includeData is true
           if (includeData && msg.query_result !== undefined && msg.query_result !== null) {
             apiMessages.push({
               role: "system",
-              content: `Previous query result data: ${JSON.stringify(msg.query_result)}`
+              content: `Previous query result data: ${JSON.stringify(msg.query_result)}`,
             });
           }
           break;
-        
+
         case "system":
-          // Only include system messages that are not meant to be shown (internal retry messages)
           if (!msg.show) {
             apiMessages.push({
               role: msg.role,
-              content: msg.error || "" // This will contain the error from the database
+              content: msg.error || "",
             });
           }
           break;

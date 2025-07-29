@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Download,
   XCircle,
+  Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,6 @@ interface MessageBubbleProps {
   message: ChatMessage;
   onCopy?: (text: string) => void;
   showSuggestions?: boolean;
-  suggestions?: string[];
   onSuggestionClick: (suggestion: string) => void;
   isRetry?: boolean;
 }
@@ -46,20 +46,16 @@ export function MessageBubble({
   const rowsPerPage = 10;
 
   // Function to convert table data to CSV and trigger download
-  const exportToCSV = (
-    data: Record<string, any>[] | null,
-    filename: string
-  ) => {
+  const exportToCSV = (data: Record<string, any>[] | null, filename: string) => {
     if (!data || data.length === 0) return;
 
     const headers = Object.keys(data[0]);
     const csvRows = [
-      headers.join(","), // Header row
+      headers.join(","),
       ...data.map((row) =>
         headers
           .map((header) => {
             const value = row[header] ?? "";
-            // Escape commas and quotes in values
             const escaped = value.toString().replace(/"/g, '""');
             return `"${escaped}"`;
           })
@@ -92,14 +88,11 @@ export function MessageBubble({
     }
 
     const headers = Object.keys(data[0]);
-
-    // Calculate pagination
     const totalPages = Math.ceil(data.length / rowsPerPage);
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
     const currentData = data.slice(startIndex, endIndex);
 
-    // Calculate dynamic height based on content
     const headerHeight = 48;
     const rowHeight = 40;
     const currentRows = Math.min(currentData.length, rowsPerPage);
@@ -121,13 +114,9 @@ export function MessageBubble({
                     <th
                       key={header}
                       className="font-semibold min-w-[120px] max-w-[200px] p-3 text-left border-r last:border-r-0 truncate"
-                      title={header
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      title={header.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                     >
-                      {header
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      {header.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                     </th>
                   ))}
                 </tr>
@@ -154,11 +143,9 @@ export function MessageBubble({
           </div>
         </div>
 
-        {/* Pagination and Export Controls */}
         <div className="flex items-center justify-between px-2">
           <div className="text-sm text-muted-foreground">
-            Showing {startIndex + 1}-{Math.min(endIndex, data.length)} of{" "}
-            {data.length} rows
+            Showing {startIndex + 1}-{Math.min(endIndex, data.length)} of {data.length} rows
           </div>
           <div className="flex items-center space-x-2">
             {totalPages > 1 && (
@@ -166,9 +153,7 @@ export function MessageBubble({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -190,9 +175,7 @@ export function MessageBubble({
                     return (
                       <Button
                         key={pageNum}
-                        variant={
-                          currentPage === pageNum ? "default" : "outline"
-                        }
+                        variant={currentPage === pageNum ? "default" : "outline"}
                         size="sm"
                         onClick={() => setCurrentPage(pageNum)}
                         className="w-8 h-8 p-0"
@@ -205,9 +188,7 @@ export function MessageBubble({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                 >
                   Next
@@ -222,8 +203,7 @@ export function MessageBubble({
   };
 
   const renderSuggestions = () => {
-    if (!isAssistant || !showSuggestions || message.suggestions.length === 0)
-      return null;
+    if (!isAssistant || !showSuggestions || message.suggestions.length === 0) return null;
 
     return (
       <div className="mt-6 space-y-3 max-w-4xl space-x-3">
@@ -248,7 +228,6 @@ export function MessageBubble({
     );
   };
 
-  // Render system messages only if show is true
   if (isSystem) {
     if (!message.show) {
       return null;
@@ -258,24 +237,23 @@ export function MessageBubble({
       <div className="space-y-4">
         <div className="flex justify-start">
           <div className="flex space-x-3 w-full">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ">
-              <XCircle className="w-4 h-4 text-white" />
+            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted-foreground">
+              <XCircle className="w-4 h-4 text-background" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="rounded-lg p-4 space-y-2">
+              <div className="rounded-lg p-4 space-y-2 bg-muted/30 border border-muted">
                 <div className="flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 " />
-                  <span className="text-sm font-semibold">
+                  <AlertCircle className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-semibold text-muted-foreground">
                     Query Execution Failed
                   </span>
                   <Badge variant="default" className="text-xs">
                     Error Analysis
                   </Badge>
                 </div>
-                <div className="text-sm  leading-relaxed">
+                <div className="text-sm text-muted-foreground leading-relaxed">
                   {message.error}
                 </div>
-                
               </div>
             </div>
           </div>
@@ -315,8 +293,8 @@ export function MessageBubble({
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="bg-muted/20 border border-muted rounded-lg p-4 space-y-4">
-                {message.thought_process && (
+              <div className="bg-muted/30 border border-muted rounded-lg p-4 space-y-4">
+                {message.reasoning && (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Brain className="w-4 h-4 text-muted-foreground" />
@@ -324,8 +302,8 @@ export function MessageBubble({
                         Analysis
                       </span>
                     </div>
-                    <div className="text-sm leading-relaxed text-primary">
-                      {message.thought_process}
+                    <div className="text-sm leading-relaxed text-muted-foreground">
+                      {message.reasoning}
                     </div>
                   </div>
                 )}
@@ -333,15 +311,15 @@ export function MessageBubble({
                 {message.partial && message.partial_reason ? (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <Info className="w-4 h-4 text-yellow-500" />
-                      <span className="text-sm font-semibold text-yellow-700 dark:text-yellow-400">
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold text-muted-foreground">
                         Partial Result
                       </span>
                       <Badge variant="outline" className="text-xs">
                         Incomplete
                       </Badge>
                     </div>
-                    <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <div className="text-sm text-muted-foreground">
                       {message.partial_reason}
                     </div>
                   </div>
@@ -349,12 +327,12 @@ export function MessageBubble({
                   message.error && (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                        <span className="text-sm font-semibold text-red-700 dark:text-red-400">
+                        <AlertCircle className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm font-semibold text-muted-foreground">
                           Error Occurred
                         </span>
                       </div>
-                      <div className="text-sm text-red-800 dark:text-red-200">
+                      <div className="text-sm text-muted-foreground">
                         {message.error}
                       </div>
                     </div>
@@ -385,10 +363,24 @@ export function MessageBubble({
                         </Button>
                       )}
                     </div>
-                    <div className="bg-muted border rounded-md p-3">
+                    <div className="bg-muted/50 border border-muted rounded-md p-3">
                       <pre className="text-sm font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap">
                         {message.sql_query}
                       </pre>
+                    </div>
+                  </div>
+                )}
+
+                {message.explanation && (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Lightbulb className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold text-muted-foreground">
+                        Explanation
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {message.explanation}
                     </div>
                   </div>
                 )}
@@ -406,9 +398,7 @@ export function MessageBubble({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() =>
-                          exportToCSV(message.query_result, "query_results")
-                        }
+                        onClick={() => exportToCSV(message.query_result, "query_results")}
                         title="Export as CSV"
                       >
                         <Download className="w-4 h-4" />

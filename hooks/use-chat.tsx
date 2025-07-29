@@ -2,14 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ChatStorage } from "@/lib/chat-storage";
-import { Chat, ChatMessage } from "@/lib/types";
-
-interface ThinkingState {
-  status: "initializing" | "thinking" | "generating" | "executing" | "complete";
-  text: string;
-  isActive: boolean;
-  sqlQuery?: string;
-}
+import { Chat, ChatMessage, ThinkingState } from "@/lib/types";
 
 export function useChat(chatId: string) {
   const [chat, setChat] = useState<Chat | null>(null);
@@ -40,13 +33,20 @@ export function useChat(chatId: string) {
       sqlQuery?: string
     ) => {
       setCurrentThinking((prev) => {
-        if (!prev) return null;
+        if (!prev) {
+          return {
+            status,
+            text: text || "",
+            isActive: status !== "complete" && status !== "system_error",
+            sqlQuery: null,
+          };
+        }
         return {
           ...prev,
           status,
           text: append && text ? prev.text + text : text || prev.text,
-          isActive: status !== "complete",
-          sqlQuery: sqlQuery || prev.sqlQuery,
+          isActive: status !== "complete" && status !== "system_error",
+          sqlQuery: null,
         };
       });
     },
@@ -79,11 +79,11 @@ export function useChat(chatId: string) {
 
             switch (data.status) {
               case "initializing":
-              case "thinking":
-                updateThinking("thinking", data.message, true);
+              case "reasoning":
+                updateThinking("reasoning", data.message, true);
                 break;
               case "explanation_complete":
-                explanation = data.thought_process || "No explanation provided";
+                explanation = data.reasoning || "No explanation provided";
                 sourceClosedManually = true;
                 source.close();
                 resolve(explanation);
@@ -149,12 +149,13 @@ export function useChat(chatId: string) {
           timestamp: new Date(),
           role: "assistant",
           error: data.error,
-          thought_process: data.thought_process,
+          reasoning: data.reasoning,
           partial: data.partial,
           partial_reason: data.partial_reason,
           sql_query: sqlQuery,
           query_result: resultData.data,
-          suggestions: data.suggestions,
+          explanation: data.explanation,
+          suggestions: data.suggestions || [],
         };
 
         const updatedChat = {
@@ -179,12 +180,13 @@ export function useChat(chatId: string) {
           timestamp: new Date(),
           role: "assistant",
           error: data.error,
-          thought_process: data.thought_process,
+          reasoning: data.reasoning,
           partial: data.partial,
           partial_reason: data.partial_reason,
           sql_query: sqlQuery,
           query_result: null,
-          suggestions: data.suggestions,
+          explanation: data.explanation,
+          suggestions: data.suggestions || [],
         };
 
         const updatedChat = {
@@ -226,35 +228,44 @@ export function useChat(chatId: string) {
         );
 
         const source = new EventSource(
-          `http://localhost:8000/api/query/inference?user_id=${encodeURIComponent(userId)}&messages=${encodeURIComponent(JSON.stringify(apiMessages))}`
+          `http://localhost:8000/api/query/inference?user_id=${encodeURIComponent(
+            userId
+          )}&messages=${encodeURIComponent(JSON.stringify(apiMessages))}`
         );
 
         let sourceClosedManually = false;
 
         source.onmessage = async (event) => {
           const data = JSON.parse(event.data);
-
           switch (data.status) {
-            case "initialize":
-              updateThinking("initializing", "Initializing AI process...");
+            case "initializing":
+              updateThinking("initializing", data.message);
               break;
-            case "thinking":
-              if (data.message) {
-                updateThinking("thinking", data.message, true);
-              }
+            case "reasoning":
+              updateThinking("reasoning", data.message, true);
               break;
             case "generatingQuery":
-              updateThinking("generating", "Generating SQL query...", true);
+              updateThinking(
+                "generatingQuery",
+                data.message,
+                true,
+                data.message
+              );
               break;
+            case "explaining":
+              updateThinking("explaining", data.message, true);
+              break;
+            case "suggesting":
+              updateThinking("suggesting", data.message, true);
+              break;
+            case "partial":
+              updateThinking("partial", data.message, true);
+              break;
+            // case "partial_reason":
+            //   updateThinking("partial_reason", data.message, true);
+            //   break;
             case "inference_complete":
               if (data.sql_query) {
-                updateThinking(
-                  "generating",
-                  "Generated SQL query.",
-                  true,
-                  data.sql_query
-                );
-
                 const queryResult = await executeQuery(
                   data,
                   currentChat,
@@ -271,7 +282,7 @@ export function useChat(chatId: string) {
                       queryResult.error +
                         " This ERROR is from the db server understand explain in depth and then respond with fixed query" ||
                       "",
-                    show: false, // Don't show this message
+                    show: false,
                   };
 
                   const updatedChat = {
@@ -296,24 +307,21 @@ export function useChat(chatId: string) {
                   return;
                 } else if (!queryResult.success && attempt === 3) {
                   // On third attempt failure, explain the error
-                  updateThinking("thinking", "Analyzing error...", true);
+                  updateThinking("reasoning", "Analyzing error...", true);
                   setCurrentThinking(null);
-                setError(null);
+                  setError(null);
                   const errorMsg: ChatMessage = {
                     id: Date.now().toString(),
                     role: "system",
                     timestamp: new Date(),
                     error:
                       queryResult.error +
-                      " read last 3 conversations understand what is the possible error explain it in simple terms that a non techincal person can understand",
+                      " read last 3 conversations understand what is the possible error explain it in simple terms that a non technical person can understand",
                     show: true,
                   };
                   const chatWithError: Chat = {
                     ...currentChat,
-                    messages: [
-                      ...currentChat.messages,
-                      errorMsg, // Add the error explanation message
-                    ],
+                    messages: [...currentChat.messages, errorMsg],
                   };
                   const errorExplanation = await explainError(chatWithError);
 
@@ -322,23 +330,21 @@ export function useChat(chatId: string) {
                     role: "system",
                     timestamp: new Date(),
                     error: errorExplanation,
-                    show: true, // This message should be displayed
+                    show: true,
                   };
-                  // Create system message with error explanation (to be shown)
-
-                  const thoughtProcessText = currentThinking?.text || "";
 
                   const assistantMessage: ChatMessage = {
                     id: Date.now().toString(),
                     timestamp: new Date(),
                     role: "assistant",
                     error: data.error,
+                    reasoning: data.reasoning, // Changed from thought_process
                     partial: data.partial,
                     partial_reason: data.partial_reason,
-                    thought_process: thoughtProcessText,
                     sql_query: data.sql_query,
                     query_result: [],
-                    suggestions: data.suggestions,
+                    explanation: data.explanation, // Added
+                    suggestions: data.suggestions || [],
                   };
 
                   const updatedChat = {
@@ -346,23 +352,44 @@ export function useChat(chatId: string) {
                     messages: [
                       ...queryResult.updatedChat.messages,
                       assistantMessage,
-                      systemMessage, // Add the error explanation message
+                      systemMessage,
                     ],
                   };
                   setChat(updatedChat);
                   ChatStorage.saveChat(updatedChat);
                 }
 
-                // Clear any previous errors on successful completion
                 setError(null);
                 setIsLoading(false);
+              } else {
+                // Create assistant message with successful result
+                const assistantMessage: ChatMessage = {
+                  id: Date.now().toString(),
+                  timestamp: new Date(),
+                  role: "assistant",
+                  error: data.error,
+                  reasoning: data.reasoning,
+                  partial: data.partial,
+                  partial_reason: data.partial_reason,
+                  sql_query: null,
+                  query_result: [],
+                  explanation: data.explanation,
+                  suggestions: data.suggestions || [],
+                };
+
+                const updatedChat = {
+                  ...currentChat,
+                  messages: [...currentChat.messages, assistantMessage],
+                };
+                setChat(updatedChat);
+                ChatStorage.saveChat(updatedChat);
               }
               sourceClosedManually = true;
               source.close();
               break;
-            case "error":
-              updateThinking("complete", `Error: ${data.error}`, true);
-              setError(data.error);
+            case "system_error":
+              updateThinking("system_error", data.message, true);
+              setError(data.message);
               sourceClosedManually = true;
               source.close();
               setIsLoading(false);
