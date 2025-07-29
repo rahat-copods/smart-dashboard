@@ -38,123 +38,68 @@ export function InsightsPanel({ isOpen, onClose, initialData, userId }: Insights
 
   useEffect(() => {
     if (isOpen && messages.length === 0 && initialData && userId) {
-      generateInitialInsights()
+      sendRequest({ isInitial: true })
     }
   }, [isOpen, initialData, userId])
 
-  const generateInitialInsights = async () => {
-    if (!initialData || !userId) return
+  const createMessage = (role: "user" | "assistant", content: string): InsightMessage => ({
+    id: Date.now().toString(),
+    role,
+    content,
+    timestamp: new Date(),
+  })
 
-    setIsLoading(true)
-    try {
-      const response = await fetch(
-        `http://localhost:8000/api/query/insights?user_id=${userId}&data=${encodeURIComponent(JSON.stringify(initialData))}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to generate insights")
-      }
-
-      const initialMessage: InsightMessage = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: data.result,
-        timestamp: new Date(),
-      }
-
-      setMessages([initialMessage])
-    } catch (error) {
-      console.error("Failed to generate initial insights:", error)
-      const errorMessage: InsightMessage = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content:
-          "Sorry, I couldn't analyze your data right now. Please try asking me a specific question about your results.",
-        timestamp: new Date(),
-      }
-      setMessages([errorMessage])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return
-
-    const userMessage: InsightMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputValue.trim(),
-      timestamp: new Date(),
+  const sendRequest = async ({ isInitial = false, userInput = "" }: { isInitial?: boolean; userInput?: string }) => {
+    if (!initialData || !userId || (isInitial && messages.length > 0) || (!isInitial && !userInput.trim()) || isLoading) {
+      return
     }
 
-    setMessages((prev) => [...prev, userMessage])
-    setInputValue("")
     setIsLoading(true)
+    const newMessage = !isInitial ? createMessage("user", userInput.trim()) : null
+    if (newMessage) {
+      setMessages((prev) => [...prev, newMessage])
+      setInputValue("")
+    }
 
     try {
       const previousMessages = [
         {
           role: "user",
-          content:
-            `Please analyze and explain the following data:\n\n` +
-            `Data: ${JSON.stringify(initialData)}`,
+          content: `Please analyze and explain the following data:\n\nData: ${JSON.stringify(initialData)}`,
         },
-        ...messages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-        {
-          role: "user",
-          content: userMessage.content,
-        },
-      ];
+        ...messages.map((msg) => ({ role: msg.role, content: msg.content })),
+        ...(newMessage ? [{ role: "user", content: newMessage.content }] : []),
+      ]
 
-      const response = await fetch(
-        `http://localhost:8000/api/query/insights?user_id=${userId}&data=${encodeURIComponent(JSON.stringify(initialData))}&messages=${encodeURIComponent(JSON.stringify(previousMessages))}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      const response = await fetch("http://localhost:8000/api/query/insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          data: initialData,
+          messages: previousMessages,
+        }),
+      })
 
       const data = await response.json()
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to process follow-up message")
+        throw new Error(data.error || data.partial_reason || "Failed to process request")
       }
 
-      const assistantMessage: InsightMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.result.explanation || "I'm not sure how to help with that. Could you be more specific?",
-        timestamp: new Date(),
-      }
-
-      setMessages((prev) => [...prev, assistantMessage])
+      const content = isInitial ? data.result : data.result.explanation || "I'm not sure how to help with that. Could you be more specific?"
+      setMessages((prev) => [...prev, createMessage("assistant", content)])
     } catch (error) {
-      console.error("Failed to send message:", error)
-      const errorMessage: InsightMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      console.error(`Failed to ${isInitial ? "generate initial insights" : "send message"}:`, error)
+      const errorContent = isInitial
+        ? "Sorry, I couldn't analyze your data right now. Please try asking me a specific question about your results."
+        : `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}. Please try again.`
+      setMessages((prev) => [...prev, createMessage("assistant", errorContent)])
     } finally {
       setIsLoading(false)
     }
   }
+
+  const handleSendMessage = () => sendRequest({ userInput: inputValue })
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
