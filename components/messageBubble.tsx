@@ -25,6 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import type { ChatMessage } from "@/types";
 import { InsightsPanel } from "./insightsPanel";
+import { BarChartComponent } from "./visuals/charts";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -354,6 +355,12 @@ export function MessageBubble({
                         {message.explanation}
                       </div>
                     </div>
+                  )}
+                  {message.visuals && message.query_result && (
+                    <BarChartComponent
+                      config={message.visuals}
+                      chartData={message.query_result}
+                    />
                   )}
 
                   {message.query_result && (

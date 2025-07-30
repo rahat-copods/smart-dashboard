@@ -155,6 +155,7 @@ export function useChat(chatId: string) {
           sql_query: sqlQuery,
           query_result: resultData.data,
           explanation: data.explanation,
+          visuals: data.visuals,
           suggestions: data.suggestions || [],
         };
 
@@ -186,6 +187,7 @@ export function useChat(chatId: string) {
           sql_query: sqlQuery,
           query_result: null,
           explanation: data.explanation,
+          visuals: data.visuals,
           suggestions: data.suggestions || [],
         };
 
@@ -343,6 +345,7 @@ export function useChat(chatId: string) {
                     partial_reason: data.partial_reason,
                     sql_query: data.sql_query,
                     query_result: [],
+                    visuals: data.visuals,
                     explanation: data.explanation, // Added
                     suggestions: data.suggestions || [],
                   };
@@ -374,6 +377,7 @@ export function useChat(chatId: string) {
                   sql_query: null,
                   query_result: [],
                   explanation: data.explanation,
+                  visuals: data.visuals,
                   suggestions: data.suggestions || [],
                 };
 
