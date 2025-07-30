@@ -1,5 +1,6 @@
 import { SVGProps } from "react";
-import { BarChartConfig } from "./visuals";
+import { BarChartConfig, LineChartConfig } from "./visuals";
+import { Line } from "recharts";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -25,7 +26,7 @@ interface AssistantMessage extends BaseMessage {
   sql_query: string | null;
   query_result: any[] | null;
   explanation: string; 
-  visuals: BarChartConfig ;
+  visuals: BarChartConfig | LineChartConfig | null;
   suggestions: string[];
 }
 

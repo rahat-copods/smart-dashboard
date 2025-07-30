@@ -13,6 +13,7 @@ interface BarChartProps{
 }
 export function BarChartComponent({config, chartData}: BarChartProps) {
     const chartConfig = config.dataSeries satisfies ChartConfig;
+    console.log(config, chartData)
     return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <BarChart accessibilityLayer data={chartData}>
@@ -24,7 +25,7 @@ export function BarChartComponent({config, chartData}: BarChartProps) {
           axisLine={false}
         />
         <YAxis  tickLine={false} axisLine={false} tickMargin={10}/>
-        <ChartTooltip content={<ChartTooltipContent />} />
+        <ChartTooltip content={<ChartTooltipContent className="w-[160px]"/>} />
         <ChartLegend content={<ChartLegendContent />} />
         {config.bars.map((bar, index) => (
           <Bar
@@ -32,6 +33,7 @@ export function BarChartComponent({config, chartData}: BarChartProps) {
             dataKey={bar.dataKey}
             fill={bar.fill}
             radius={4}
+            type="step"
           />
         ))}
       </BarChart>

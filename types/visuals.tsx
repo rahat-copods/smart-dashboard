@@ -1,9 +1,9 @@
-import { ChartConfig } from "@/components/ui/chart";
+import { ChartConfig as DataSeries } from "@/components/ui/chart";
 
 // Interface for a single <Bar> component configuration
-interface BarConfig {
+interface BarOrLineConfig {
   dataKey: string; 
-  fill: string;
+  fill: "var(--chart-1)"| "var(--chart-2)"| "var(--chart-3)"| "var(--chart-4)"| "var(--chart-5)";
 }
 
 // Interface for x-axis configuration
@@ -12,8 +12,16 @@ interface XAxisConfig {
 }
 
 // Interface for shadcn bar chart configuration
-export interface BarChartConfig {
-  dataSeries: ChartConfig;
-  bars: BarConfig[]; 
-  xAxis: XAxisConfig; 
+export interface ChartConfig {
+  dataSeries: DataSeries;
+  xAxis: XAxisConfig;
+}
+
+export interface  BarChartConfig extends ChartConfig {
+  bars: BarOrLineConfig[]; 
+  type: "bar"
+}
+export interface LineChartConfig extends ChartConfig {
+  line: BarOrLineConfig[]; 
+  type: "line"
 }
