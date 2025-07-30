@@ -1,3 +1,10 @@
+import { SVGProps } from "react";
+import { BarChartConfig } from "./visuals";
+
+export type IconSvgProps = SVGProps<SVGSVGElement> & {
+  size?: number;
+};
+
 interface BaseMessage {
   id: string;
   role: "user" | "assistant" | "system";
@@ -17,7 +24,8 @@ interface AssistantMessage extends BaseMessage {
   partial_reason: string | null;
   sql_query: string | null;
   query_result: any[] | null;
-  explanation: string; // Added to match backend
+  explanation: string; 
+  visuals: BarChartConfig ;
   suggestions: string[];
 }
 

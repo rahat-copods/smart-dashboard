@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ChatStorage } from "@/lib/chat-storage";
-import { Chat, ChatMessage, ThinkingState } from "@/lib/types";
+import { Chat, ChatMessage, ThinkingState } from "@/types";
 
 export function useChat(chatId: string) {
   const [chat, setChat] = useState<Chat | null>(null);

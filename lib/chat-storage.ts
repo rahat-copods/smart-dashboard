@@ -1,4 +1,4 @@
-import { Chat, ChatMessage } from "./types";
+import { Chat, ChatMessage } from "../types";
 
 export class ChatStorage {
   private static STORAGE_KEY = "sql-chat-history";

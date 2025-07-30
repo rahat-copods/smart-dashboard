@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage } from "@/types";
 import { InsightsPanel } from "./insightsPanel";
 
 interface MessageBubbleProps {
@@ -317,8 +317,6 @@ export function MessageBubble({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="bg-muted/30 border border-muted rounded-lg p-4 space-y-4">
-              
-
                   {message.partial && message.partial_reason ? (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
@@ -357,7 +355,7 @@ export function MessageBubble({
                       </div>
                     </div>
                   )}
-                 
+
                   {message.query_result && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -397,7 +395,7 @@ export function MessageBubble({
                     </div>
                   )}
 
-                      {message.reasoning && (
+                  {message.reasoning && (
                     <Card className="bg-muted/30 border-muted py-2">
                       <CardContent
                         className={isAnalysisExpanded ? "p-3" : "px-3 py-2"}
@@ -424,8 +422,8 @@ export function MessageBubble({
                       </CardContent>
                     </Card>
                   )}
-                  
-                   {message.sql_query && (
+
+                  {message.sql_query && (
                     <Card className="bg-muted/30 border-muted p-1 py-2">
                       <CardContent
                         className={isQueryExpanded ? "p-3" : "px-3 py-2"}

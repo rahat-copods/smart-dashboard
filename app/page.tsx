@@ -17,7 +17,7 @@ import { Database, Send, Loader2 } from "lucide-react";
 import { ChatLayout } from "@/components/chatLayout";
 import { ChatHeader } from "@/components/chatHeader";
 import { ChatStorage } from "@/lib/chat-storage";
-import { ChatMessage } from "@/lib/types";
+import { ChatMessage } from "@/types";
 
 export default function HomePage() {
   const [userId, setUserId] = useState("");

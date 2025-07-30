@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Loader2, Brain, Code, Database, AlertCircle, Lightbulb, ChevronRight, ChevronDown } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import type { ThinkingState } from "@/lib/types"
+import type { ThinkingState } from "@/types"
 
 export function ThinkingIndicator({ status, text, isActive, sqlQuery }: ThinkingState) {
   const [isExpanded, setIsExpanded] = useState(false)
