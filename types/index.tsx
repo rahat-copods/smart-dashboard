@@ -26,7 +26,7 @@ interface AssistantMessage extends BaseMessage {
   sql_query: string | null;
   query_result: any[] | null;
   explanation: string; 
-  visuals: BarChartConfig | LineChartConfig | null;
+  visuals: Array<BarChartConfig | LineChartConfig> | null;
   suggestions: string[];
 }
 

@@ -46,6 +46,7 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
             fill={bar.fill}
             radius={4}
             type="step"
+            maxBarSize={40}
           />
         ))}
       </BarChart>

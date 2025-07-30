@@ -4,10 +4,13 @@ import { BarChartComponent } from "./barCharts";
 import { LineChartComponent } from "./lineChart";
 
 interface ChartsComponentProps {
-  chartData: any[];
+  chartData: any[] | null;
   config: BarChartConfig | LineChartConfig;
 }
 export default function ChartsComponent({ chartData, config }: ChartsComponentProps) {
+  if (!chartData) {
+    return null;
+  }
   switch (config.type) {
     case "bar":
       return <BarChartComponent config={config} chartData={chartData} />;

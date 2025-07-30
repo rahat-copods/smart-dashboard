@@ -48,7 +48,6 @@ export function MessageBubble({
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
   const isSystem = message.role === "system";
-
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
@@ -357,10 +356,15 @@ export function MessageBubble({
                       </div>
                     </div>
                   )}
-                  {message.visuals && message.query_result && (
-
-                    <ChartsComponent config={message.visuals} chartData={message.query_result}/>
-                  )}
+                  {message.visuals &&
+                    message.query_result &&
+                    message.visuals.map((visual, index) => (
+                      <ChartsComponent
+                      key={index}
+                        config={visual}
+                        chartData={message.query_result}
+                      />
+                    ))}
 
                   {message.query_result && (
                     <div className="space-y-2">

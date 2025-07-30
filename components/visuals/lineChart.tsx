@@ -26,7 +26,6 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
     return formattedItem;
   });
 
-  console.log(config)
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <LineChart accessibilityLayer data={formattedChartData}>
