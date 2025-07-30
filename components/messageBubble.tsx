@@ -26,6 +26,7 @@ import { useState } from "react";
 import type { ChatMessage } from "@/types";
 import { InsightsPanel } from "./insightsPanel";
 import ChartsComponent from "./visuals";
+import { formatCellValue } from "@/lib/utils";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -149,9 +150,9 @@ export function MessageBubble({
                       <td
                         key={header}
                         className="font-mono text-sm py-2 px-3 border-r last:border-r-0 min-w-[120px] max-w-[200px] truncate"
-                        title={row[header]?.toString() || "—"}
+                        title={formatCellValue(row[header])}
                       >
-                        {row[header]?.toString() || "—"}
+                        {formatCellValue(row[header])}
                       </td>
                     ))}
                   </tr>

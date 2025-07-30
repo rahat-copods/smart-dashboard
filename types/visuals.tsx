@@ -22,6 +22,6 @@ export interface  BarChartConfig extends ChartConfig {
   type: "bar"
 }
 export interface LineChartConfig extends ChartConfig {
-  line: BarOrLineConfig[]; 
+  lines: BarOrLineConfig[]; 
   type: "line"
 }

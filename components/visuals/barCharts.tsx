@@ -2,21 +2,33 @@
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { BarChartConfig } from "@/types/visuals";
+import { formatCellValue } from "@/lib/utils";
 
-
-
-interface BarChartProps{
-    chartData: any[];
-    config: BarChartConfig
+interface BarChartProps {
+  chartData: any[];
+  config: BarChartConfig;
 }
-export function BarChartComponent({config, chartData}: BarChartProps) {
-    const chartConfig = config.dataSeries satisfies ChartConfig;
-    console.log(config, chartData)
-    return (
+export function BarChartComponent({ config, chartData }: BarChartProps) {
+  const chartConfig = config.dataSeries satisfies ChartConfig;
+  const formattedChartData = chartData.map((item) => {
+    const formattedItem = { ...item };
+    config.bars.forEach((bar) => {
+      formattedItem[bar.dataKey] = formatCellValue(item[bar.dataKey]);
+    });
+    return formattedItem;
+  });
+  return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-      <BarChart accessibilityLayer data={chartData}>
+      <BarChart accessibilityLayer data={formattedChartData}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey={config.xAxis.dataKey}
@@ -24,8 +36,8 @@ export function BarChartComponent({config, chartData}: BarChartProps) {
           tickMargin={10}
           axisLine={false}
         />
-        <YAxis  tickLine={false} axisLine={false} tickMargin={10}/>
-        <ChartTooltip content={<ChartTooltipContent className="w-[160px]"/>} />
+        <YAxis tickLine={false} axisLine={false} tickMargin={10} />
+        <ChartTooltip content={<ChartTooltipContent className="w-[160px]" />} />
         <ChartLegend content={<ChartLegendContent />} />
         {config.bars.map((bar, index) => (
           <Bar

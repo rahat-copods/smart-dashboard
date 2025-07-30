@@ -10,16 +10,26 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { LineChartConfig } from "@/types/visuals";
+import { formatCellValue } from "@/lib/utils";
 
-interface LineChartProps{
-    chartData: any[];
-    config: LineChartConfig
+interface LineChartProps {
+  chartData: any[];
+  config: LineChartConfig;
 }
-export function LineChartComponent({config, chartData}: LineChartProps) {
-    const chartConfig = config.dataSeries satisfies ChartConfig;
+export function LineChartComponent({ config, chartData }: LineChartProps) {
+  const chartConfig = config.dataSeries satisfies ChartConfig;
+  const formattedChartData = chartData.map((item) => {
+    const formattedItem = { ...item };
+    config.lines.forEach((line) => {
+      formattedItem[line.dataKey] = formatCellValue(item[line.dataKey]);
+    });
+    return formattedItem;
+  });
+
+  console.log(config)
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-      <LineChart accessibilityLayer data={chartData}>
+      <LineChart accessibilityLayer data={formattedChartData}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey={config.xAxis.dataKey}
@@ -30,7 +40,7 @@ export function LineChartComponent({config, chartData}: LineChartProps) {
         <YAxis tickLine={false} axisLine={false} tickMargin={10} />
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
         <ChartLegend content={<ChartLegendContent />} />
-        {config.line.map((line, index) => (
+        {config.lines.map((line, index) => (
           <Line
             key={index}
             dataKey={line.dataKey}
@@ -38,8 +48,8 @@ export function LineChartComponent({config, chartData}: LineChartProps) {
             stroke={line.fill}
             strokeWidth={2}
             dot={{
-                fill: line.fill,
-              }}
+              fill: line.fill,
+            }}
           />
         ))}
       </LineChart>
