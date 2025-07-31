@@ -13,6 +13,7 @@ import {
   ChevronUp,
   Download,
   MessageSquare,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +22,15 @@ import { useState } from "react";
 import type { ChatMessage } from "@/types/chat";
 import { InsightsPanel } from "./insightsPanel";
 import ChartsComponent from "./visuals";
-import { formatCellValue } from "@/lib/utils";
+import { cn, formatCellValue } from "@/lib/utils";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   showSuggestions?: boolean;
   onSuggestionClick: (suggestion: string) => void;
   userId: string;
+  isStreaming?: boolean;
+  streamedContent?: string;
 }
 
 export function MessageBubble({
@@ -35,19 +38,29 @@ export function MessageBubble({
   showSuggestions = false,
   onSuggestionClick,
   userId,
+  isStreaming = false,
+  streamedContent = "",
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
   // Collapsible states
-  const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
   const [isQueryExpanded, setIsQueryExpanded] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsData, setInsightsData] = useState<ChatMessage | null>(null);
+  const [isContentExpanded, setIsContentExpanded] = useState(true);
+  // Derive current status
+  const currentStatus = isStreaming ? "Thinking" : "Completed";
+
+  // Use streamedContent during streaming, fall back to message.streamedContent when done
+  const displayContent = isStreaming
+    ? streamedContent
+    : (message.role === "assistant" && message.streamedContent) || "";
 
   const exportToCSV = (
     data: Record<string, any>[] | null,
@@ -275,6 +288,35 @@ export function MessageBubble({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="bg-muted/30 border border-muted rounded-lg p-4 space-y-4">
+                  {/* Display current status and streaming content */}
+                  <div className="space-y-2">
+                    <button
+                      className="flex items-center space-x-1 text-sm font-normal focus:outline-none group text-muted-foreground hover:text-primary"
+                      onClick={() => setIsContentExpanded(!isContentExpanded)}
+                    >
+                      <span className="relative w-4 h-4">
+                        {/* Brain icon (visible by default, fades out on hover) */}
+                        <Brain className="absolute inset-0 w-4 h-4 transition-all duration-200 transform group-hover:opacity-0 group-hover:scale-90" />
+
+                        {/* Chevron icon (hidden by default, fades in on hover, rotates if expanded) */}
+                        <ChevronRight
+                          className={cn(
+                            "absolute inset-0 w-4 h-4 transition-all duration-200 transform opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100",
+                            isContentExpanded && "rotate-90"
+                          )}
+                          strokeWidth={1.5}
+                        />
+                      </span>
+
+                      <span className="">{currentStatus}</span>
+                    </button>
+                    {isContentExpanded && displayContent && (
+                      <div className="text-sm text-muted-foreground whitespace-pre-wrap pl-4 border-l-2 border-gray-200">
+                        {displayContent}
+                      </div>
+                    )}
+                  </div>
+
                   {message.partial && message.partial_reason && (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
@@ -305,7 +347,7 @@ export function MessageBubble({
                       </div>
                     </div>
                   )}
-                 
+
                   {message.chartConfig &&
                     message.data &&
                     message.chartConfig.map((visual, index) => (
@@ -360,7 +402,7 @@ export function MessageBubble({
                       <CardContent
                         className={isQueryExpanded ? "p-3" : "px-3 py-2"}
                       >
-                        <div className="flex items-center justify-between ">
+                        <div className="flex items-center justify-between">
                           <button
                             className="flex items-center space-x-2 text-sm font-semibold focus:outline-none group"
                             onClick={() => setIsQueryExpanded(!isQueryExpanded)}

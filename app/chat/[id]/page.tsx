@@ -18,7 +18,7 @@ export default function ChatPage() {
   const [user, setUser] = useState("");
   const [chatTitle, setChatTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { sendQuery, isStreaming, streamedContent } = useChat(
+  const { sendQuery, isStreaming, streamedContent, streamingStatus } = useChat(
     chatId,
     messages,
     setMessages
@@ -59,7 +59,7 @@ export default function ChatPage() {
 
   const handleSubmit = (message: string) => {
     sendQuery(message, user);
-  }
+  };
   if (!messages.length) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -89,6 +89,8 @@ export default function ChatPage() {
                 !isStreaming
               }
               onSuggestionClick={handleSubmit}
+              isStreaming={isLastMessage(index) ? isStreaming : false}
+              streamedContent={isLastMessage(index) ? streamedContent : ""}
             />
           ))}
 

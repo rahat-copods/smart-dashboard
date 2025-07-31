@@ -14,6 +14,7 @@ export const useChat = (
 ) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamedContent, setStreamedContent] = useState("");
+  const [streamingStatus, setStreamingStatus] = useState("");
 
   const sendQuery = useCallback(
     async (question: string, userId: string) => {
@@ -44,6 +45,7 @@ export const useChat = (
       ChatStorage.addMessage(chatId, assistantMessage);
       setIsStreaming(true);
       setStreamedContent("");
+      setStreamingStatus("Thinking");
       let accumulatedContent = "";
 
       try {
@@ -82,25 +84,9 @@ export const useChat = (
               const parsed: StreamResponse = JSON.parse(line);
 
               if (parsed.type === "status") {
-                accumulatedContent += `**Status:** ${parsed.text}\n`;
-                setStreamedContent(accumulatedContent);
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastIndex = updated.length - 1;
-                  if (
-                    updated[lastIndex] &&
-                    updated[lastIndex].role === "assistant"
-                  ) {
-                    updated[lastIndex] = {
-                      ...updated[lastIndex],
-                      streamedContent: accumulatedContent,
-                    };
-                  }
-                  return updated;
-                });
-                ChatStorage.updateLastMessage(chatId, {
-                  streamedContent: accumulatedContent,
-                });
+                accumulatedContent += `${parsed.text}`;
+                setStreamedContent(accumulatedContent + `\n ###${parsed.text}`);
+                setStreamingStatus(parsed.text);
               } else if (parsed.type === "content") {
                 accumulatedContent += parsed.text;
                 setStreamedContent(accumulatedContent);
@@ -225,10 +211,12 @@ export const useChat = (
         });
       } finally {
         setIsStreaming(false);
+        setStreamingStatus("");
+        setStreamedContent("");
       }
     },
     [chatId, messages, setMessages]
   );
 
-  return { sendQuery, isStreaming, streamedContent };
+  return { sendQuery, isStreaming, streamedContent, streamingStatus };
 };
