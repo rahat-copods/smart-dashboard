@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/tooltip"
 
 interface MessageInputProps {
-  onSubmit: (message: string, includeData?: boolean) => void
+  onSubmit: (message: string) => void
   disabled?: boolean
   placeholder?: string
 }
@@ -26,7 +26,7 @@ export function MessageInput({ onSubmit, disabled = false, placeholder = "Type y
     e.preventDefault()
     if (!message.trim() || disabled) return
 
-    onSubmit(message.trim(), includeData)
+    onSubmit(message.trim())
     setMessage("")
   }
 

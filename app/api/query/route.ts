@@ -15,15 +15,16 @@ import {
   getSummarizationPrompt,
 } from "@/lib/api/systemPrompts";
 
+type StreamMarkdown = (text: string, type: 'status' | 'content' | 'partialResult' | 'error') => void;
 async function parseUserQuery(
   aiClient: AIClient,
   schemaString: string,
   previousSummary: string | null,
   userQuery: string,
   messages: any[],
-  streamMarkdown: (text: string, type: 'status' | 'content') => void
+  streamMarkdown: StreamMarkdown
 ) {
-  streamMarkdown("**Thinking**: Preparing to parse query...\n", "status");
+  streamMarkdown("Thinking: Preparing to parse query...\n", "status");
   const systemPromptQueryIntent = getQueryParsingPrompt(
     schemaString,
     previousSummary,
@@ -42,6 +43,7 @@ async function parseUserQuery(
   }
   const userQueryParsed = JSON.parse(parsingData);
   streamMarkdown("Analyzed", "status");
+  streamMarkdown(JSON.stringify({ userQueryParsed }), "partialResult");
   return userQueryParsed;
 }
 
@@ -51,13 +53,10 @@ async function generateSqlQuery(
   schemaString: string,
   previousSummary: string | null,
   messages: any[],
-  streamMarkdown: (text: string, type: 'status' | 'content') => void,
+  streamMarkdown: StreamMarkdown,
   attempt: number
 ) {
-  streamMarkdown(
-    "Thinking",
-    "status"
-  );
+  streamMarkdown("Thinking", "status");
   const systemPromptQueryGenerate = getSqlGenerationPrompt(
     userQueryParsed,
     schemaString,
@@ -76,13 +75,14 @@ async function generateSqlQuery(
   }
   const sqlResult = JSON.parse(sqlData);
   streamMarkdown("Generated Query", "status");
+  streamMarkdown(JSON.stringify({ sqlResult }), "partialResult");
   return sqlResult;
 }
 
 async function executeSqlQuery(
   sqlQuery: string,
   dbUrl: string,
-  streamMarkdown: (text: string, type: 'status' | 'content') => void
+  streamMarkdown: StreamMarkdown
 ) {
   streamMarkdown("Executing Query", "status");
   const dbResult = await executeQuery(sqlQuery, dbUrl);
@@ -91,6 +91,7 @@ async function executeSqlQuery(
   } else {
     streamMarkdown("Query failed", "status");
   }
+  streamMarkdown(JSON.stringify({ dbResult }), "partialResult");
   return dbResult;
 }
 
@@ -100,7 +101,7 @@ async function explainError(
   error: string,
   previousSummary: string | null,
   messages: any[],
-  streamMarkdown: (text: string, type: 'status' | 'content') => void
+  streamMarkdown: StreamMarkdown
 ) {
   streamMarkdown("Thinking", "status");
   const systemPromptErrorExplanation = getErrorExplanationPrompt(
@@ -119,6 +120,7 @@ async function explainError(
     errorData += content;
     streamMarkdown(content, "content");
   }
+  streamMarkdown(JSON.stringify({ errorResult: errorData }), "partialResult");
   return errorData;
 }
 
@@ -128,7 +130,7 @@ async function generateChartConfig(
   userQueryParsed: any,
   previousSummary: string | null,
   messages: any[],
-  streamMarkdown: (text: string, type: 'status' | 'content') => void
+  streamMarkdown: StreamMarkdown
 ) {
   streamMarkdown("Generate visuals", "status");
   const systemPromptChartConfig = getChartConfigPrompt(
@@ -147,7 +149,8 @@ async function generateChartConfig(
     streamMarkdown(content, "content");
   }
   const chartResult = JSON.parse(chartData);
-  streamMarkdown(`Visuals Generated`, "status");
+  streamMarkdown("Visuals Generated", "status");
+  streamMarkdown(JSON.stringify({ chartResult }), "partialResult");
   return chartResult;
 }
 
@@ -160,7 +163,7 @@ async function summarizeConversation(
   chartResult: any,
   errorResult: any = null,
   messages: any[],
-  streamMarkdown: (text: string, type: 'status' | 'content') => void
+  streamMarkdown: StreamMarkdown
 ) {
   const systemPromptSummarization = getSummarizationPrompt(
     userQuery,
@@ -180,6 +183,7 @@ async function summarizeConversation(
     summaryData += content;
     streamMarkdown(content, "content");
   }
+  streamMarkdown(JSON.stringify({ finalSummary: summaryData }), "partialResult");
   return summaryData;
 }
 
@@ -203,7 +207,7 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const encoder = new TextEncoder();
-      const streamMarkdown = (text: string, type: 'status' | 'content' = 'content') =>
+      const streamMarkdown: StreamMarkdown = (text: string, type: 'status' | 'content' | 'partialResult' | 'error') =>
         controller.enqueue(
           encoder.encode(
             JSON.stringify({ type, text }) + '\n'
@@ -247,14 +251,14 @@ export async function POST(req: NextRequest) {
             !sqlResult.table &&
             !sqlResult.columns
           ) {
-           const summary = await summarizeConversation(
+            const summary = await summarizeConversation(
               aiClient,
               userQuery,
               userQueryParsed,
               sqlResult,
               null,
               null,
-              { response: { errorExplanation: sqlResult.error } },
+              sqlResult.error,
               messages,
               streamMarkdown
             );
@@ -281,10 +285,7 @@ export async function POST(req: NextRequest) {
           if (dbResult.data || dbResult.rowCount > 0) {
             break;
           } else if (attempt < maxAttempts) {
-            streamMarkdown(
-              `Retrying`,
-              "status"
-            );
+            streamMarkdown(`Retrying`, "status");
           }
         }
         console.log("\nstep 2 complete");
@@ -293,7 +294,7 @@ export async function POST(req: NextRequest) {
         let errorResult = null;
         if (
           dbResult &&
-          (!dbResult.data || dbResult?.rowCount === 0) &&
+          (!dbResult.data || dbResult.rowCount === 0) &&
           attempt === maxAttempts
         ) {
           errorResult = await explainError(
@@ -343,8 +344,9 @@ export async function POST(req: NextRequest) {
           messages,
           streamMarkdown
         );
+        console.log("\nstep 4 complete");
 
-        // Summarize conversation
+        // Step 5: Summarize Conversation
         const summary = await summarizeConversation(
           aiClient,
           userQuery,
@@ -356,6 +358,7 @@ export async function POST(req: NextRequest) {
           messages,
           streamMarkdown
         );
+        console.log("\nstep 5 complete");
 
         // Final response with all relevant data
         controller.enqueue(
@@ -374,7 +377,22 @@ export async function POST(req: NextRequest) {
         );
         controller.close();
       } catch (error: any) {
-        streamMarkdown(`**Error**: ${error.message}\n`, "status");
+        const errorMessage = error.message || "Unknown error";
+        streamMarkdown(`Error: ${errorMessage}\n`, "status");
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({
+              type: 'error',
+              text: JSON.stringify({
+                data: null,
+                chartConfig: null,
+                sqlQuery: null,
+                error: errorMessage,
+                finalSummary: `Error occurred: ${errorMessage}`,
+              })
+            })
+          )
+        );
         controller.close();
       }
     },

@@ -1,81 +1,66 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ChatHeader } from "@/components/chatHeader";
 import { MessageBubble } from "@/components/messageBubble";
 import { MessageInput } from "@/components/messageInput";
 import { ThinkingIndicator } from "@/components/thinkingIndicator";
-import { useChat } from "@/hooks/use-chat";
+import { AssistantMessage, Chat, ChatMessage, UserMessage } from "@/types/chat";
+import { ChatStorage } from "@/hooks/chatStorage";
+import { useChat } from "@/hooks/useChat";
 
 export default function ChatPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const chatId = params.id as string;
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [user, setUser] = useState("");
+  const [chatTitle, setChatTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const {
-    chat,
-    isLoading,
-    currentThinking,
-    error,
-    loadChat,
-    sendMessage,
-    processMessage,
-  } = useChat(chatId);
-
-  const shouldShowCurrentThinking = currentThinking && currentThinking.isActive;
-
+  const { sendQuery, isStreaming, streamedContent } = useChat(
+    chatId,
+    messages,
+    setMessages
+  );
+  // Load chat messages on mount
   useEffect(() => {
-    loadChat();
-  }, [loadChat]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat?.messages, currentThinking]);
-
+    if (chatId) {
+      const chat = ChatStorage.getChat(chatId);
+      if (chat) {
+        console.log(chat, "chat");
+        setMessages(chat.messages);
+        setChatTitle(chat.title);
+        setUser(chat.user);
+      }
+    }
+  }, [chatId]);
 
   // Auto-start processing for new chats
   const hasStartedProcessing = useRef(false);
   useEffect(() => {
     if (
-      chat &&
-      chat.messages.length === 1 &&
-      chat.messages[0].role === "user" &&
-      !hasStartedProcessing.current // Add this guard
+      chatId &&
+      messages.length === 1 &&
+      messages[0].role === "user" &&
+      !hasStartedProcessing.current
     ) {
       hasStartedProcessing.current = true;
-      const userQuestion = chat.messages[0].question;
-      if (userQuestion) {
-        processMessage(userQuestion, chat, 1, false); // Default to not including data for auto-start
+      const userQuestion = messages[0].question;
+      if (userQuestion && user) {
+        sendQuery(userQuestion, user);
       }
     }
-  }, [processMessage]);
+  }, [chatId, messages, sendQuery, user]);
 
-  const handleCopy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (err) {
-      console.error("Failed to copy text:", err);
-    }
-  };
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const handleSendMessage = (message: string, includeData?: boolean) => {
-    sendMessage(message, includeData);
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    sendMessage(suggestion, false); // Suggestions don't include data by default
-  };
-
-  if (!chat) {
-    if (error) {
-      router.push("/");
-      return null;
-    }
-
+  const handleSubmit = (message: string) => {
+    sendQuery(message, user);
+  }
+  if (!messages.length) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -84,66 +69,36 @@ export default function ChatPage() {
   }
 
   const isLastMessage = (index: number) => {
-    return index === chat.messages.length - 1;
-  };
-
-  const isRetryMessage = (message: any, index: number) => {
-    // Check if previous message was a system error message
-    if (index > 0) {
-      const prevMessage = chat.messages[index - 1];
-      return prevMessage.role === "system";
-    }
-    return false;
+    return index === messages.length - 1;
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-4xl">
-      <ChatHeader title={chat.title} />
+    <div className="flex flex-col flex-1 min-h-0 w-full">
+      <ChatHeader title={chatTitle} />
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-6 pb-6">
-          {chat.messages.map((message, index) => (
+          {messages.map((message, index) => (
             <MessageBubble
               key={index}
               message={message}
-              userId={chat.user}
-              onCopy={handleCopy}
+              userId={user}
               showSuggestions={
                 isLastMessage(index) &&
                 message.role === "assistant" &&
-                !shouldShowCurrentThinking &&
-                !isLoading
+                !isStreaming
               }
-              onSuggestionClick={handleSuggestionClick}
-              isRetry={isRetryMessage(message, index)}
+              onSuggestionClick={handleSubmit}
             />
           ))}
-
-          {/* Current Thinking - Only during active streaming */}
-          {shouldShowCurrentThinking && currentThinking && (
-            <ThinkingIndicator
-              status={currentThinking.status}
-              text={currentThinking.text}
-              isActive={currentThinking.isActive}
-              sqlQuery={currentThinking.sqlQuery}
-            />
-          )}
-
-          {error && !shouldShowCurrentThinking && (
-            <div className="text-center p-4">
-              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
-                {error}
-              </div>
-            </div>
-          )}
 
           <div ref={messagesEndRef} />
         </div>
       </div>
 
       <MessageInput
-        onSubmit={handleSendMessage}
-        disabled={isLoading}
+        onSubmit={handleSubmit}
+        disabled={isStreaming}
         placeholder="Ask a follow-up question..."
       />
     </div>

@@ -28,8 +28,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Chat } from "@/types";
-import { ChatStorage } from "@/lib/chat-storage";
+import { Chat } from "@/types/chat";
+import { ChatStorage } from "@/hooks/chatStorage";
 import { ThemeSwitch } from "./theme-switch";
 import { useState } from "react";
 

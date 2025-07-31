@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { CollapsibleMarkdown } from "@/components/collapsibleMarkdown" // Import the new component
-import type { ChatMessage } from "@/types"
+import type { ChatMessage } from "@/types/chat"
 
 interface InsightMessage {
   id: string

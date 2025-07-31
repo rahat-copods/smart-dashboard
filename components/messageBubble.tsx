@@ -3,10 +3,8 @@
 import {
   User,
   Bot,
-  Brain,
   Code,
   Database,
-  Copy,
   AlertCircle,
   Info,
   ChevronLeft,
@@ -14,40 +12,32 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
-  XCircle,
-  Lightbulb,
   MessageSquare,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
-import type { ChatMessage } from "@/types";
+import type { ChatMessage } from "@/types/chat";
 import { InsightsPanel } from "./insightsPanel";
 import ChartsComponent from "./visuals";
 import { formatCellValue } from "@/lib/utils";
 
 interface MessageBubbleProps {
   message: ChatMessage;
-  onCopy?: (text: string) => void;
   showSuggestions?: boolean;
   onSuggestionClick: (suggestion: string) => void;
-  isRetry?: boolean;
   userId: string;
 }
 
 export function MessageBubble({
   message,
-  onCopy,
   showSuggestions = false,
   onSuggestionClick,
-  isRetry = false,
   userId,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
-  const isSystem = message.role === "system";
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
@@ -227,7 +217,7 @@ export function MessageBubble({
   };
 
   const renderSuggestions = () => {
-    if (!isAssistant || !showSuggestions || message.suggestions.length === 0)
+    if (!isAssistant || !showSuggestions || message.suggestions?.length === 0)
       return null;
 
     return (
@@ -237,7 +227,7 @@ export function MessageBubble({
           Follow-up questions:
         </div>
         <div className="flex flex-wrap gap-2">
-          {message.suggestions.map((suggestion, index) => (
+          {message.suggestions?.map((suggestion, index) => (
             <Button
               key={index}
               variant="outline"
@@ -252,39 +242,6 @@ export function MessageBubble({
       </div>
     );
   };
-
-  if (isSystem) {
-    if (!message.show) {
-      return null;
-    }
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-start">
-          <div className="flex space-x-3 w-full">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted-foreground">
-              <XCircle className="w-4 h-4 text-background" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="rounded-lg p-4 space-y-2 bg-muted/30 border border-muted">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    Query Execution Failed
-                  </span>
-                  <Badge variant="default" className="text-xs">
-                    Error Analysis
-                  </Badge>
-                </div>
-                <div className="text-sm text-primary leading-relaxed">
-                  {message.error}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (isUser) {
     return (
@@ -318,7 +275,7 @@ export function MessageBubble({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="bg-muted/30 border border-muted rounded-lg p-4 space-y-4">
-                  {message.partial && message.partial_reason ? (
+                  {message.partial && message.partial_reason && (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Info className="w-4 h-4 text-muted-foreground" />
@@ -333,47 +290,40 @@ export function MessageBubble({
                         {message.partial_reason}
                       </div>
                     </div>
-                  ) : (
-                    message.error && (
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-semibold text-muted-foreground">
-                            Error Occurred
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {message.error}
-                        </div>
-                      </div>
-                    )
                   )}
 
-                  {message.explanation && (
+                  {message.error && (
                     <div className="space-y-2">
-                      <div className="text-sm text-primary">
-                        {message.explanation}
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm font-semibold text-muted-foreground">
+                          Error Occurred
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {message.error}
                       </div>
                     </div>
                   )}
-                  {message.visuals &&
-                    message.query_result &&
-                    message.visuals.map((visual, index) => (
+                 
+                  {message.chartConfig &&
+                    message.data &&
+                    message.chartConfig.map((visual, index) => (
                       <ChartsComponent
-                      key={index}
+                        key={index}
                         config={visual}
-                        chartData={message.query_result}
+                        chartData={message.data}
                       />
                     ))}
 
-                  {message.query_result && (
+                  {message.data && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <Database className="w-4 h-4 text-blue-600" />
                           <span className="text-sm font-semibold">Results</span>
                           <Badge variant="secondary" className="text-xs">
-                            {message.query_result.length} rows
+                            {message.data.length} rows
                           </Badge>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -393,7 +343,7 @@ export function MessageBubble({
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              exportToCSV(message.query_result, "query_results")
+                              exportToCSV(message.data, "query_results")
                             }
                             title="Export as CSV"
                           >
@@ -401,39 +351,11 @@ export function MessageBubble({
                           </Button>
                         </div>
                       </div>
-                      {renderTable(message.query_result)}
+                      {renderTable(message.data)}
                     </div>
                   )}
 
-                  {message.reasoning && (
-                    <Card className="bg-muted/30 border-muted py-2">
-                      <CardContent
-                        className={isAnalysisExpanded ? "p-3" : "px-3 py-2"}
-                      >
-                        <button
-                          className="flex items-center space-x-2 text-sm font-semibold focus:outline-none group w-full"
-                          onClick={() =>
-                            setIsAnalysisExpanded(!isAnalysisExpanded)
-                          }
-                        >
-                          <Brain className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-foreground/80">Analysis</span>
-                          {isAnalysisExpanded ? (
-                            <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                          )}
-                        </button>
-                        {isAnalysisExpanded && (
-                          <div className="mt-3 text-sm leading-relaxed text-foreground/90">
-                            {message.reasoning}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {message.sql_query && (
+                  {message.sqlQuery && (
                     <Card className="bg-muted/30 border-muted p-1 py-2">
                       <CardContent
                         className={isQueryExpanded ? "p-3" : "px-3 py-2"}
@@ -447,31 +369,17 @@ export function MessageBubble({
                             <span className="text-foreground/80">
                               Query Executed
                             </span>
-                            {isRetry && (
-                              <Badge variant="outline" className="text-xs">
-                                Retry
-                              </Badge>
-                            )}
                             {isQueryExpanded ? (
                               <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             ) : (
                               <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             )}
                           </button>
-                          {onCopy && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onCopy(message.sql_query!)}
-                            >
-                              <Copy className="w-4 h-4" />
-                            </Button>
-                          )}
                         </div>
                         {isQueryExpanded && (
                           <div className="bg-muted/50 border border-muted rounded-md p-3">
                             <pre className="text-sm font-mono text-foreground/90 overflow-x-auto whitespace-pre-wrap">
-                              {message.sql_query}
+                              {message.sqlQuery}
                             </pre>
                           </div>
                         )}

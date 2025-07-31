@@ -235,7 +235,7 @@ You are an AI assistant tasked with summarizing a conversation involving a user 
 - SQL Query: ${sqlResult.sqlQuery}
 - Database Result: ${dbResult ? `Rows: ${dbResult.rowCount}, Error: ${dbResult.error || 'None'}` : 'None'}
 - Chart Config: ${chartResult ? JSON.stringify(chartResult.chartConfig) : 'None'}
-- Error Explanation: ${errorResult ? errorResult.response.errorExplanation : 'None'}
+- Error Explanation: ${errorResult ? errorResult : 'None'}
 
 **Instructions**:
 - Write a concise summary in natural language.
