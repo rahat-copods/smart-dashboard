@@ -291,7 +291,7 @@ export function MessageBubble({
                   {/* Display current status and streaming content */}
                   <div className="space-y-2">
                     <button
-                      className="flex items-center space-x-1 text-sm font-normal focus:outline-none group text-muted-foreground hover:text-primary"
+                      className="flex items-center space-x-1 text-sm font-normal focus:outline-none group hover:text-primary text-muted-foreground"
                       onClick={() => setIsContentExpanded(!isContentExpanded)}
                     >
                       <span className="relative w-4 h-4">
@@ -308,7 +308,14 @@ export function MessageBubble({
                         />
                       </span>
 
-                      <span className="">{currentStatus}</span>
+                      <span
+                        className={cn(
+                          isStreaming &&
+                            "animate-gradient bg-gradient-to-r from-[var(--muted-foreground)] via-[var(--text-primary)] to-[var(--muted-foreground)] bg-[length:300%_100%] bg-left bg-clip-text text-transparent"
+                        )}
+                      >
+                        {currentStatus}
+                      </span>
                     </button>
                     {isContentExpanded && displayContent && (
                       <div className="text-sm text-muted-foreground whitespace-pre-wrap pl-4 border-l-2 border-gray-200">
