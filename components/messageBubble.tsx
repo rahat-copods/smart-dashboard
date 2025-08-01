@@ -23,6 +23,8 @@ import type { ChatMessage } from "@/types/chat";
 import { InsightsPanel } from "./insightsPanel";
 import ChartsComponent from "./visuals";
 import { cn, formatCellValue } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -31,6 +33,7 @@ interface MessageBubbleProps {
   userId: string;
   isStreaming?: boolean;
   streamedContent?: string;
+  streamingStatus?: string;
 }
 
 export function MessageBubble({
@@ -40,6 +43,7 @@ export function MessageBubble({
   userId,
   isStreaming = false,
   streamedContent = "",
+  streamingStatus = "",
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
@@ -55,7 +59,7 @@ export function MessageBubble({
   const [insightsData, setInsightsData] = useState<ChatMessage | null>(null);
   const [isContentExpanded, setIsContentExpanded] = useState(true);
   // Derive current status
-  const currentStatus = isStreaming ? "Thinking" : "Completed";
+  const currentStatus = isStreaming ? streamingStatus : "Completed";
 
   // Use streamedContent during streaming, fall back to message.streamedContent when done
   const displayContent = isStreaming
@@ -319,7 +323,8 @@ export function MessageBubble({
                     </button>
                     {isContentExpanded && displayContent && (
                       <div className="text-sm text-muted-foreground whitespace-pre-wrap pl-4 border-l-2 border-gray-200">
-                        {displayContent}
+                        
+                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayContent}</ReactMarkdown>
                       </div>
                     )}
                   </div>

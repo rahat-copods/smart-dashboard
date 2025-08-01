@@ -91,6 +91,7 @@ export default function ChatPage() {
               onSuggestionClick={handleSubmit}
               isStreaming={isLastMessage(index) ? isStreaming : false}
               streamedContent={isLastMessage(index) ? streamedContent : ""}
+              streamingStatus={isLastMessage(index) ? streamingStatus : ""}
             />
           ))}
 
