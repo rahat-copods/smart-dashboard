@@ -1,9 +1,8 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import {
   PanelRightClose,
   PanelRightOpen,
@@ -17,25 +16,71 @@ import {
   MessageSquare,
   Eye,
   ScrollText,
-} from "lucide-react";
-import type { AssistantMessage } from "@/types/chat";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+} from "lucide-react"
+import type { AssistantMessage } from "@/types/chat"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+
+// Helper function to parse markdown into card sections
+const parseMarkdownIntoCards = (markdown: string) => {
+  const cards: { title: string; content: string }[] = []
+
+  // Split the markdown by '## ' to get sections based on H2 headings
+  // The regex captures the delimiter so it's included in the parts array
+  const parts = markdown.split(/(##\s.*)/g).filter(Boolean) // Filter out empty strings
+
+  let currentTitle = ""
+  let currentContent = ""
+
+  // Handle the initial section before the first '##'
+  // This might contain an H1 title and some introductory text
+  if (parts.length > 0 && !parts[0].startsWith("## ")) {
+    const initialSection = parts[0].trim()
+    const firstLine = initialSection.split("\n")[0]
+
+    if (firstLine.startsWith("# ")) {
+      // currentTitle = firstLine.substring(2).trim() // Remove '# '
+      // currentContent = initialSection.substring(firstLine.length).trim()
+    } else {
+      currentTitle = "Summary" // Default title if no H1
+      currentContent = initialSection
+    }
+    if (currentTitle || currentContent) {
+      // Only add if there's actual content or a title
+      cards.push({ title: currentTitle, content: currentContent })
+    }
+    parts.shift() // Remove the processed initial section
+  }
+
+  // Process the remaining parts, which should now start with '## '
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
+    if (part.startsWith("## ")) {
+      // This is a new heading
+      currentTitle = part.substring(3).trim() // Remove "## "
+      currentContent = ""
+      // The content for this heading is the next part in the array
+      if (i + 1 < parts.length && !parts[i + 1].startsWith("## ")) {
+        currentContent = parts[i + 1].trim()
+        i++ // Skip the next part as it's already consumed
+      }
+      cards.push({ title: currentTitle, content: currentContent })
+    }
+  }
+  return cards
+}
 
 interface InsightsSidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-  message: AssistantMessage | null;
-  messageIndex: number;
-  isStreaming?: boolean;
-  streamedContent?: string;
-  insightContent: string;
-  isInsightStreaming: boolean;
-  generateInsights: (
-    userId: string,
-    data: Record<string, any>[]
-  ) => Promise<void>;
-  userId: string;
+  isOpen: boolean
+  onToggle: () => void
+  message: AssistantMessage | null
+  messageIndex: number
+  isStreaming?: boolean
+  streamedContent?: string
+  insightContent: string
+  isInsightStreaming: boolean
+  generateInsights: (userId: string, data: Record<string, any>[]) => Promise<void>
+  userId: string
 }
 
 export function InsightsSidebar({
@@ -50,40 +95,32 @@ export function InsightsSidebar({
   generateInsights,
   userId,
 }: InsightsSidebarProps) {
-  const [insights, setInsights] = useState<any[]>([]);
+  const [insights, setInsights] = useState<any[]>([])
 
   // Generate insights when message or streaming content changes
   useEffect(() => {
     if (!message) {
-      setInsights([]);
-      return;
+      setInsights([])
+      return
     }
-
-    const newInsights = [];
+    const newInsights = []
 
     // Get the content to analyze (streaming content if available, otherwise message content)
-    const contentToAnalyze = isStreaming
-      ? streamedContent
-      : message.streamedContent || "";
+    const contentToAnalyze = isStreaming ? streamedContent : message.streamedContent || ""
 
     // Word count insight
     if (contentToAnalyze) {
       const words = contentToAnalyze
         .trim()
         .split(/\s+/)
-        .filter((word) => word.length > 0);
-      const wordCount = words.length;
-      const charCount = contentToAnalyze.length;
-      const charCountNoSpaces = contentToAnalyze.replace(/\s/g, "").length;
-      const sentences = contentToAnalyze
-        .split(/[.!?]+/)
-        .filter((s) => s.trim().length > 0).length;
-      const paragraphs = contentToAnalyze
-        .split(/\n\s*\n/)
-        .filter((p) => p.trim().length > 0).length;
-      const readingTime = Math.ceil(wordCount / 200); // Average reading speed
-      const avgWordsPerSentence =
-        sentences > 0 ? Math.round(wordCount / sentences) : 0;
+        .filter((word) => word.length > 0)
+      const wordCount = words.length
+      const charCount = contentToAnalyze.length
+      const charCountNoSpaces = contentToAnalyze.replace(/\s/g, "").length
+      const sentences = contentToAnalyze.split(/[.!?]+/).filter((s) => s.trim().length > 0).length
+      const paragraphs = contentToAnalyze.split(/\n\s*\n/).filter((p) => p.trim().length > 0).length
+      const readingTime = Math.ceil(wordCount / 200) // Average reading speed
+      const avgWordsPerSentence = sentences > 0 ? Math.round(wordCount / sentences) : 0
 
       newInsights.push({
         type: "content",
@@ -110,13 +147,13 @@ export function InsightsSidebar({
           { label: "Reading Time", value: `${readingTime} min`, icon: Clock },
         ],
         icon: MessageSquare,
-      });
+      })
     }
 
     // Data insights
     if (message.data && message.data.length > 0) {
-      const rowCount = message.data.length;
-      const columnCount = Object.keys(message.data[0]).length;
+      const rowCount = message.data.length
+      const columnCount = Object.keys(message.data[0]).length
       newInsights.push({
         type: "data",
         title: "Data Summary",
@@ -125,7 +162,7 @@ export function InsightsSidebar({
           { label: "Columns", value: columnCount, icon: Hash },
         ],
         icon: Database,
-      });
+      })
     }
 
     // Chart insights
@@ -133,18 +170,16 @@ export function InsightsSidebar({
       newInsights.push({
         type: "visualization",
         title: "Visualizations",
-        items: [
-          { label: "Charts", value: message.chartConfig.length, icon: Hash },
-        ],
+        items: [{ label: "Charts", value: message.chartConfig.length, icon: Hash }],
         icon: BarChart3,
-      });
+      })
     }
 
     // SQL Query insights
     if (message.sqlQuery) {
-      const queryLength = message.sqlQuery.length;
-      const queryLines = message.sqlQuery.split("\n").length;
-      const queryWords = message.sqlQuery.trim().split(/\s+/).length;
+      const queryLength = message.sqlQuery.length
+      const queryLines = message.sqlQuery.split("\n").length
+      const queryWords = message.sqlQuery.trim().split(/\s+/).length
       newInsights.push({
         type: "query",
         title: "SQL Query",
@@ -158,37 +193,29 @@ export function InsightsSidebar({
           { label: "Words", value: queryWords, icon: Hash },
         ],
         icon: Database,
-      });
+      })
     }
-
-    setInsights(newInsights);
-  }, [message, isStreaming, streamedContent]);
+    setInsights(newInsights)
+  }, [message, isStreaming, streamedContent])
 
   const handleInsightClick = () => {
-    if (!message || !message.data || !message.data.length) return;
-    generateInsights(userId, message.data);
-  };
+    if (!message || !message.data || !message.data.length) return
+    generateInsights(userId, message.data)
+  }
+
+  const contentToDisplay = isInsightStreaming ? insightContent : message?.insights || ""
+  const parsedCards = parseMarkdownIntoCards(contentToDisplay)
+
   return (
     <>
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full bg-background border-l border-border transition-all duration-300 ease-in-out z-40 ${
-          isOpen ? "w-80" : "w-12"
-        }`}
+        className={`fixed top-0 right-0 h-full bg-background border-l border-border transition-all duration-300 ease-in-out z-40 ${isOpen ? "w-80" : "w-12"}`}
       >
         {/* Toggle Button */}
         <div className="absolute top-4 left-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-            className="h-8 w-8 p-0"
-          >
-            {isOpen ? (
-              <PanelRightClose className="w-4 h-4" />
-            ) : (
-              <PanelRightOpen className="w-4 h-4" />
-            )}
+          <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+            {isOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
           </Button>
         </div>
 
@@ -205,89 +232,46 @@ export function InsightsSidebar({
               {message && messageIndex >= 0 && (
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 " />
-                  <span className="text-sm font-medium ">
-                    Viewing Message #{messageIndex + 1}
-                  </span>
+                  <span className="text-sm font-medium ">Viewing Message #{messageIndex + 1}</span>
                 </div>
               )}
-              <>
-                <Button
-                  onClick={handleInsightClick}
-                  disabled={isInsightStreaming}
-                >
-                  Generate Insights
-                </Button>
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ node, ...props }) => (
-                      <h1
-                        className="text-2xl font-bold mt-6 mb-4 text-gray-900 dark:text-gray-100"
-                        {...props}
-                      />
-                    ),
-                    h2: ({ node, ...props }) => (
-                      <h2
-                        className="text-xl font-semibold mt-5 mb-3 text-gray-800 dark:text-gray-200"
-                        {...props}
-                      />
-                    ),
-                    h3: ({ node, ...props }) => (
-                      <h3
-                        className="text-xl font-medium mt-4 mb-2 text-gray-700 dark:text-gray-300"
-                        {...props}
-                      />
-                    ),
-                    p: ({ node, ...props }) => (
-                      <p
-                        className="text-sm text-gray-600 dark:text-gray-400 mb-4"
-                        {...props}
-                      />
-                    ),
-                    ul: ({ node, ...props }) => (
-                      <ul
-                        className="text-sm list-disc list-inside mb-4 text-gray-600 dark:text-gray-400"
-                        {...props}
-                      />
-                    ),
-                    li: ({ node, ...props }) => (
-                      <li className="mb-2" {...props} />
-                    ),
-                  }}
-                >
-                  {isInsightStreaming ? insightContent : message?.insights}
-                </ReactMarkdown>
-              </>
 
-              {/* {insights.length > 0 ? (
+              <Button onClick={handleInsightClick} disabled={isInsightStreaming}>
+                Generate Insights
+              </Button>
+
+              {parsedCards.length > 0 ? (
                 <div className="space-y-4">
-                  {insights.map((insight, index) => (
+                  {parsedCards.map((card, index) => (
                     <Card key={index}>
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <insight.icon className="w-4 h-4" />
-                          {insight.title}
+                        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                          <Brain className="w-4 h-4" />
+                          {card.title}
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="space-y-2">
-                          {insight.items.map((item: any, itemIndex: number) => (
-                            <div
-                              key={itemIndex}
-                              className="flex justify-between items-center"
-                            >
-                              <div className="flex items-center gap-2">
-                                <item.icon className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">
-                                  {item.label}:
-                                </span>
-                              </div>
-                              <span className="text-sm font-medium">
-                                {item.value}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            // Adjust heading sizes for content within cards
+                            h1: ({ node, ...props }) => <h1 className="text-base font-semibold mb-2" />,
+                            h2: ({ node, ...props }) => <h2 className="text-base font-medium mb-2" {...props} />,
+                            h3: ({ node, ...props }) => <h3 className="text-sm font-medium mb-2" {...props} />,
+                            p: ({ node, ...props }) => (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2" {...props} />
+                            ),
+                            ul: ({ node, ...props }) => (
+                              <ul
+                                className="text-sm list-disc list-inside mb-2 text-gray-600 dark:text-gray-400"
+                                {...props}
+                              />
+                            ),
+                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                          }}
+                        >
+                          {card.content}
+                        </ReactMarkdown>
                       </CardContent>
                     </Card>
                   ))}
@@ -296,69 +280,9 @@ export function InsightsSidebar({
                 <div className="text-center py-8 text-muted-foreground">
                   <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No insights available</p>
-                  <p className="text-xs mt-1">
-                    Scroll to an assistant message to view insights
-                  </p>
+                  <p className="text-xs mt-1">Scroll to an assistant message to view insights</p>
                 </div>
-              )} */}
-
-              {/* Streaming Status */}
-              {/* {isStreaming && (
-                <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/50">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-sm text-green-700 dark:text-green-300">
-                        Analyzing response...
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )} */}
-
-              {/* Message Status */}
-              {/* {message && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Brain className="w-4 h-4" />
-                      Message Status
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Type:</span>
-                        <Badge variant="outline" className="text-xs">
-                          {message.role}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Position:</span>
-                        <Badge variant="secondary" className="text-xs">
-                          #{messageIndex + 1}
-                        </Badge>
-                      </div>
-                      {message.sqlResult?.partial && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Status:</span>
-                          <Badge variant="destructive" className="text-xs">
-                            Partial
-                          </Badge>
-                        </div>
-                      )}
-                      {message.error && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Error:</span>
-                          <Badge variant="destructive" className="text-xs">
-                            Yes
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )} */}
+              )}
             </div>
           </div>
         )}
@@ -371,5 +295,5 @@ export function InsightsSidebar({
         )}
       </div>
     </>
-  );
+  )
 }
