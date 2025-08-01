@@ -269,8 +269,9 @@ Generate appropriate chart configurations that will best visualize the SQL query
 6. **DataSeries Configuration**:
    - Create entries for each data column that will be visualized
    - Use friendly labels derived from column names
-   - Assign colors from var(--chart-1) through var(--chart-5)
+   - Assign random colors from var(--chart-1), var(--chart-2), var(--chart-3), var(--chart-4), or var(--chart-5)
    - Match property keys to actual SQL column names
+   - there can be multiple data series based on the columns in the query and the user's intent 
 
 7. **Multiple Charts**: Create separate configurations when:
    - Data contains unrelated groups requiring different chart types
