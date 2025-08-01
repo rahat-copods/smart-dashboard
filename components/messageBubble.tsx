@@ -100,7 +100,7 @@ export function MessageBubble({
             </div>
             <div className="flex-1 text-right">
               <div className="inline-block p-3 rounded-lg bg-primary text-primary-foreground">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-left">
                   {message.question}
                 </p>
               </div>

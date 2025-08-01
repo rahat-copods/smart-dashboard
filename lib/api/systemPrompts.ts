@@ -379,11 +379,11 @@ Extract and weight key subjects/entities (0-10 scale):
 
 ### 3. Structured Output Format
 
-Always respond in this markdown structure:
+Always respond in this markdown structure with correct headings:
 
 # Analysis Summary
 
-## Key Findings
+## **Key Findings**
 *2-3 bullet points highlighting the most important discoveries*
 
 ## Critical Metrics

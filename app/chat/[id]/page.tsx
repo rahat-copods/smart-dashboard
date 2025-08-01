@@ -56,63 +56,6 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Handle scroll to detect which assistant message is most visible
-  // useEffect(() => {
-  //   const container = messagesContainerRef.current
-  //   if (!container) return
-
-  //   const handleScroll = () => {
-  //     console.log('Scroll event triggered') // Debug log
-  //     const containerRect = container.getBoundingClientRect()
-  //     const containerTop = containerRect.top
-  //     const containerBottom = containerRect.bottom
-  //     console.log('Container bounds:', { containerTop, containerBottom }) // Debug log
-
-  //     // Find the first assistant message that's visible on screen
-  //     let foundMessage: ChatMessage | null = null
-  //     let foundIndex = -1
-
-  //     for (let i = 0; i < messages.length; i++) {
-  //       const message = messages[i]
-  //       if (message.role === 'assistant') {
-  //         const element = document.querySelector(`[data-message-index="${i}"]`)
-  //         if (element) {
-  //           const elementRect = element.getBoundingClientRect()
-  //           console.log(`Message ${i} bounds:`, { top: elementRect.top, bottom: elementRect.bottom, visible: elementRect.bottom > containerTop && elementRect.top < containerBottom })
-  //           // Check if any part of the message is visible
-  //           if (elementRect.bottom > containerTop && elementRect.top < containerBottom) {
-  //             foundMessage = message
-  //             foundIndex = i
-  //             // break 
-  //           }
-  //         }
-  //       }
-  //     }
-
-  //     console.log('Found message:', { foundIndex, currentActive: activeMessageIndex }) // Debug log
-  //     // Update active message if we found one and it's different
-  //     if (foundMessage && foundIndex !== activeMessageIndex) {
-  //       console.log('Updating active message to:', foundIndex) // Debug log
-  //       setActiveAssistantMessage(foundMessage)
-  //       setActiveMessageIndex(foundIndex)
-        
-  //       // Auto-open sidebar when there's an assistant message visible
-  //       if (!isSidebarOpen) {
-  //         setIsSidebarOpen(true)
-  //       }
-  //     }
-  //   }
-
-  //   // Add scroll listener
-  //   container.addEventListener('scroll', handleScroll, { passive: true })
-    
-  //   // Initial check
-  //   setTimeout(handleScroll, 100) // Delay initial check to ensure DOM is ready
-
-  //   return () => {
-  //     container.removeEventListener('scroll', handleScroll)
-  //   }
-  // }, [messages, activeMessageIndex, isSidebarOpen]) 
 
   const handleSubmit = (message: string) => {
     sendQuery(message, user)
