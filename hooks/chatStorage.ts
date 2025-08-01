@@ -44,7 +44,7 @@ export class ChatStorage {
   static createChat(title: string, userId: string): Chat {
     const newChat: Chat = {
       id: crypto.randomUUID(),
-      title,
+      title: title.length > 50 ? title.slice(0, 47) + '...' : title,
       user: userId,
       messages: [],
       createdAt: new Date(),

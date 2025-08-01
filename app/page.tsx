@@ -101,16 +101,16 @@ export default function HomePage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="user01">
-                      DVD Rental - May-2005—May-2013
+                      DVD Rental — May 2005-May 2013
                     </SelectItem>
                     <SelectItem value="user02">
-                      Clothing Store Aug-2016—Aug-2018
+                      Clothing Store — Aug 2016-Aug 2018
                     </SelectItem>
                     <SelectItem value="user03">
-                      Hospital Management Jan-1950—Dec-2023
+                      Hospital Management — Jan 2023-Dec 2023
                     </SelectItem>
                     <SelectItem value="user04">
-                      Healthcare Patient May-2019—Jun-2024
+                      Healthcare Patient — May 2019-Jun 2024
                     </SelectItem>
                   </SelectContent>
                 </Select>
