@@ -63,25 +63,35 @@ export const sqlGenerationSchema = {
   properties: {
     sqlQuery: {
       type: ["string", "null"],
-      description: "The generated SQL query (null if error occurred)"
+      description: "The generated SQL query (null if error occurred)",
     },
     isPartial: {
       type: ["boolean", "null"],
-      description: "Whether the SQL query is incomplete or partial (null if error occurred)"
+      description:
+        "Whether the SQL query is incomplete or partial (null if error occurred)",
     },
     partialReason: {
       type: ["string", "null"],
-      description: "Reason why the query is partial, if applicable (null if not partial or error occurred)"
+      description:
+        "Reason why the query is partial, if applicable (null if not partial or error occurred)",
     },
     error: {
       type: ["string", "null"],
-      description: "Error message when query cannot be generated due to schema mismatch or incompatible request"
-    }
+      description:
+        "Error message when query cannot be generated due to schema mismatch or incompatible request",
+    },
+    suggestions: {
+      type: "array",
+      description:
+        "A list of 3–4 natural language follow-up questions that could be asked next, based on the current question and response — e.g., filtering further, comparing results, or digging deeper into related metrics.",
+      items: {
+        type: "string",
+      },
+    },
   },
-  required: ["sqlQuery", "isPartial", "partialReason", "error"],
-  additionalProperties: false
+  required: ["sqlQuery", "isPartial", "partialReason", "error", "suggestions"],
+  additionalProperties: false,
 };
-
 
 // Chart Configuration Schema - Supporting 6 chart types with shadcn/recharts integration
 const dataSeries = {
@@ -237,7 +247,14 @@ const singleChartConfig = {
         xAxis: xAxis,
         yAxis: yAxis,
       },
-      required: ["type", "chartType", "dataSeries", "components", "xAxis", "yAxis"],
+      required: [
+        "type",
+        "chartType",
+        "dataSeries",
+        "components",
+        "xAxis",
+        "yAxis",
+      ],
       additionalProperties: false,
     },
     {
@@ -265,7 +282,14 @@ const singleChartConfig = {
         xAxis: xAxis,
         yAxis: yAxis,
       },
-      required: ["type", "chartType", "dataSeries", "components", "xAxis", "yAxis"],
+      required: [
+        "type",
+        "chartType",
+        "dataSeries",
+        "components",
+        "xAxis",
+        "yAxis",
+      ],
       additionalProperties: false,
     },
     {
@@ -293,7 +317,14 @@ const singleChartConfig = {
         xAxis: xAxis,
         yAxis: yAxis,
       },
-      required: ["type", "chartType", "dataSeries", "components", "xAxis", "yAxis"],
+      required: [
+        "type",
+        "chartType",
+        "dataSeries",
+        "components",
+        "xAxis",
+        "yAxis",
+      ],
       additionalProperties: false,
     },
     {
@@ -386,7 +417,7 @@ export const chartConfigSchema = {
         "An array of one or more chart configurations, each defining a specific visualization to represent the SQL query results. Multiple configurations are used when data contains unrelated groups that require separate visualizations. Each configuration maps SQL query result columns to chart series with labels, colors, and component data keys.",
       items: singleChartConfig,
       minItems: 1,
-    }
+    },
   },
   required: ["visuals"],
   additionalProperties: false,
