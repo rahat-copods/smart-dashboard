@@ -32,7 +32,10 @@ export default function ChartsComponent({
   chartData,
   config,
 }: ChartsComponentProps) {
-  const [activeChartType, setActiveChartType] = useState<string>("bar");
+  const chartTypes = ["bar", "line", "area", "table"];
+  const [activeChartType, setActiveChartType] = useState<string>(
+    chartTypes[Math.floor(Math.random() * chartTypes.length)]
+  );
 
   if (!chartData) return null;
 
@@ -93,8 +96,10 @@ export default function ChartsComponent({
           )}
         </TabsContent>
         <TabsContent value="area" className="mt-0">
-        {activeChartType === "area" && <AreaChartComponent config={config} chartData={chartData} />}
-      </TabsContent>
+          {activeChartType === "area" && (
+            <AreaChartComponent config={config} chartData={chartData} />
+          )}
+        </TabsContent>
         <TabsContent value="table" className="mt-0">
           {activeChartType === "table" && (
             <DataTableComponent data={chartData} />
