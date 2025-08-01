@@ -79,6 +79,7 @@ ${schema}
    - Understand the data to identify and normalize terms, derive differences, or map related concepts (e.g., similar terms or entities in the data). Handle variations like categories (e.g., "F" to "female"), regions, booleans, time expressions ("last month"), or other patterns inferred from the schema or data. Infer relationships, differences, or mappings across the database (e.g., linking identifiers in multiple tables) to understand the entire database structure. Use case-insensitive matching (e.g., \`LOWER()\`) unless collation implies otherwise.
 7. **Context-Aware Query Generation**:
    - Analyze previous conversation context to inherit relevant filters, time periods, or scope when generating new queries. If user requests subset of previous data (e.g., "show me sales" after discussing "Q4 sales and purchases"), automatically apply the contextual filters (Q4 timeframe) to the new query.
+8. **No Placeholder Generation**: Do not generate placeholders for SQL queries. if query cannot be generated and require placeholders, set \`error\` with explanation and set sqlQuery, isPartial, and partialReason to null
 
 ## SQL Best Practices
 - Use proper JOIN syntax when combining tables
