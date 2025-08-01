@@ -1,6 +1,16 @@
 "use client";
 
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { TrendingUp } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -9,14 +19,14 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartConfig as LineChartConfig } from "@/types/visuals";
+import { ChartConfig as AreaChartConfig } from "@/types/visuals";
 import { formatCellValue } from "@/lib/utils";
 
-interface LineChartProps {
+interface AreaChartProps {
   chartData: any[];
-  config: LineChartConfig;
+  config: AreaChartConfig;
 }
-export function LineChartComponent({ config, chartData }: LineChartProps) {
+export function AreaChartComponent({ config, chartData }: AreaChartProps) {
   const chartConfig = config.dataSeries satisfies ChartConfig;
   const formattedChartData = chartData.map((item) => {
     const formattedItem = { ...item };
@@ -29,39 +39,41 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
   const upperDomain = Math.max(
     ...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)
   );
-
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-      <LineChart accessibilityLayer data={formattedChartData}>
+    <ChartContainer config={chartConfig}>
+      <AreaChart accessibilityLayer data={formattedChartData}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey={config.xAxis.dataKey}
           tickLine={false}
-          tickMargin={8}
           axisLine={false}
+          tickMargin={8}
         />
         <YAxis
           dataKey={config.yAxis.dataKey}
           tickLine={false}
           axisLine={false}
           tickMargin={10}
-          domain={[0, upperDomain + upperDomain * 0.1]}
+          domain={[0, upperDomain+ upperDomain * 0.1]}
         />
-        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-        <ChartLegend content={<ChartLegendContent />} />
-        {config.components.map((line, index) => (
-          <Line
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent indicator="line" />}
+        />
+        {config.components.map((area, index) => (
+          <Area
             key={index}
-            dataKey={line.dataKey}
+            dataKey={area.dataKey}
             type="natural"
-            stroke={line.fill}
-            strokeWidth={2}
-            dot={{
-              fill: line.fill,
-            }}
+            fill={area.fill}
+            fillOpacity={0.4}
+            stroke={area.fill}
+            stackId={index}
+            dot={{ fill: area.fill }}
           />
         ))}
-      </LineChart>
+        <ChartLegend content={<ChartLegendContent />} />
+      </AreaChart>
     </ChartContainer>
   );
 }

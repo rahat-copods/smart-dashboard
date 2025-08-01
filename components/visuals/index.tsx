@@ -21,6 +21,7 @@ import type { ChartConfig } from "@/types/visuals";
 import { BarChartComponent } from "./barCharts";
 import { LineChartComponent } from "./lineChart";
 import DataTableComponent from "./dataTableComponent";
+import { AreaChartComponent } from "./areaChart";
 
 interface ChartsComponentProps {
   chartData: any[] | null;
@@ -91,9 +92,9 @@ export default function ChartsComponent({
             <LineChartComponent config={config} chartData={chartData} />
           )}
         </TabsContent>
-        {/* <TabsContent value="area" className="mt-0">
+        <TabsContent value="area" className="mt-0">
         {activeChartType === "area" && <AreaChartComponent config={config} chartData={chartData} />}
-      </TabsContent> */}
+      </TabsContent>
         <TabsContent value="table" className="mt-0">
           {activeChartType === "table" && (
             <DataTableComponent data={chartData} />

@@ -6,7 +6,10 @@ import { formatCellValue } from "@/lib/utils";
 export default function DataTableComponent({data}: {data:any[]}) {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
-  if (!data || data.length === 0) {
+  if (!data) {
+    return null
+  }
+  if ( data.length === 0) {
     return (
       <div className="text-sm text-center py-8 text-muted-foreground border rounded-md">
         No data found

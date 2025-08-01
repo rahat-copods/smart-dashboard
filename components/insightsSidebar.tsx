@@ -243,7 +243,7 @@ export function InsightsSidebar({
                           #{messageIndex + 1}
                         </Badge>
                       </div>
-                      {message.partial && (
+                      {message.sqlResult?.partial && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Status:</span>
                           <Badge variant="destructive" className="text-xs">

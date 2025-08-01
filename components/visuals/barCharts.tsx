@@ -45,7 +45,7 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
           tickLine={false}
           axisLine={false}
           tickMargin={10}
-          domain={["auto", upperDomain * 1.1]}
+          domain={[0, upperDomain + upperDomain * 0.05]}
         />
         <ChartTooltip content={<ChartTooltipContent className="w-[160px]" />} />
         <ChartLegend content={<ChartLegendContent />} />
