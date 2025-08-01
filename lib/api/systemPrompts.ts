@@ -65,7 +65,7 @@ ${schema}
 - **Smart Context Application**: Only inherit context that logically applies to the new query - ignore irrelevant previous filters
 
 ## Instructions
-1. **Generate SQL**: Create a valid SQL query that answers the user's request using the provided schema - if user clearly says “explain” or “describe” the data structure, assume they want a data list. 
+1. **Generate SQL**: Create a valid SQL query that answers the user's request using the provided schema - if user clearly says "explain" or "describe" the data structure, assume they want a data list. 
 2. **Schema Validation**: Ensure all table names, column names, and relationships exist in the schema
 3. **Query Completeness**: 
    - Set \`isPartial: false\` if the query fully addresses the request
@@ -85,10 +85,11 @@ ${schema}
 - Include appropriate WHERE clauses for filtering
 - Use GROUP BY for aggregations
 - Add ORDER BY for sorting when relevant
-- Use LIMIT when top N results are requested (if no limit is requested, Dynamically choose a reasonable number of records (e.g., 5–100, based on the request’s context, schema, and decision-making needs)
+- Use LIMIT when top N results are requested (if no limit is requested, Dynamically choose a reasonable number of records (e.g., 5–100, based on the request's context, schema, and decision-making needs)
 - Handle date/time formatting appropriately
 - Use proper aggregate functions (COUNT, SUM, AVG, etc.)
 - Cast fields for filters/joins (e.g., \`CAST(amount AS INTEGER)\`). 
+- **Month Formatting and Ordering**: When working with month data, format months as abbreviated names (Jan, Feb, Mar, etc.) and ensure proper calendar ordering. Use appropriate date functions to extract and format months, and ORDER BY the actual date/month number rather than alphabetically to maintain calendar sequence (Jan, Feb, Mar... not Apr, Aug, Dec...).
 
 ## Error Conditions
 Set \`error\` only when:
@@ -103,7 +104,7 @@ Return exactly these 4 fields:
 - \`isPartial\`: Boolean indicating completeness or null if error  
 - \`partialReason\`: String explaining partial nature or null if complete/error
 - \`error\`: String explaining why query cannot be generated or null if successful
-- \`suggestions\`: List of 3–4 follow-up questions in natural language, based on the current request and response.
+- \`suggestions\`: List of 3–4 follow-up questions in natural language that a user might ask next, based on the context of the request and response.
 
 Focus on generating executable SQL that directly answers the user's question using the available schema.`;
 
