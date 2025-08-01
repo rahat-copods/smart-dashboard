@@ -131,22 +131,107 @@ Return only the markdown explanation text. No JSON, no schema - just clear, help
 
 Focus on being helpful and encouraging the user to try again with different parameters or questions.`;
 
+// export const getChartConfigPrompt = (
+// ) => `You are an expert at creating shadcn/recharts visualization configurations based on SQL queries and user intent.
+
+// ## Your Task
+// Generate appropriate chart/graph configurations that will best visualize the SQL query results based on the user's intent and data structure. Consider any previous visualization context to maintain consistency and build upon prior analysis.
+
+// ## Chart Categories
+// **Charts** (type: "chart"): Traditional data visualizations
+// - **bar**: Categorical comparisons, discrete values, distribution across categories
+// - **line**: Sequential data, trends, ordered progression (not limited to time)
+// - **area**: Cumulative data, filled regions, volume/magnitude emphasis
+
+// **Graphs** (type: "graph"): Specialized visualizations
+// - **pie**: Proportions, percentages, parts of a whole
+// - **radar**: Multivariate comparisons, multiple metrics simultaneously
+// - **radial**: Circular representations, progress indicators, radial comparisons
+
+// ## Configuration Guidelines
+
+// 1. **Previous Context Awareness**: 
+//    - Maintain consistency with previous visualizations when applicable
+//    - If user previously viewed sales by region, and now asks for "show profit", apply the same regional breakdown
+//    - Preserve chart types, groupings, and dimensional choices that were successful in prior analysis
+//    - Inherit relevant filters, time periods, or categorical groupings from previous visualizations
+
+// 2. **Analyze SQL Structure**: Examine SELECT columns, GROUP BY, aggregations to understand data shape and relationships
+
+// 3. **Smart Axis Mapping Strategy**:
+//    - **Primary Dimension**: Identify the main categorical or grouping column (usually from GROUP BY)
+//    - **Metrics**: Identify aggregated values (COUNT, SUM, AVG, etc.)
+//    - **Secondary Grouping**: Look for additional categorical dimensions
+
+// 4. **Multi-Dimensional Data Handling**:
+//    When you have multiple dimensions (e.g., category, status, region), choose the most logical grouping:
+   
+//    **Example**: treatment_type, count, month
+//    - **Option A**: X = Month, Grouped by treatment_type (colored bars/lines per treatment)
+//    - **Option B**: X = Treatment_type, Grouped by month (colored bars/lines per month)
+//    - **Decision**: Choose based on user intent - are they analyzing treatments over time, or comparing treatments across months?
+
+// 5. **Axis Selection Priority**:
+//    - **X-Axis (dataKey)**: 
+//      * Primary categorical dimension
+//      * Natural ordering preference (alphabetical, numerical, hierarchical)
+//      * The dimension user wants to "compare across"
+//    - **Y-Axis**: 
+//      * Quantitative measures (counts, sums, averages)
+//      * The metric user wants to "measure"
+
+// 6. **DataSeries Configuration**:
+//    - Create entries for each data column that will be visualized
+//    - Use friendly labels derived from column names
+//    - Assign colors from var(--chart-1) through var(--chart-5)
+//    - Match property keys to actual SQL column names
+
+// 7. **Multiple Visuals**: Create separate configurations when:
+//    - Data contains unrelated groups requiring different chart types
+//    - Different metrics need different visualization approaches
+//    - Multiple distinct comparisons are needed
+
+// ## Example Mappings
+
+// **Example 1**: \`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
+// - xAxis: { dataKey: "department" }
+// - Primary focus: Compare departments
+// - dataSeries: { 
+//     employee_count: { label: "Employee Count", color: "var(--chart-1)" },
+//     avg_salary: { label: "Average Salary", color: "var(--chart-2)" }
+//   }
+
+// **Example 2**: \`SELECT product_category, sales_region, total_revenue FROM sales GROUP BY product_category, sales_region\`
+// - **Option A**: X = product_category, Grouped by sales_region
+// - **Option B**: X = sales_region, Grouped by product_category
+// - **Decision Logic**: Choose based on whether user wants to compare products across regions OR regions across products
+
+// **Example 3**: \`SELECT priority_level, status, ticket_count FROM tickets GROUP BY priority_level, status\`
+// - xAxis: { dataKey: "priority_level" } (natural ordering: Low, Medium, High)
+// - Grouped by: status (Open, In Progress, Closed)
+// - Focus: How ticket counts vary by priority, broken down by status
+
+// ## Decision Framework
+// 1. **Consider previous visualization context** (chart types, groupings, dimensions used)
+// 2. **Identify the primary comparison dimension** (what user wants to compare)
+// 3. **Identify the measurement** (what user wants to measure)
+// 4. **Identify secondary groupings** (how to break down the data further)
+// 5. **Choose chart type** based on data nature and comparison intent
+// 6. **Apply logical ordering** to categorical data when possible
+// 7. **Maintain consistency** with previous analysis patterns when building upon prior work
+
+// Focus on creating configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
+
 export const getChartConfigPrompt = (
-) => `You are an expert at creating shadcn/recharts visualization configurations based on SQL queries and user intent.
+) => `You are an expert at creating shadcn/recharts chart configurations based on SQL queries and user intent.
 
 ## Your Task
-Generate appropriate chart/graph configurations that will best visualize the SQL query results based on the user's intent and data structure. Consider any previous visualization context to maintain consistency and build upon prior analysis.
+Generate appropriate chart configurations that will best visualize the SQL query results based on the user's intent and data structure. Consider any previous visualization context to maintain consistency and build upon prior analysis.
 
-## Chart Categories
-**Charts** (type: "chart"): Traditional data visualizations
+## Available Chart Types
 - **bar**: Categorical comparisons, discrete values, distribution across categories
 - **line**: Sequential data, trends, ordered progression (not limited to time)
 - **area**: Cumulative data, filled regions, volume/magnitude emphasis
-
-**Graphs** (type: "graph"): Specialized visualizations
-- **pie**: Proportions, percentages, parts of a whole
-- **radar**: Multivariate comparisons, multiple metrics simultaneously
-- **radial**: Circular representations, progress indicators, radial comparisons
 
 ## Configuration Guidelines
 
@@ -186,7 +271,7 @@ Generate appropriate chart/graph configurations that will best visualize the SQL
    - Assign colors from var(--chart-1) through var(--chart-5)
    - Match property keys to actual SQL column names
 
-7. **Multiple Visuals**: Create separate configurations when:
+7. **Multiple Charts**: Create separate configurations when:
    - Data contains unrelated groups requiring different chart types
    - Different metrics need different visualization approaches
    - Multiple distinct comparisons are needed
@@ -194,6 +279,7 @@ Generate appropriate chart/graph configurations that will best visualize the SQL
 ## Example Mappings
 
 **Example 1**: \`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
+- Chart Type: bar (comparing departments)
 - xAxis: { dataKey: "department" }
 - Primary focus: Compare departments
 - dataSeries: { 
@@ -202,27 +288,35 @@ Generate appropriate chart/graph configurations that will best visualize the SQL
   }
 
 **Example 2**: \`SELECT product_category, sales_region, total_revenue FROM sales GROUP BY product_category, sales_region\`
+- Chart Type: bar (categorical comparison)
 - **Option A**: X = product_category, Grouped by sales_region
 - **Option B**: X = sales_region, Grouped by product_category
 - **Decision Logic**: Choose based on whether user wants to compare products across regions OR regions across products
 
 **Example 3**: \`SELECT priority_level, status, ticket_count FROM tickets GROUP BY priority_level, status\`
+- Chart Type: bar (comparing priority levels with status breakdown)
 - xAxis: { dataKey: "priority_level" } (natural ordering: Low, Medium, High)
 - Grouped by: status (Open, In Progress, Closed)
 - Focus: How ticket counts vary by priority, broken down by status
+
+**Example 4**: \`SELECT quarter, cumulative_revenue FROM quarterly_growth ORDER BY quarter\`
+- Chart Type: area (showing cumulative growth progression)
+- xAxis: { dataKey: "quarter" }
+- Focus: Cumulative revenue growth over quarters
 
 ## Decision Framework
 1. **Consider previous visualization context** (chart types, groupings, dimensions used)
 2. **Identify the primary comparison dimension** (what user wants to compare)
 3. **Identify the measurement** (what user wants to measure)
 4. **Identify secondary groupings** (how to break down the data further)
-5. **Choose chart type** based on data nature and comparison intent
+5. **Choose chart type** based on data nature and comparison intent:
+   - Discrete categories → **bar**
+   - Sequential/ordered progression → **line**
+   - Cumulative/volume emphasis → **area**
 6. **Apply logical ordering** to categorical data when possible
 7. **Maintain consistency** with previous analysis patterns when building upon prior work
 
-Focus on creating configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
-
-
+Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
 
 export function getSummarizationPrompt(
   userQuery: string,

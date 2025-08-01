@@ -232,11 +232,6 @@ const singleChartConfig = {
           const: "chart",
           description: "Chart category identifier",
         },
-        chartType: {
-          type: "string",
-          const: "bar",
-          description: "Specific chart type for bar charts",
-        },
         dataSeries: dataSeries,
         components: {
           type: "array",
@@ -249,7 +244,6 @@ const singleChartConfig = {
       },
       required: [
         "type",
-        "chartType",
         "dataSeries",
         "components",
         "xAxis",
@@ -257,154 +251,7 @@ const singleChartConfig = {
       ],
       additionalProperties: false,
     },
-    {
-      type: "object",
-      description:
-        "Line chart configuration - suitable for time series data, trends over time, continuous data, or when showing data progression and patterns.",
-      properties: {
-        type: {
-          type: "string",
-          const: "chart",
-          description: "Chart category identifier",
-        },
-        chartType: {
-          type: "string",
-          const: "line",
-          description: "Specific chart type for line charts",
-        },
-        dataSeries: dataSeries,
-        components: {
-          type: "array",
-          description:
-            "Configuration for chart components, dynamically generated based on the data series in chartData.",
-          items: chartComponent,
-        },
-        xAxis: xAxis,
-        yAxis: yAxis,
-      },
-      required: [
-        "type",
-        "chartType",
-        "dataSeries",
-        "components",
-        "xAxis",
-        "yAxis",
-      ],
-      additionalProperties: false,
-    },
-    {
-      type: "object",
-      description:
-        "Area chart configuration - suitable for showing cumulative data, filled regions, or emphasizing volume/magnitude over time.",
-      properties: {
-        type: {
-          type: "string",
-          const: "chart",
-          description: "Chart category identifier",
-        },
-        chartType: {
-          type: "string",
-          const: "area",
-          description: "Specific chart type for area charts",
-        },
-        dataSeries: dataSeries,
-        components: {
-          type: "array",
-          description:
-            "Configuration for chart components, dynamically generated based on the data series in chartData.",
-          items: chartComponent,
-        },
-        xAxis: xAxis,
-        yAxis: yAxis,
-      },
-      required: [
-        "type",
-        "chartType",
-        "dataSeries",
-        "components",
-        "xAxis",
-        "yAxis",
-      ],
-      additionalProperties: false,
-    },
-    {
-      type: "object",
-      description:
-        "Pie chart configuration - suitable for showing proportions, percentages, or parts of a whole.",
-      properties: {
-        type: {
-          type: "string",
-          const: "graph",
-          description: "Graph category identifier",
-        },
-        chartType: {
-          type: "string",
-          const: "pie",
-          description: "Specific chart type for pie charts",
-        },
-        dataSeries: dataSeries,
-        components: {
-          type: "array",
-          description:
-            "Configuration for graph components, specialized for pie chart visualization.",
-          items: graphComponent,
-        },
-      },
-      required: ["type", "chartType", "dataSeries", "components"],
-      additionalProperties: false,
-    },
-    {
-      type: "object",
-      description:
-        "Radar chart configuration - suitable for multivariate data comparison, showing multiple metrics simultaneously.",
-      properties: {
-        type: {
-          type: "string",
-          const: "graph",
-          description: "Graph category identifier",
-        },
-        chartType: {
-          type: "string",
-          const: "radar",
-          description: "Specific chart type for radar charts",
-        },
-        dataSeries: dataSeries,
-        components: {
-          type: "array",
-          description:
-            "Configuration for graph components, specialized for radar chart visualization.",
-          items: graphComponent,
-        },
-      },
-      required: ["type", "chartType", "dataSeries", "components"],
-      additionalProperties: false,
-    },
-    {
-      type: "object",
-      description:
-        "Radial chart configuration - suitable for circular data representation, progress indicators, or radial comparisons.",
-      properties: {
-        type: {
-          type: "string",
-          const: "graph",
-          description: "Graph category identifier",
-        },
-        chartType: {
-          type: "string",
-          const: "radial",
-          description: "Specific chart type for radial charts",
-        },
-        dataSeries: dataSeries,
-        components: {
-          type: "array",
-          description:
-            "Configuration for graph components, specialized for radial chart visualization.",
-          items: graphComponent,
-        },
-      },
-      required: ["type", "chartType", "dataSeries", "components"],
-      additionalProperties: false,
-    },
+    // TODO adding the graph type over here
   ],
 };
 
