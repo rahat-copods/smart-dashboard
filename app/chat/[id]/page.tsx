@@ -23,9 +23,8 @@ export default function ChatPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
-  const { sendQuery, isStreaming, streamedContent, streamingStatus } = useChat(chatId, messages, setMessages)
+  const { sendQuery, isStreaming, streamedContent, streamingStatus, insightContent, isInsightStreaming, generateInsights } = useChat(chatId, messages, setMessages)
 
   // Load chat messages on mount
   useEffect(() => {
@@ -52,96 +51,72 @@ export default function ChatPage() {
     }
   }, [chatId, messages, sendQuery, user])
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Improved scroll-based message detection
-  useEffect(() => {
-    if (!messagesContainerRef.current) return
+  // Handle scroll to detect which assistant message is most visible
+  // useEffect(() => {
+  //   const container = messagesContainerRef.current
+  //   if (!container) return
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find assistant messages that are more than 50% visible
-        let bestCandidate: {
-          message: ChatMessage
-          index: number
-          ratio: number
-        } | null = null
+  //   const handleScroll = () => {
+  //     console.log('Scroll event triggered') // Debug log
+  //     const containerRect = container.getBoundingClientRect()
+  //     const containerTop = containerRect.top
+  //     const containerBottom = containerRect.bottom
+  //     console.log('Container bounds:', { containerTop, containerBottom }) // Debug log
 
-        entries.forEach((entry) => {
-          // Only consider entries that are more than 50% visible
-          if (entry.intersectionRatio > 0.5) {
-            const messageIndex = Number.parseInt(entry.target.getAttribute("data-message-index") || "-1")
-            const message = messages[messageIndex]
+  //     // Find the first assistant message that's visible on screen
+  //     let foundMessage: ChatMessage | null = null
+  //     let foundIndex = -1
 
-            if (message && message.role === "assistant") {
-              // If this is the first candidate or has a higher intersection ratio
-              if (!bestCandidate || entry.intersectionRatio > bestCandidate.ratio) {
-                bestCandidate = {
-                  message,
-                  index: messageIndex,
-                  ratio: entry.intersectionRatio,
-                }
-              }
-            }
-          }
-        })
+  //     for (let i = 0; i < messages.length; i++) {
+  //       const message = messages[i]
+  //       if (message.role === 'assistant') {
+  //         const element = document.querySelector(`[data-message-index="${i}"]`)
+  //         if (element) {
+  //           const elementRect = element.getBoundingClientRect()
+  //           console.log(`Message ${i} bounds:`, { top: elementRect.top, bottom: elementRect.bottom, visible: elementRect.bottom > containerTop && elementRect.top < containerBottom })
+  //           // Check if any part of the message is visible
+  //           if (elementRect.bottom > containerTop && elementRect.top < containerBottom) {
+  //             foundMessage = message
+  //             foundIndex = i
+  //             // break 
+  //           }
+  //         }
+  //       }
+  //     }
 
-        // Update active message if we found a suitable candidate
-        if (bestCandidate && bestCandidate.index !== activeMessageIndex) {
-          setActiveAssistantMessage(bestCandidate.message)
-          setActiveMessageIndex(bestCandidate.index)
+  //     console.log('Found message:', { foundIndex, currentActive: activeMessageIndex }) // Debug log
+  //     // Update active message if we found one and it's different
+  //     if (foundMessage && foundIndex !== activeMessageIndex) {
+  //       console.log('Updating active message to:', foundIndex) // Debug log
+  //       setActiveAssistantMessage(foundMessage)
+  //       setActiveMessageIndex(foundIndex)
+        
+  //       // Auto-open sidebar when there's an assistant message visible
+  //       if (!isSidebarOpen) {
+  //         setIsSidebarOpen(true)
+  //       }
+  //     }
+  //   }
 
-          // Auto-open sidebar when there's an assistant message visible
-          if (!isSidebarOpen) {
-            setIsSidebarOpen(true)
-          }
-        }
-      },
-      {
-        root: messagesContainerRef.current,
-        // Use 0px margins to get accurate intersection ratios
-        rootMargin: "0px",
-        // Use more granular thresholds including 0.5 (50%)
-        threshold: [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0],
-      },
-    )
+  //   // Add scroll listener
+  //   container.addEventListener('scroll', handleScroll, { passive: true })
+    
+  //   // Initial check
+  //   setTimeout(handleScroll, 100) // Delay initial check to ensure DOM is ready
 
-    // Observe all message elements
-    messageRefs.current.forEach((element) => {
-      if (element) {
-        observer.observe(element)
-      }
-    })
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [messages, activeMessageIndex, isSidebarOpen])
-
-  // Update active message when streaming content changes (for the last message)
-  useEffect(() => {
-    if (isStreaming && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1]
-      if (lastMessage.role === "assistant") {
-        setActiveAssistantMessage(lastMessage)
-        setActiveMessageIndex(messages.length - 1)
-      }
-    }
-  }, [messages, streamedContent, isStreaming])
+  //   return () => {
+  //     container.removeEventListener('scroll', handleScroll)
+  //   }
+  // }, [messages, activeMessageIndex, isSidebarOpen]) 
 
   const handleSubmit = (message: string) => {
     sendQuery(message, user)
   }
-
-  const setMessageRef = useCallback((index: number, element: HTMLDivElement | null) => {
-    if (element) {
-      messageRefs.current.set(index, element)
-    } else {
-      messageRefs.current.delete(index)
-    }
-  }, [])
 
   if (!messages.length) {
     return (
@@ -166,10 +141,9 @@ export default function ChatPage() {
             <div className="p-4 space-y-6 pb-6">
               {messages.map((message, index) => (
                 <div
-                  key={index}
-                  ref={(el) => setMessageRef(index, el)}
+                  key={message.id || index}
                   data-message-index={index}
-                  // Add some padding to ensure proper intersection detection
+                  data-message-role={message.role}
                   className="py-2"
                 >
                   <MessageBubble
@@ -194,10 +168,14 @@ export default function ChatPage() {
         <InsightsSidebar
           isOpen={isSidebarOpen}
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          message={activeAssistantMessage as AssistantMessage}
+          message={messages[messages.length - 1] as AssistantMessage}
           messageIndex={activeMessageIndex}
           isStreaming={isStreaming && activeMessageIndex === messages.length - 1}
           streamedContent={activeMessageIndex === messages.length - 1 ? streamedContent : ""}
+          insightContent={insightContent}
+          isInsightStreaming={isInsightStreaming}
+          generateInsights={generateInsights}
+          userId={user}
         />
       </div>
     </div>

@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   PanelRightClose,
   PanelRightOpen,
@@ -17,16 +17,25 @@ import {
   MessageSquare,
   Eye,
   ScrollText,
-} from "lucide-react"
-import type { AssistantMessage } from "@/types/chat"
+} from "lucide-react";
+import type { AssistantMessage } from "@/types/chat";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface InsightsSidebarProps {
-  isOpen: boolean
-  onToggle: () => void
-  message: AssistantMessage | null
-  messageIndex: number
-  isStreaming?: boolean
-  streamedContent?: string
+  isOpen: boolean;
+  onToggle: () => void;
+  message: AssistantMessage | null;
+  messageIndex: number;
+  isStreaming?: boolean;
+  streamedContent?: string;
+  insightContent: string;
+  isInsightStreaming: boolean;
+  generateInsights: (
+    userId: string,
+    data: Record<string, any>[]
+  ) => Promise<void>;
+  userId: string;
 }
 
 export function InsightsSidebar({
@@ -36,41 +45,56 @@ export function InsightsSidebar({
   messageIndex,
   isStreaming = false,
   streamedContent = "",
+  insightContent,
+  isInsightStreaming,
+  generateInsights,
+  userId,
 }: InsightsSidebarProps) {
-  const [insights, setInsights] = useState<any[]>([])
+  const [insights, setInsights] = useState<any[]>([]);
 
   // Generate insights when message or streaming content changes
   useEffect(() => {
     if (!message) {
-      setInsights([])
-      return
+      setInsights([]);
+      return;
     }
 
-    const newInsights = []
+    const newInsights = [];
 
     // Get the content to analyze (streaming content if available, otherwise message content)
-    const contentToAnalyze = isStreaming ? streamedContent : message.streamedContent || ""
+    const contentToAnalyze = isStreaming
+      ? streamedContent
+      : message.streamedContent || "";
 
     // Word count insight
     if (contentToAnalyze) {
       const words = contentToAnalyze
         .trim()
         .split(/\s+/)
-        .filter((word) => word.length > 0)
-      const wordCount = words.length
-      const charCount = contentToAnalyze.length
-      const charCountNoSpaces = contentToAnalyze.replace(/\s/g, "").length
-      const sentences = contentToAnalyze.split(/[.!?]+/).filter((s) => s.trim().length > 0).length
-      const paragraphs = contentToAnalyze.split(/\n\s*\n/).filter((p) => p.trim().length > 0).length
-      const readingTime = Math.ceil(wordCount / 200) // Average reading speed
-      const avgWordsPerSentence = sentences > 0 ? Math.round(wordCount / sentences) : 0
+        .filter((word) => word.length > 0);
+      const wordCount = words.length;
+      const charCount = contentToAnalyze.length;
+      const charCountNoSpaces = contentToAnalyze.replace(/\s/g, "").length;
+      const sentences = contentToAnalyze
+        .split(/[.!?]+/)
+        .filter((s) => s.trim().length > 0).length;
+      const paragraphs = contentToAnalyze
+        .split(/\n\s*\n/)
+        .filter((p) => p.trim().length > 0).length;
+      const readingTime = Math.ceil(wordCount / 200); // Average reading speed
+      const avgWordsPerSentence =
+        sentences > 0 ? Math.round(wordCount / sentences) : 0;
 
       newInsights.push({
         type: "content",
         title: "Content Analysis",
         items: [
           { label: "Words", value: wordCount.toLocaleString(), icon: Hash },
-          { label: "Characters", value: charCount.toLocaleString(), icon: FileText },
+          {
+            label: "Characters",
+            value: charCount.toLocaleString(),
+            icon: FileText,
+          },
           {
             label: "Characters (no spaces)",
             value: charCountNoSpaces.toLocaleString(),
@@ -78,17 +102,21 @@ export function InsightsSidebar({
           },
           { label: "Sentences", value: sentences, icon: ScrollText },
           { label: "Paragraphs", value: paragraphs, icon: ScrollText },
-          { label: "Avg words/sentence", value: avgWordsPerSentence, icon: Hash },
+          {
+            label: "Avg words/sentence",
+            value: avgWordsPerSentence,
+            icon: Hash,
+          },
           { label: "Reading Time", value: `${readingTime} min`, icon: Clock },
         ],
         icon: MessageSquare,
-      })
+      });
     }
 
     // Data insights
     if (message.data && message.data.length > 0) {
-      const rowCount = message.data.length
-      const columnCount = Object.keys(message.data[0]).length
+      const rowCount = message.data.length;
+      const columnCount = Object.keys(message.data[0]).length;
       newInsights.push({
         type: "data",
         title: "Data Summary",
@@ -97,7 +125,7 @@ export function InsightsSidebar({
           { label: "Columns", value: columnCount, icon: Hash },
         ],
         icon: Database,
-      })
+      });
     }
 
     // Chart insights
@@ -105,31 +133,41 @@ export function InsightsSidebar({
       newInsights.push({
         type: "visualization",
         title: "Visualizations",
-        items: [{ label: "Charts", value: message.chartConfig.length, icon: Hash }],
+        items: [
+          { label: "Charts", value: message.chartConfig.length, icon: Hash },
+        ],
         icon: BarChart3,
-      })
+      });
     }
 
     // SQL Query insights
     if (message.sqlQuery) {
-      const queryLength = message.sqlQuery.length
-      const queryLines = message.sqlQuery.split("\n").length
-      const queryWords = message.sqlQuery.trim().split(/\s+/).length
+      const queryLength = message.sqlQuery.length;
+      const queryLines = message.sqlQuery.split("\n").length;
+      const queryWords = message.sqlQuery.trim().split(/\s+/).length;
       newInsights.push({
         type: "query",
         title: "SQL Query",
         items: [
-          { label: "Characters", value: queryLength.toLocaleString(), icon: Hash },
+          {
+            label: "Characters",
+            value: queryLength.toLocaleString(),
+            icon: Hash,
+          },
           { label: "Lines", value: queryLines, icon: Hash },
           { label: "Words", value: queryWords, icon: Hash },
         ],
         icon: Database,
-      })
+      });
     }
 
-    setInsights(newInsights)
-  }, [message, isStreaming, streamedContent])
+    setInsights(newInsights);
+  }, [message, isStreaming, streamedContent]);
 
+  const handleInsightClick = () => {
+    if (!message || !message.data || !message.data.length) return;
+    generateInsights(userId, message.data);
+  };
   return (
     <>
       {/* Sidebar */}
@@ -140,8 +178,17 @@ export function InsightsSidebar({
       >
         {/* Toggle Button */}
         <div className="absolute top-4 left-3">
-          <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
-            {isOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggle}
+            className="h-8 w-8 p-0"
+          >
+            {isOpen ? (
+              <PanelRightClose className="w-4 h-4" />
+            ) : (
+              <PanelRightOpen className="w-4 h-4" />
+            )}
           </Button>
         </div>
 
@@ -152,29 +199,25 @@ export function InsightsSidebar({
               <div className="flex items-center gap-2 mb-6">
                 <Lightbulb className="w-5 h-5 text-yellow-500" />
                 <h3 className="font-semibold text-lg">Insights</h3>
-                {isStreaming && (
-                  <Badge variant="secondary" className="text-xs">
-                    Live
-                  </Badge>
-                )}
               </div>
 
               {/* Active Message Indicator */}
               {message && messageIndex >= 0 && (
-                <Card className="bg-blue-50/50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                        Viewing Message #{messageIndex + 1}
-                      </span>
-                      {isStreaming && <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse ml-auto" />}
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 " />
+                  <span className="text-sm font-medium ">
+                    Viewing Message #{messageIndex + 1}
+                  </span>
+                </div>
               )}
+              <>
+                <Button onClick={handleInsightClick}>Generate Insights</Button>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {isInsightStreaming ? insightContent : message?.insights}
+                </ReactMarkdown>
+              </>
 
-              {insights.length > 0 ? (
+              {/* {insights.length > 0 ? (
                 <div className="space-y-4">
                   {insights.map((insight, index) => (
                     <Card key={index}>
@@ -187,12 +230,19 @@ export function InsightsSidebar({
                       <CardContent className="pt-0">
                         <div className="space-y-2">
                           {insight.items.map((item: any, itemIndex: number) => (
-                            <div key={itemIndex} className="flex justify-between items-center">
+                            <div
+                              key={itemIndex}
+                              className="flex justify-between items-center"
+                            >
                               <div className="flex items-center gap-2">
                                 <item.icon className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">{item.label}:</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {item.label}:
+                                </span>
                               </div>
-                              <span className="text-sm font-medium">{item.value}</span>
+                              <span className="text-sm font-medium">
+                                {item.value}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -204,24 +254,28 @@ export function InsightsSidebar({
                 <div className="text-center py-8 text-muted-foreground">
                   <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No insights available</p>
-                  <p className="text-xs mt-1">Scroll to an assistant message to view insights</p>
+                  <p className="text-xs mt-1">
+                    Scroll to an assistant message to view insights
+                  </p>
                 </div>
-              )}
+              )} */}
 
               {/* Streaming Status */}
-              {isStreaming && (
+              {/* {isStreaming && (
                 <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/50">
                   <CardContent className="p-3">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-sm text-green-700 dark:text-green-300">Analyzing response...</span>
+                      <span className="text-sm text-green-700 dark:text-green-300">
+                        Analyzing response...
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
 
               {/* Message Status */}
-              {message && (
+              {/* {message && (
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -262,7 +316,7 @@ export function InsightsSidebar({
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
             </div>
           </div>
         )}
@@ -275,5 +329,5 @@ export function InsightsSidebar({
         )}
       </div>
     </>
-  )
+  );
 }

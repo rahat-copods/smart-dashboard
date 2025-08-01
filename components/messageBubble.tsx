@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import type { ChatMessage } from "@/types/chat";
 import ChartsComponent from "./visuals";
-import { cn, formatCellValue } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DataTableComponent from "./visuals/dataTableComponent";
@@ -58,44 +58,12 @@ export function MessageBubble({
     ? streamedContent
     : (message.role === "assistant" && message.streamedContent) || "";
 
-  const exportToCSV = (
-    data: Record<string, any>[] | null,
-    filename: string
-  ) => {
-    if (!data || data.length === 0) return;
-
-    const headers = Object.keys(data[0]);
-    const csvRows = [
-      headers.join(","),
-      ...data.map((row) =>
-        headers
-          .map((header) => {
-            const value = row[header] ?? "";
-            const escaped = value.toString().replace(/"/g, '""');
-            return `"${escaped}"`;
-          })
-          .join(",")
-      ),
-    ];
-
-    const csvContent = csvRows.join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${filename}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   const renderSuggestions = () => {
     if (
       !isAssistant ||
       !showSuggestions ||
-      message.sqlResult?.suggestions?.length === 0
+      !message.sqlResult?.suggestions ||
+      message.sqlResult.suggestions.length === 0
     )
       return null;
 
@@ -106,7 +74,7 @@ export function MessageBubble({
           Follow-up questions:
         </div>
         <div className="flex flex-wrap gap-2">
-          {message.sqlResult?.suggestions?.map((suggestion, index) => (
+          {message.sqlResult.suggestions.map((suggestion, index) => (
             <Button
               key={index}
               variant="outline"
@@ -156,8 +124,6 @@ export function MessageBubble({
                 <div
                   className={cn(
                     "bg-muted/30 border border-muted rounded-lg p-4 space-y-4 transition-all duration-300",
-                    isActive &&
-                      "ring-2 ring-blue-500/50 bg-blue-50/30 dark:bg-blue-950/30 shadow-lg"
                   )}
                 >
                   {/* Display current status and streaming content */}
@@ -262,7 +228,7 @@ export function MessageBubble({
                           </button>
                         </div>
                         {isQueryExpanded && (
-                          <div className="bg-muted/50 border border-muted rounded-md p-3">
+                          <div className="bg-muted/50 border border-muted rounded-md p-3 mt-2">
                             <pre className="text-sm font-mono text-foreground/90 overflow-x-auto whitespace-pre-wrap">
                               {message.sqlQuery}
                             </pre>
