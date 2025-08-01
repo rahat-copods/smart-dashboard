@@ -146,7 +146,7 @@ async function generateChartConfig(
   messages: any[],
   streamMarkdown: StreamMarkdown
 ) {
-  streamMarkdown("Generate visuals", "status");
+  streamMarkdown("Generating visuals", "status");
   const systemPromptChartConfig = getChartConfigPrompt(
     // sqlQuery,
     // userQueryParsed,
