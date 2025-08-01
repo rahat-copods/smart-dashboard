@@ -15,6 +15,8 @@ export const useChat = (
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamedContent, setStreamedContent] = useState("");
   const [streamingStatus, setStreamingStatus] = useState("");
+  const [insightContent, setInsightContent] = useState("");
+  const [isInsightStreaming, setIsInsightStreaming] = useState(false);
 
   const sendQuery = useCallback(
     async (question: string, userId: string) => {
@@ -148,7 +150,7 @@ export const useChat = (
                       streamedContent: accumulatedContent,
                     };
                   }
-                  console.log(updated)
+                  console.log(updated);
                   return updated;
                 });
                 // Store final result
@@ -219,5 +221,154 @@ export const useChat = (
     [chatId, messages, setMessages]
   );
 
-  return { sendQuery, isStreaming, streamedContent, streamingStatus };
+  const generateInsights = useCallback(
+    async (userId: string, data: Record<string, any>[]) => {
+      setIsInsightStreaming(true);
+      setInsightContent("");
+      let accumulatedInsight = "";
+
+      try {
+        const response = await fetch("/api/insights", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            messages: [
+              ...messages.map((msg) => ({
+                role: msg.role,
+                content: msg.role === "user" ? msg.question : msg.finalSummary,
+              })),
+              {
+                role: "user",
+                content:
+                  "Please give me insights for this data \n" +
+                  JSON.stringify(data),
+              },
+            ],
+          }),
+        });
+
+        if (!response.body) {
+          throw new Error("No response body");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n").filter((line) => line.trim());
+
+          for (const line of lines) {
+            try {
+              const parsed: StreamResponse = JSON.parse(line);
+
+              if (parsed.type === "status") {
+              } else if (parsed.type === "content") {
+                accumulatedInsight += parsed.text;
+                setInsightContent(accumulatedInsight);
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  if (
+                    updated[lastIndex] &&
+                    updated[lastIndex].role === "assistant"
+                  ) {
+                    updated[lastIndex] = {
+                      ...updated[lastIndex],
+                      insights: accumulatedInsight,
+                    };
+                  }
+                  return updated;
+                });
+                ChatStorage.updateLastMessage(chatId, {
+                  insights: accumulatedInsight,
+                });
+              } else if (parsed.type === "partialResult") {
+              } else if (parsed.type === "result" || parsed.type === "error") {
+                const result = JSON.parse(parsed.text);
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  if (
+                    updated[lastIndex] &&
+                    updated[lastIndex].role === "assistant"
+                  ) {
+                    updated[lastIndex] = {
+                      ...updated[lastIndex],
+                      insights: result.summary,
+                    };
+                  }
+                  return updated;
+                });
+                ChatStorage.updateLastMessage(chatId, {
+                  insights: result.summary,
+                  error: result.error,
+                });
+              }
+            } catch (error) {
+              console.error("Error parsing insights stream chunk:", error);
+              const errorMessage =
+                error instanceof Error
+                  ? error.message
+                  : "Failed to parse insights response";
+              setMessages((prev) => {
+                const updated = [...prev];
+                const lastIndex = updated.length - 1;
+                if (
+                  updated[lastIndex] &&
+                  updated[lastIndex].role === "assistant"
+                ) {
+                  updated[lastIndex] = {
+                    ...updated[lastIndex],
+                    insights: errorMessage,
+                  };
+                }
+                return updated;
+              });
+              ChatStorage.updateLastMessage(chatId, {
+                insights: errorMessage,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error generating insights:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastIndex = updated.length - 1;
+          if (updated[lastIndex] && updated[lastIndex].role === "assistant") {
+            updated[lastIndex] = {
+              ...updated[lastIndex],
+              insights: errorMessage,
+            };
+          }
+          return updated;
+        });
+        ChatStorage.updateLastMessage(chatId, {
+          insights: errorMessage,
+        });
+      } finally {
+        setIsInsightStreaming(false);
+        setInsightContent("");
+      }
+    },
+    [chatId, messages, setMessages]
+  );
+
+  return {
+    sendQuery,
+    generateInsights,
+    isStreaming,
+    streamedContent,
+    streamingStatus,
+    isInsightStreaming,
+    insightContent,
+  };
 };

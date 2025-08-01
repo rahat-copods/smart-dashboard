@@ -23,6 +23,7 @@ export interface AssistantMessage extends BaseMessage {
   suggestions?: string[];
   data?: any;
   status?: string;
+  insights?: string;
 }
 
 export type ChatMessage = UserMessage | AssistantMessage;
