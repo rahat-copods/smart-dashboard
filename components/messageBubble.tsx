@@ -4,15 +4,11 @@ import {
   User,
   Bot,
   Code,
-  Database,
   AlertCircle,
   Info,
-  ChevronLeft,
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Download,
-  MessageSquare,
   Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,11 +16,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import type { ChatMessage } from "@/types/chat";
-import { InsightsPanel } from "./insightsPanel";
 import ChartsComponent from "./visuals";
 import { cn, formatCellValue } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import DataTableComponent from "./visuals/dataTableComponent";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -34,6 +30,7 @@ interface MessageBubbleProps {
   isStreaming?: boolean;
   streamedContent?: string;
   streamingStatus?: string;
+  isActive?: boolean;
 }
 
 export function MessageBubble({
@@ -44,20 +41,15 @@ export function MessageBubble({
   isStreaming = false,
   streamedContent = "",
   streamingStatus = "",
+  isActive = false,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
-
   // Collapsible states
   const [isQueryExpanded, setIsQueryExpanded] = useState(false);
-  const [showInsights, setShowInsights] = useState(false);
-  const [insightsLoading, setInsightsLoading] = useState(false);
-  const [insightsData, setInsightsData] = useState<ChatMessage | null>(null);
-  const [isContentExpanded, setIsContentExpanded] = useState(true);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+
   // Derive current status
   const currentStatus = isStreaming ? streamingStatus : "Completed";
 
@@ -99,142 +91,12 @@ export function MessageBubble({
     URL.revokeObjectURL(url);
   };
 
-  const renderTable = (data: Record<string, any>[]) => {
-    if (!data || data.length === 0) {
-      return (
-        <div className="text-sm text-center py-8 text-muted-foreground border rounded-md">
-          No data found
-        </div>
-      );
-    }
-
-    const headers = Object.keys(data[0]);
-    const totalPages = Math.ceil(data.length / rowsPerPage);
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const currentData = data.slice(startIndex, endIndex);
-
-    const headerHeight = 48;
-    const rowHeight = 40;
-    const currentRows = Math.min(currentData.length, rowsPerPage);
-    const contentHeight = headerHeight + currentRows * rowHeight;
-    const maxHeight = headerHeight + 8 * rowHeight;
-    const tableHeight = Math.min(contentHeight, maxHeight);
-
-    return (
-      <div className="space-y-2">
-        <div
-          className="border rounded-md overflow-hidden w-full"
-          style={{ height: `${tableHeight}px` }}
-        >
-          <div className="h-full overflow-auto">
-            <table className="w-full border-collapse min-w-full">
-              <thead className="sticky top-0 bg-background border-b">
-                <tr>
-                  {headers.map((header) => (
-                    <th
-                      key={header}
-                      className="font-semibold min-w-[120px] max-w-[200px] p-3 text-left border-r last:border-r-0 truncate"
-                      title={header
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (l) => l.toUpperCase())}
-                    >
-                      {header
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (l) => l.toUpperCase())}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {currentData.map((row, index) => (
-                  <tr
-                    key={startIndex + index}
-                    className="hover:bg-muted/50 border-b last:border-b-0"
-                  >
-                    {headers.map((header) => (
-                      <td
-                        key={header}
-                        className="font-mono text-sm py-2 px-3 border-r last:border-r-0 min-w-[120px] max-w-[200px] truncate"
-                        title={formatCellValue(row[header])}
-                      >
-                        {formatCellValue(row[header])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between px-2">
-          <div className="text-sm text-muted-foreground">
-            Showing {startIndex + 1}-{Math.min(endIndex, data.length)} of{" "}
-            {data.length} rows
-          </div>
-          <div className="flex items-center space-x-2">
-            {totalPages > 1 && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={
-                          currentPage === pageNum ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const renderSuggestions = () => {
-    if (!isAssistant || !showSuggestions || message.suggestions?.length === 0)
+    if (
+      !isAssistant ||
+      !showSuggestions ||
+      message.sqlResult?.suggestions?.length === 0
+    )
       return null;
 
     return (
@@ -244,7 +106,7 @@ export function MessageBubble({
           Follow-up questions:
         </div>
         <div className="flex flex-wrap gap-2">
-          {message.suggestions?.map((suggestion, index) => (
+          {message.sqlResult?.suggestions?.map((suggestion, index) => (
             <Button
               key={index}
               variant="outline"
@@ -284,14 +146,20 @@ export function MessageBubble({
   if (isAssistant) {
     return (
       <>
-        <div className="space-y-4">
+        <div className="space-y-4 relative">
           <div className="flex justify-start">
             <div className="flex space-x-3 w-full">
               <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted-foreground">
                 <Bot className="w-4 h-4 text-background" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="bg-muted/30 border border-muted rounded-lg p-4 space-y-4">
+                <div
+                  className={cn(
+                    "bg-muted/30 border border-muted rounded-lg p-4 space-y-4 transition-all duration-300",
+                    isActive &&
+                      "ring-2 ring-blue-500/50 bg-blue-50/30 dark:bg-blue-950/30 shadow-lg"
+                  )}
+                >
                   {/* Display current status and streaming content */}
                   <div className="space-y-2">
                     <button
@@ -301,7 +169,6 @@ export function MessageBubble({
                       <span className="relative w-4 h-4">
                         {/* Brain icon (visible by default, fades out on hover) */}
                         <Brain className="absolute inset-0 w-4 h-4 transition-all duration-200 transform group-hover:opacity-0 group-hover:scale-90" />
-
                         {/* Chevron icon (hidden by default, fades in on hover, rotates if expanded) */}
                         <ChevronRight
                           className={cn(
@@ -311,7 +178,6 @@ export function MessageBubble({
                           strokeWidth={1.5}
                         />
                       </span>
-
                       <span
                         className={cn(
                           isStreaming &&
@@ -323,28 +189,30 @@ export function MessageBubble({
                     </button>
                     {isContentExpanded && displayContent && (
                       <div className="text-sm text-muted-foreground whitespace-pre-wrap pl-4 border-l-2 border-gray-200">
-                        
-                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayContent}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {displayContent}
+                        </ReactMarkdown>
                       </div>
                     )}
                   </div>
 
-                  {message.partial && message.partial_reason && (
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Info className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-semibold text-primary">
-                          Partial Result
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          Incomplete
-                        </Badge>
+                  {message.sqlResult?.partial &&
+                    message.sqlResult?.partialReason && (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Info className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-semibold text-primary">
+                            Partial Result
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            Incomplete
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-primary">
+                          {message.sqlResult.partialReason}
+                        </div>
                       </div>
-                      <div className="text-sm text-primary">
-                        {message.partial_reason}
-                      </div>
-                    </div>
-                  )}
+                    )}
 
                   {message.error && (
                     <div className="space-y-2">
@@ -360,53 +228,16 @@ export function MessageBubble({
                     </div>
                   )}
 
-                  {message.chartConfig &&
-                    message.data &&
+                  {message.data && message.chartConfig ? (
                     message.chartConfig.map((visual, index) => (
                       <ChartsComponent
                         key={index}
                         config={visual}
                         chartData={message.data}
                       />
-                    ))}
-
-                  {message.data && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Database className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm font-semibold">Results</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {message.data.length} rows
-                          </Badge>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setShowInsights(true);
-                              setInsightsData(message);
-                            }}
-                            disabled={insightsLoading}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            {insightsLoading ? "Loading..." : "Insights"}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              exportToCSV(message.data, "query_results")
-                            }
-                            title="Export as CSV"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      {renderTable(message.data)}
-                    </div>
+                    ))
+                  ) : (
+                    <DataTableComponent data={message.data} />
                   )}
 
                   {message.sqlQuery && (
@@ -446,12 +277,6 @@ export function MessageBubble({
           </div>
           {renderSuggestions()}
         </div>
-        <InsightsPanel
-          isOpen={showInsights}
-          onClose={() => setShowInsights(false)}
-          initialData={insightsData as ChatMessage}
-          userId={userId}
-        />
       </>
     );
   }

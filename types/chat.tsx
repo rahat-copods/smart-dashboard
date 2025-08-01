@@ -1,4 +1,5 @@
-import { BarChartConfig, LineChartConfig } from "./visuals";
+import { ChartConfig } from "./visuals";
+
 
 export interface BaseMessage {
   id: string;
@@ -14,12 +15,11 @@ export interface UserMessage extends BaseMessage {
 export interface AssistantMessage extends BaseMessage {
   role: "assistant";
   sqlQuery?: string;
-  partial?: boolean;
-  partial_reason?: string;
   error?: string;
   finalSummary?: string;
   streamedContent?: string;
-  chartConfig?: Array<BarChartConfig | LineChartConfig> | null;
+  chartConfig?: Array<ChartConfig> | null;
+  sqlResult?: {error: string, partial: boolean, partialReason: string, sqlQuery: string, suggestions: string[]};
   suggestions?: string[];
   data?: any;
   status?: string;

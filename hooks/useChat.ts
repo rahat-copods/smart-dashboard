@@ -148,6 +148,7 @@ export const useChat = (
                       streamedContent: accumulatedContent,
                     };
                   }
+                  console.log(updated)
                   return updated;
                 });
                 // Store final result

@@ -392,6 +392,7 @@ export async function POST(req: NextRequest) {
           streamMarkdown
         );
         console.log("\nstep 5 complete");
+        console.log(chartResult)
 
         // Final response with all relevant data
         controller.enqueue(
@@ -400,7 +401,7 @@ export async function POST(req: NextRequest) {
               type: "result",
               text: JSON.stringify({
                 data: dbResult?.data,
-                chartConfig: chartResult.chartConfig,
+                chartConfig: chartResult.visuals,
                 sqlQuery: sqlResult.sqlQuery,
                 error: dbResult?.error || null,
                 finalSummary: summary,

@@ -10,7 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { BarChartConfig } from "@/types/visuals";
+import { ChartConfig as BarChartConfig } from "@/types/visuals";
 import { formatCellValue } from "@/lib/utils";
 
 interface BarChartProps {
@@ -21,11 +21,15 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
   const chartConfig = config.dataSeries satisfies ChartConfig;
   const formattedChartData = chartData.map((item) => {
     const formattedItem = { ...item };
-    config.bars.forEach((bar) => {
+    config.components.forEach((bar) => {
       formattedItem[bar.dataKey] = formatCellValue(item[bar.dataKey]);
     });
     return formattedItem;
   });
+
+  const upperDomain = Math.max(
+    ...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)
+  );
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <BarChart accessibilityLayer data={formattedChartData}>
@@ -36,16 +40,21 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
           tickMargin={10}
           axisLine={false}
         />
-        <YAxis tickLine={false} axisLine={false} tickMargin={10} />
+        <YAxis
+          dataKey={config.yAxis.dataKey}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={10}
+          domain={["auto", upperDomain * 1.1]}
+        />
         <ChartTooltip content={<ChartTooltipContent className="w-[160px]" />} />
         <ChartLegend content={<ChartLegendContent />} />
-        {config.bars.map((bar, index) => (
+        {config.components.map((bar, index) => (
           <Bar
             key={index}
             dataKey={bar.dataKey}
             fill={bar.fill}
             radius={4}
-            type="step"
             maxBarSize={40}
           />
         ))}
