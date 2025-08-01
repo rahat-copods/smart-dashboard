@@ -27,9 +27,9 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
     return formattedItem;
   });
 
-  const upperDomain = Math.max(
+  const upperDomain = Math.ceil(Math.max(
     ...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)
-  );
+  ));
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <BarChart accessibilityLayer data={formattedChartData}>
@@ -45,7 +45,7 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
           tickLine={false}
           axisLine={false}
           tickMargin={10}
-          domain={[0, upperDomain + upperDomain * 0.05]}
+          domain={[0, upperDomain]}
         />
         <ChartTooltip content={<ChartTooltipContent className="w-[160px]" />} />
         <ChartLegend content={<ChartLegendContent />} />

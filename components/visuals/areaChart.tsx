@@ -36,9 +36,9 @@ export function AreaChartComponent({ config, chartData }: AreaChartProps) {
     return formattedItem;
   });
 
-  const upperDomain = Math.max(
+   const upperDomain = Math.ceil(Math.max(
     ...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)
-  );
+  ));
   return (
     <ChartContainer config={chartConfig}>
       <AreaChart accessibilityLayer data={formattedChartData}>
