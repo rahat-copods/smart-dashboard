@@ -3,7 +3,7 @@ import { AIClient } from "@/lib/api/aiClient";
 import { getInsightsPrompt } from "@/lib/api/systemPrompts";
 import { userSchemas } from "@/lib/api/schema";
 import { ChatCompletionMessageParam } from "openai/resources/index";
-import { StreamCallback } from "@/lib/api/types";
+import { InsightsResult, StreamCallback } from "@/lib/api/types";
 import { InsightsSchema } from "@/lib/api/outputSchema";
 
 async function generateDataInsights(
@@ -11,7 +11,7 @@ async function generateDataInsights(
   schema: string,
   messages: ChatCompletionMessageParam[],
   streamCallback: StreamCallback
-) {
+): Promise<InsightsResult> {
   streamCallback("Generating summary...", "status");
 
   const systemPrompt = getInsightsPrompt(schema);
@@ -25,7 +25,8 @@ async function generateDataInsights(
       ...messages,
     ],
     streamCallback,
-    InsightsSchema
+    InsightsSchema,
+    "insights"
   );
 
   streamCallback("Summary generated", "status");
@@ -68,10 +69,7 @@ export async function POST(req: NextRequest) {
           encoder.encode(
             JSON.stringify({
               type: "result",
-              text: JSON.stringify({
-                insights,
-                error: null,
-              }),
+              text: JSON.stringify(insights),
             })
           )
         );
@@ -83,10 +81,7 @@ export async function POST(req: NextRequest) {
           encoder.encode(
             JSON.stringify({
               type: "error",
-              text: JSON.stringify({
-                summary: null,
-                error: errorMessage,
-              }),
+              text: errorMessage,
             })
           )
         );

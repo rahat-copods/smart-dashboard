@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
+import { DbResult } from './types';
 
-export async function executeQuery(query: string, dbUrl: string): Promise<{ data: any[] | null; rowCount: number; error: string | null }> {
+export async function executeQuery(query: string, dbUrl: string): Promise<DbResult> {
   console.log("query", query)
   const pool = new Pool({ connectionString: dbUrl });
   let client;

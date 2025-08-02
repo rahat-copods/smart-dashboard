@@ -1,3 +1,5 @@
+import { ChartConfig, ErrorReasonResult, QueryParsingResult, SqlGenerationResult } from "./types";
+
 export const getQueryParsingPrompt = (
   schema: string,
 ) => `You are an expert at understanding user queries and identifying what matters most to them.
@@ -323,11 +325,11 @@ Focus on creating chart configurations that accurately represent the SQL query s
 
 export function getSummarizationPrompt(
   userQuery: string,
-  userQueryParsed: any,
-  sqlResult: any,
+  userQueryParsed: QueryParsingResult,
+  sqlResult: SqlGenerationResult,
   dbResult: any,
-  chartResult: any,
-  errorResult: any = null
+  chartResult: ChartConfig | null,
+  errorResult: ErrorReasonResult | null
 ): string {
   return `
 You are an AI assistant tasked with summarizing a conversation involving a user query, its parsed form, a generated SQL query, database results, chart configuration, and optional error explanations. Create a concise, natural-language summary that captures the key points of the conversation. Include:
@@ -344,8 +346,8 @@ You are an AI assistant tasked with summarizing a conversation involving a user 
 - SQL Query: ${sqlResult.sqlQuery}
 - Partial Reason: ${sqlResult.partialReason}
 - Database Result: ${dbResult ? `Rows: ${dbResult.rowCount}, Error: ${dbResult.error || 'None'}` : 'None'}
-- Chart Config: ${chartResult ? JSON.stringify(chartResult.chartConfig) : 'None'}
-- Error Explanation: ${errorResult ? errorResult : 'None'}
+- Chart Config: ${chartResult ? JSON.stringify(chartResult.visuals) : 'None'}
+- Error Explanation: ${errorResult ? JSON.stringify(errorResult) : 'None'}
 
 **Instructions**:
 - Write a concise summary in natural language.
@@ -383,7 +385,7 @@ Always respond in this markdown structure with correct headings:
 
 # Analysis Summary
 
-## **Key Findings**
+## Key Findings
 *2-3 bullet points highlighting the most important discoveries*
 
 ## Critical Metrics

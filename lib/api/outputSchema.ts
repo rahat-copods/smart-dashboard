@@ -29,7 +29,7 @@ export const QueryParsingSchema = z.object({
   reasoning: z
     .string()
     .describe(
-      "Brief reasoning of how you processed in Markdown format. Start with '## Understanding Request' as the heading."
+      "Brief reasoning in Markdown format (40-50 words). Start with '## Understanding Request\n' as the heading."
     ),
 });
 
@@ -64,7 +64,7 @@ export const SqlGenerationSchema = z.object({
   reasoning: z
     .string()
     .describe(
-      "Brief reasoning of how you processed in Markdown format. Start with '## Generating Query' as the heading."
+      "Brief reasoning in Markdown format (40-50 words) the query generation. Start with '\n## Generating Query\n' as the heading."
     ),
 });
 
@@ -72,7 +72,7 @@ export const ErrorReasonSchema = z.object({
   errorReason: z
     .string()
     .describe(
-      "Detailed explanation of why the request failed or could not be processed"
+      "brief explanation of why the request failed or could not be processed (40-50 words) in Markdown format"
     ),
 });
 
@@ -80,15 +80,18 @@ export const SummarySchema = z.object({
   summary: z
     .string()
     .describe(
-      "A Markdown format Summary for the conversion of the user query to SQL"
+      "A Markdown format Summary for the conversion of the user query to SQL (150-200 words)"
     ),
 });
 
 export const InsightsSchema = z.object({
-  Insights: z
+  insights: z
     .string()
+    .describe("A Markdown format Insights for the data provided by user"),
+  suggestions: z
+    .array(z.string())
     .describe(
-      "A Markdown format Insights for the data provided by user"
+      "A list of 2-3 natural language follow-up questions that could be asked next, based on the insights provided — e.g., filtering further, comparing results, or digging deeper into related metrics."
     ),
 });
 
@@ -155,17 +158,6 @@ export const ChartConfigSchema = z.object({
   reasoning: z
     .string()
     .describe(
-      "Brief reasoning of how you processed in Markdown format. Start with '## Figuring Out Visuals' as the heading."
+      "Brief reasoning in Markdown format (40-50 words). Start with '\n## Figuring Out Visuals\n' as the heading."
     ),
 });
-
-// Inferred TypeScript type
-export type KeySubject = z.infer<typeof KeySubjectSchema>;
-export type QueryParsingResult = z.infer<typeof QueryParsingSchema>;
-export type SqlGenerationResult = z.infer<typeof SqlGenerationSchema>;
-export type ErrorReasonResult = z.infer<typeof ErrorReasonSchema>;
-export type DataSeriesItem = z.infer<typeof DataSeriesItemSchema>;
-export type Component = z.infer<typeof ComponentSchema>;
-export type Axis = z.infer<typeof AxisSchema>;
-export type ChartVisual = z.infer<typeof ChartVisualSchema>;
-export type ChartConfig = z.infer<typeof ChartConfigSchema>;

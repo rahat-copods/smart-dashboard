@@ -8,7 +8,6 @@ import {
   SqlGenerationSchema,
   ErrorReasonSchema,
   SummarySchema,
-  QueryParsingResult,
 } from "@/lib/api/outputSchema";
 import {
   getChartConfigPrompt,
@@ -17,7 +16,16 @@ import {
   getSqlGenerationPrompt,
   getSummarizationPrompt,
 } from "@/lib/api/systemPrompts";
-import { StreamCallback } from "@/lib/api/types";
+import {
+  ChartConfig,
+  DbResult,
+  ErrorReasonResult,
+  QueryParsingResult,
+  SqlGenerationResult,
+  StreamCallback,
+  SummaryResult,
+} from "@/lib/api/types";
+import { ChatCompletionMessageParam } from "openai/resources/index";
 
 async function parseUserQuery(
   aiClient: AIClient,
@@ -40,13 +48,12 @@ async function parseUserQuery(
 
 async function generateSqlQuery(
   aiClient: AIClient,
-  userQueryParsed: any,
+  userQueryParsed: QueryParsingResult,
   schemaString: string,
-  messages: any[],
+  messages: ChatCompletionMessageParam[],
   streamCallback: StreamCallback,
-  attempt: number,
   dialect: string
-) {
+): Promise<SqlGenerationResult> {
   const systemPromptQueryGenerate = getSqlGenerationPrompt(
     schemaString,
     dialect
@@ -60,7 +67,7 @@ async function generateSqlQuery(
       ...messages.slice(0, -1),
       {
         ...messages[messages.length - 1],
-        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify(userQueryParsed)}`,
+        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({...userQueryParsed, reasoning: null})}`,
       },
     ],
     streamCallback,
@@ -76,7 +83,7 @@ async function executeSqlQuery(
   sqlQuery: string,
   dbUrl: string,
   streamCallback: StreamCallback
-) {
+): Promise<DbResult> {
   streamCallback("Executing Query", "status");
   const dbResult = await executeQuery(sqlQuery, dbUrl);
 
@@ -96,9 +103,9 @@ async function explainError(
   aiClient: AIClient,
   sqlQuery: string,
   error: string,
-  messages: any[],
+  messages: ChatCompletionMessageParam[],
   streamCallback: StreamCallback
-) {
+): Promise<ErrorReasonResult> {
   const systemPromptErrorExplanation = getErrorExplanationPrompt();
 
   streamCallback("Analyzing failure", "status");
@@ -117,16 +124,16 @@ async function explainError(
     ErrorReasonSchema,
     "errorReason"
   );
-  return errorData.errorReason;
+  return errorData;
 }
 
 async function generateChartConfig(
   aiClient: AIClient,
   sqlQuery: string,
-  userQueryParsed: any,
+  userQueryParsed: QueryParsingResult,
   messages: any[],
   streamCallback: StreamCallback
-) {
+): Promise<ChartConfig> {
   streamCallback("Generating visuals", "status");
   const systemPromptChartConfig = getChartConfigPrompt();
 
@@ -136,7 +143,7 @@ async function generateChartConfig(
       ...messages.slice(0, -1),
       {
         ...messages[messages.length - 1],
-        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify(userQueryParsed)}\n\n**SQL Query**:\n${sqlQuery}`,
+        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({...userQueryParsed, reasoning: null})}\n\n**SQL Query**:\n${sqlQuery}`,
       },
     ],
     streamCallback,
@@ -151,20 +158,20 @@ async function generateChartConfig(
 async function summarizeConversation(
   aiClient: AIClient,
   userQuery: string,
-  userQueryParsed: any,
-  sqlResult: any,
-  dbResult: any,
-  chartResult: any,
-  errorResult: any = null,
+  userQueryParsed: QueryParsingResult,
+  sqlResult: SqlGenerationResult,
+  dbResult: DbResult | null,
+  chartResult: ChartConfig | null,
+  errorResult: ErrorReasonResult | null = null,
   messages: any[],
   streamCallback: StreamCallback
-) {
+): Promise<SummaryResult> {
   const systemPromptSummarization = getSummarizationPrompt(
     userQuery,
-    userQueryParsed,
-    sqlResult,
+    {...userQueryParsed, reasoning: "null"},
+    {...sqlResult, reasoning: "null"},
     dbResult,
-    chartResult,
+    chartResult && {...chartResult, reasoning: "null"},
     errorResult
   );
 
@@ -219,7 +226,14 @@ export async function POST(req: NextRequest) {
         console.log("\nstep 1 complete");
 
         // Step 2: SQL Generation (up to 3 attempts)
-        let sqlResult;
+        let sqlResult: SqlGenerationResult = {
+          error: null,
+          reasoning: "",
+          sqlQuery: null,
+          isPartial: null,
+          partialReason: null,
+          suggestions: [],
+        };
         let dbResult = null;
         let attempt = 0;
         const maxAttempts = 3;
@@ -235,7 +249,6 @@ export async function POST(req: NextRequest) {
             schemaString,
             messages,
             streamCallback,
-            attempt,
             dbUrl.split(":")[0]
           );
 
@@ -243,8 +256,8 @@ export async function POST(req: NextRequest) {
           if (
             sqlResult.error &&
             !sqlResult.sqlQuery &&
-            !sqlResult.table &&
-            !sqlResult.columns
+            !sqlResult.partialReason &&
+            !sqlResult.isPartial
           ) {
             const summary = await summarizeConversation(
               aiClient,
@@ -253,7 +266,7 @@ export async function POST(req: NextRequest) {
               sqlResult,
               null,
               null,
-              sqlResult.error,
+              { errorReason: sqlResult.error },
               messages,
               streamCallback
             );
@@ -262,11 +275,10 @@ export async function POST(req: NextRequest) {
                 JSON.stringify({
                   type: "result",
                   text: JSON.stringify({
-                    data: null,
-                    chartConfig: null,
-                    sqlQuery: null,
-                    error: sqlResult.error,
-                    finalSummary: summary,
+                    query: sqlResult,
+                    visuals: null,
+                    summary: summary.summary,
+                    error: null,
                   }),
                 })
               )
@@ -276,7 +288,7 @@ export async function POST(req: NextRequest) {
           }
 
           dbResult = await executeSqlQuery(
-            sqlResult.sqlQuery,
+            sqlResult.sqlQuery as string,
             dbUrl,
             streamCallback
           );
@@ -298,8 +310,8 @@ export async function POST(req: NextRequest) {
         ) {
           errorResult = await explainError(
             aiClient,
-            sqlResult.sqlQuery,
-            dbResult.error as string,
+            sqlResult?.sqlQuery as string,
+            dbResult.error || "0 rows returned",
             messages,
             streamCallback
           );
@@ -319,11 +331,10 @@ export async function POST(req: NextRequest) {
               JSON.stringify({
                 type: "result",
                 text: JSON.stringify({
-                  data: null,
-                  chartConfig: null,
-                  sqlQuery: sqlResult.sqlQuery,
-                  error: errorResult,
-                  finalSummary: summary,
+                  query: sqlResult,
+                  visuals: null,
+                  summary: summary.summary,
+                  error: errorResult.errorReason,
                 }),
               })
             )
@@ -336,7 +347,7 @@ export async function POST(req: NextRequest) {
         // Step 4: Chart Config
         const chartResult = await generateChartConfig(
           aiClient,
-          sqlResult.sqlQuery,
+          sqlResult?.sqlQuery as string,
           userQueryParsed,
           messages,
           streamCallback
@@ -363,11 +374,11 @@ export async function POST(req: NextRequest) {
             JSON.stringify({
               type: "result",
               text: JSON.stringify({
+                query: sqlResult,
+                visuals: chartResult,
+                summary: summary.summary,
+                error: null,
                 data: dbResult?.data,
-                chartConfig: chartResult.visuals,
-                sqlQuery: sqlResult.sqlQuery,
-                error: dbResult?.error || null,
-                finalSummary: summary,
               }),
             })
           )
@@ -385,7 +396,7 @@ export async function POST(req: NextRequest) {
                 chartConfig: null,
                 sqlQuery: null,
                 error: errorMessage,
-                finalSummary: `Error occurred: ${errorMessage}`,
+                summary: null,
               }),
             })
           )
