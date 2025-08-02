@@ -86,8 +86,6 @@ export const useChat = (
               const parsed: StreamResponse = JSON.parse(line);
 
               if (parsed.type === "status") {
-                accumulatedContent += `${parsed.text}`;
-                setStreamedContent(accumulatedContent + `\n ###${parsed.text}`);
                 setStreamingStatus(parsed.text);
               } else if (parsed.type === "content") {
                 accumulatedContent += parsed.text;
