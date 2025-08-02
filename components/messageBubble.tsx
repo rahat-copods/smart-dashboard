@@ -18,9 +18,8 @@ import { useState, forwardRef } from "react";
 import type { ChatMessage } from "@/types/chat";
 import ChartsComponent from "./visuals";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import DataTableComponent from "./visuals/dataTableComponent";
+import MarkdownRenderer from "./markdownRenderer";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -160,9 +159,9 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                       </button>
                       {isContentExpanded && displayContent && (
                         <div className="text-sm text-muted-foreground whitespace-pre-wrap pl-4 border-l-2 border-gray-200">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          <MarkdownRenderer>
                             {displayContent}
-                          </ReactMarkdown>
+                          </MarkdownRenderer>
                         </div>
                       )}
                     </div>

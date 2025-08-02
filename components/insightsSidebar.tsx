@@ -1,11 +1,9 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { PanelRightClose, PanelRightOpen, Lightbulb, Brain, Eye } from "lucide-react"
 import type { AssistantMessage } from "@/types/chat"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+import MarkdownRenderer from "./markdownRenderer"
 
 // Helper function to parse markdown into card sections
 const parseMarkdownIntoCards = (markdown: string) => {
@@ -135,34 +133,18 @@ export function InsightsSidebar({
                 <div className="space-y-4">
                   {parsedCards.map((card, index) => (
                     <Card key={index}>
-                      <CardHeader className="pb-3">
+                      <CardHeader className="">
                         <CardTitle className="text-lg font-semibold flex items-center gap-2">
                           <Brain className="w-4 h-4" />
                           {card.title}
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            // Adjust heading sizes for content within cards
-                            h1: ({ node, ...props }) => <h1 className="text-base font-semibold mb-2" {...props} />,
-                            h2: ({ node, ...props }) => <h2 className="text-base font-medium mb-2" {...props} />,
-                            h3: ({ node, ...props }) => <h3 className="text-sm font-medium mb-2" {...props} />,
-                            p: ({ node, ...props }) => (
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2" {...props} />
-                            ),
-                            ul: ({ node, ...props }) => (
-                              <ul
-                                className="text-sm list-disc list-inside mb-2 text-gray-600 dark:text-gray-400"
-                                {...props}
-                              />
-                            ),
-                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                          }}
+                        <MarkdownRenderer
+                          
                         >
                           {card.content}
-                        </ReactMarkdown>
+                        </MarkdownRenderer>
                       </CardContent>
                     </Card>
                   ))}

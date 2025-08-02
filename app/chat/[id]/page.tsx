@@ -17,7 +17,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [user, setUser] = useState("")
   const [chatTitle, setChatTitle] = useState("")
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [activeMessage, setActiveMessage] = useState<AssistantMessage | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)

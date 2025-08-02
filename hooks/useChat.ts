@@ -93,6 +93,7 @@ export const useChat = (
 
               if (parsed.type === "status") {
                 setStreamingStatus(parsed.text);
+                accumulatedContent = accumulatedContent + '\n'
               } else if (parsed.type === "content") {
                 accumulatedContent += parsed.text;
                 setStreamedContent(accumulatedContent);
@@ -137,11 +138,7 @@ export const useChat = (
                 });
                 // Store final result
                 ChatStorage.updateLastMessage(chatId, {
-                  data: result.data,
-                  chartConfig: result.chartConfig,
-                  sqlQuery: result.sqlQuery,
-                  error: result.error,
-                  finalSummary: result.finalSummary,
+                  ...result,
                   streamedContent: accumulatedContent,
                 });
               }
