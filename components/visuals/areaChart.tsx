@@ -19,7 +19,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartConfig as AreaChartConfig } from "@/types/visuals";
+import { ChartVisual as AreaChartConfig } from "@/lib/api/types";
 import { formatCellValue } from "@/lib/utils";
 
 interface AreaChartProps {
@@ -27,7 +27,7 @@ interface AreaChartProps {
   config: AreaChartConfig;
 }
 export function AreaChartComponent({ config, chartData }: AreaChartProps) {
-  const chartConfig = config.dataSeries satisfies ChartConfig;
+  const chartConfig = { ...config.dataSeries } as ChartConfig;
   const formattedChartData = chartData.map((item) => {
     const formattedItem = { ...item };
     config.components.forEach((line) => {
@@ -36,9 +36,9 @@ export function AreaChartComponent({ config, chartData }: AreaChartProps) {
     return formattedItem;
   });
 
-   const upperDomain = Math.ceil(Math.max(
-    ...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)
-  ));
+  const upperDomain = Math.ceil(
+    Math.max(...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0))
+  );
   return (
     <ChartContainer config={chartConfig}>
       <AreaChart accessibilityLayer data={formattedChartData}>
@@ -54,7 +54,7 @@ export function AreaChartComponent({ config, chartData }: AreaChartProps) {
           tickLine={false}
           axisLine={false}
           tickMargin={10}
-          domain={[0, upperDomain+ upperDomain * 0.1]}
+          domain={[0, upperDomain + upperDomain * 0.1]}
         />
         <ChartTooltip
           cursor={false}

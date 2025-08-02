@@ -10,7 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartConfig as BarChartConfig } from "@/types/visuals";
+import { ChartVisual as BarChartConfig} from "@/lib/api/types";
 import { formatCellValue } from "@/lib/utils";
 
 interface BarChartProps {
@@ -18,7 +18,7 @@ interface BarChartProps {
   config: BarChartConfig;
 }
 export function BarChartComponent({ config, chartData }: BarChartProps) {
-  const chartConfig = config.dataSeries satisfies ChartConfig;
+  const chartConfig = {...config.dataSeries} as ChartConfig;
   const formattedChartData = chartData.map((item) => {
     const formattedItem = { ...item };
     config.components.forEach((bar) => {

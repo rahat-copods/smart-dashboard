@@ -17,15 +17,15 @@ import {
   MoreVertical,
   Database,
 } from "lucide-react";
-import type { ChartConfig } from "@/types/visuals";
 import { BarChartComponent } from "./barCharts";
 import { LineChartComponent } from "./lineChart";
 import DataTableComponent from "./dataTableComponent";
 import { AreaChartComponent } from "./areaChart";
+import { ChartVisual } from "@/lib/api/types";
 
 interface ChartsComponentProps {
   chartData: any[] | null;
-  config: ChartConfig;
+  config: ChartVisual;
 }
 
 export default function ChartsComponent({

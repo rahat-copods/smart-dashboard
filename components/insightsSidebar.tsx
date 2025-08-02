@@ -85,8 +85,7 @@ export function InsightsSidebar({
     if (!message || !message.data || !message.data.length) return
     generateInsights(userId, message.data)
   }
-
-  const contentToDisplay = isInsightStreaming ? insightContent : message?.insights || ""
+  const contentToDisplay = isInsightStreaming ? insightContent : message?.insights?.insights || ""
   const parsedCards = parseMarkdownIntoCards(contentToDisplay)
 
   return (

@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Database, Send, Loader2 } from "lucide-react";
 import { ChatHeader } from "@/components/chatHeader";
 import { ChatStorage } from "@/hooks/chatStorage";
-import { ChatMessage } from "@/types";
+import { ChatMessage } from "@/types/chat";
 
 export default function HomePage() {
   const [userId, setUserId] = useState("");

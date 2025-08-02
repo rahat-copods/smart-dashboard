@@ -44,48 +44,11 @@ export default function ChatPage() {
     }
   }, [])
 
-  // Enhanced scroll event listener
-  useEffect(() => {
-    const container = messagesContainerRef.current
-    console.log("📜 Setting up scroll listener, container:", !!container)
-
-    if (!container) {
-      console.log("❌ No container found for scroll listener")
-      return
-    }
-
-    // Check container dimensions
-    console.log("📐 Container dimensions:", {
-      scrollHeight: container.scrollHeight,
-      clientHeight: container.clientHeight,
-      isScrollable: container.scrollHeight > container.clientHeight,
-      offsetHeight: container.offsetHeight,
-    })
-
-    const handleScroll = (event: Event) => {
-      console.log(`📜 VERTICAL SCROLL DETECTED!`, {
-        scrollTop: container.scrollTop,
-        scrollHeight: container.scrollHeight,
-        clientHeight: container.clientHeight,
-        scrollPercentage:
-          ((container.scrollTop / (container.scrollHeight - container.clientHeight)) * 100).toFixed(1) + "%",
-      })
-    }
-
-    container.addEventListener("scroll", handleScroll, { passive: true })
-    console.log("✅ Scroll listener attached to container")
-
-    return () => {
-      container.removeEventListener("scroll", handleScroll)
-      console.log("🧹 Scroll listener removed")
-    }
-  }, [messages])
 
   // Set up intersection observer for assistant messages
   useEffect(() => {
     const assistantMessages = messages.filter((msg) => msg.role === "assistant") as AssistantMessage[]
 
-    console.log("🔄 Setting up observer for", assistantMessages.length, "assistant messages")
 
     if (assistantMessages.length === 0) {
       setActiveMessage(null)
@@ -100,14 +63,12 @@ export default function ChatPage() {
     // Create new observer
     observerRef.current = new IntersectionObserver(
       (entries) => {
-        console.log("👁️ Observer triggered - entries:", entries.length)
 
         // Find the entry with the highest intersection ratio
         const mostVisibleEntry = entries.reduce((prev, current) => {
           return current.intersectionRatio > prev.intersectionRatio ? current : prev
         })
 
-        console.log("🏆 Most visible ratio:", mostVisibleEntry.intersectionRatio.toFixed(3))
 
         // Only update if the intersection ratio is above threshold
         if (mostVisibleEntry.intersectionRatio > 0.3) {
@@ -115,7 +76,6 @@ export default function ChatPage() {
           if (messageId) {
             const message = assistantMessages.find((msg) => msg.id === messageId)
             if (message) {
-              console.log("🎯 Setting active message to:", message.id.slice(0, 8))
               setActiveMessage(message)
             }
           }
@@ -138,7 +98,6 @@ export default function ChatPage() {
       }
     })
 
-    console.log(`📈 Observing ${observedCount}/${assistantMessages.length} messages`)
 
     // Set initial active message if none is set
     if (!activeMessage && assistantMessages.length > 0) {

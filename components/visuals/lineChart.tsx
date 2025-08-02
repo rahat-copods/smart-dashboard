@@ -9,7 +9,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartConfig as LineChartConfig } from "@/types/visuals";
+import { ChartVisual as LineChartConfig } from "@/lib/api/types";
 import { formatCellValue } from "@/lib/utils";
 
 interface LineChartProps {
@@ -17,7 +17,7 @@ interface LineChartProps {
   config: LineChartConfig;
 }
 export function LineChartComponent({ config, chartData }: LineChartProps) {
-  const chartConfig = config.dataSeries satisfies ChartConfig;
+  const chartConfig = { ...config.dataSeries } as ChartConfig;
   const formattedChartData = chartData.map((item) => {
     const formattedItem = { ...item };
     config.components.forEach((line) => {
@@ -26,9 +26,9 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
     return formattedItem;
   });
 
-   const upperDomain = Math.ceil(Math.max(
-    ...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)
-  ));
+  const upperDomain = Math.ceil(
+    Math.max(...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0))
+  );
 
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">

@@ -56,8 +56,8 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
       if (
         !isAssistant ||
         !showSuggestions ||
-        !message.sqlResult?.suggestions ||
-        message.sqlResult.suggestions.length === 0
+        !message.query?.suggestions ||
+        message.query.suggestions.length === 0
       )
         return null
 
@@ -68,7 +68,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
             Follow-up questions:
           </div>
           <div className="flex flex-wrap gap-2">
-            {message.sqlResult.suggestions.map((suggestion, index) => (
+            {message.query.suggestions.map((suggestion, index) => (
               <Button
                 key={index}
                 variant="outline"
@@ -166,7 +166,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                       )}
                     </div>
 
-                    {message.sqlResult?.partial && message.sqlResult?.partialReason && (
+                    {message.query?.isPartial && message.query?.partialReason && (
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                           <Info className="w-4 h-4 text-muted-foreground" />
@@ -175,7 +175,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                             Incomplete
                           </Badge>
                         </div>
-                        <div className="text-sm text-primary">{message.sqlResult.partialReason}</div>
+                        <div className="text-sm text-primary">{message.query.partialReason}</div>
                       </div>
                     )}
 
@@ -189,15 +189,15 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                       </div>
                     )}
 
-                    {message.data && message.chartConfig ? (
-                      message.chartConfig.map((visual, index) => (
+                    {message.data && message.visuals ? (
+                      message.visuals.visuals.map((visual, index) => (
                         <ChartsComponent key={index} config={visual} chartData={message.data} />
                       ))
                     ) : (
                       <DataTableComponent data={message.data} />
                     )}
 
-                    {message.sqlQuery && (
+                    {message.query && (
                       <Card className="bg-muted/30 border-muted p-1 py-2">
                         <CardContent className={isQueryExpanded ? "p-3" : "px-3 py-2"}>
                           <div className="flex items-center justify-between">
@@ -217,7 +217,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                           {isQueryExpanded && (
                             <div className="bg-muted/50 border border-muted rounded-md p-3 mt-2">
                               <pre className="text-sm font-mono text-foreground/90 overflow-x-auto whitespace-pre-wrap">
-                                {message.sqlQuery}
+                                {message.query.sqlQuery}
                               </pre>
                             </div>
                           )}
