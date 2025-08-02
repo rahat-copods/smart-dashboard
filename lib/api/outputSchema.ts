@@ -29,7 +29,7 @@ export const QueryParsingSchema = z.object({
   reasoning: z
     .string()
     .describe(
-      "Brief reasoning in Markdown format (40-50 words). Start with '## Understanding Request\n' as the heading."
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)"
     ),
 });
 
@@ -64,7 +64,7 @@ export const SqlGenerationSchema = z.object({
   reasoning: z
     .string()
     .describe(
-      "Brief reasoning in Markdown format (40-50 words) the query generation. Start with '\n## Generating Query\n' as the heading."
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)"
     ),
 });
 
@@ -158,6 +158,6 @@ export const ChartConfigSchema = z.object({
   reasoning: z
     .string()
     .describe(
-      "Brief reasoning in Markdown format (40-50 words). Start with '\n## Figuring Out Visuals\n' as the heading."
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)"
     ),
 });

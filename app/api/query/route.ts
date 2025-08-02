@@ -182,7 +182,6 @@ async function summarizeConversation(
     [{ role: "system", content: systemPromptSummarization }, ...messages],
     streamCallback,
     SummarySchema,
-    "summary"
   );
 
   return summaryData;

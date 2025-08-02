@@ -36,6 +36,8 @@ ${schema}
 
 5. **Identify Primary Focus**: What is the ONE most important thing the user wants to know?
 
+6. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
+
 ## Weight Assignment Guidelines
 - The main metric/outcome gets highest weight
 - Time constraints get high weight if they limit the scope significantly  
@@ -82,6 +84,7 @@ ${schema}
 7. **Context-Aware Query Generation**:
    - Analyze previous conversation context to inherit relevant filters, time periods, or scope when generating new queries. If user requests subset of previous data (e.g., "show me sales" after discussing "Q4 sales and purchases"), automatically apply the contextual filters (Q4 timeframe) to the new query.
 8. **No Placeholder Generation**: Do not generate placeholders for SQL queries. if query cannot be generated and require placeholders, set \`error\` with explanation and set sqlQuery, isPartial, and partialReason to null
+9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
 
 ## SQL Best Practices
 - Use proper JOIN syntax when combining tables
@@ -280,6 +283,8 @@ Generate appropriate chart configurations that will best visualize the SQL query
    - Data contains unrelated groups requiring different chart types
    - Different metrics need different visualization approaches
    - Multiple distinct comparisons are needed
+
+8. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
 
 ## Example Mappings
 
