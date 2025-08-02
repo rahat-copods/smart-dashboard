@@ -1,5 +1,8 @@
-import { ChartConfig } from "./visuals";
-
+import {
+  ChartConfig,
+  InsightsResult,
+  SqlGenerationResult,
+} from "@/lib/api/types";
 
 export interface BaseMessage {
   id: string;
@@ -14,16 +17,14 @@ export interface UserMessage extends BaseMessage {
 
 export interface AssistantMessage extends BaseMessage {
   role: "assistant";
-  sqlQuery?: string;
-  error?: string;
-  finalSummary?: string;
-  streamedContent?: string;
-  chartConfig?: Array<ChartConfig> | null;
-  sqlResult?: {error: string, partial: boolean, partialReason: string, sqlQuery: string, suggestions: string[]};
-  suggestions?: string[];
-  data?: any;
-  status?: string;
-  insights?: string;
+  query: SqlGenerationResult | null;
+  streamedContent: string;
+  data: any | null;
+  visuals: ChartConfig | null;
+  error: string | null;
+  summary: string | null;
+  insights: InsightsResult | null;
+  insightsError: string | null;
 }
 
 export type ChatMessage = UserMessage | AssistantMessage;
@@ -38,6 +39,6 @@ export interface Chat {
 }
 
 export interface StreamResponse {
-  type: 'status' | 'content' | 'result';
+  type: "status" | "content" | "result";
   text: string;
 }

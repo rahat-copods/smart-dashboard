@@ -40,8 +40,14 @@ export const useChat = (
         id: crypto.randomUUID(),
         role: "assistant",
         timestamp: new Date(),
+        query: null,
+        summary: null,
+        data: null,
+        visuals: null,
         streamedContent: "",
-        status: "",
+        insights: null,
+        insightsError: null,
+        error: null,
       };
       setMessages((prev) => [...prev, assistantMessage]);
       ChatStorage.addMessage(chatId, assistantMessage);
@@ -61,7 +67,7 @@ export const useChat = (
             messages: [
               ...messages.map((msg) => ({
                 role: msg.role,
-                content: msg.role === "user" ? msg.question : msg.finalSummary,
+                content: msg.role === "user" ? msg.question : msg.summary,
               })),
               { role: "user", content: question },
             ],
@@ -90,23 +96,6 @@ export const useChat = (
               } else if (parsed.type === "content") {
                 accumulatedContent += parsed.text;
                 setStreamedContent(accumulatedContent);
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastIndex = updated.length - 1;
-                  if (
-                    updated[lastIndex] &&
-                    updated[lastIndex].role === "assistant"
-                  ) {
-                    updated[lastIndex] = {
-                      ...updated[lastIndex],
-                      streamedContent: accumulatedContent,
-                    };
-                  }
-                  return updated;
-                });
-                ChatStorage.updateLastMessage(chatId, {
-                  streamedContent: accumulatedContent,
-                });
               } else if (parsed.type === "partialResult") {
                 const partialResult = JSON.parse(parsed.text);
                 setMessages((prev) => {
@@ -140,15 +129,10 @@ export const useChat = (
                   ) {
                     updated[lastIndex] = {
                       ...updated[lastIndex],
-                      data: result.data,
-                      chartConfig: result.chartConfig,
-                      sqlQuery: result.sqlQuery,
-                      error: result.error,
-                      finalSummary: result.finalSummary,
+                      ...result,
                       streamedContent: accumulatedContent,
                     };
                   }
-                  console.log(updated);
                   return updated;
                 });
                 // Store final result
@@ -236,7 +220,7 @@ export const useChat = (
             messages: [
               ...messages.map((msg) => ({
                 role: msg.role,
-                content: msg.role === "user" ? msg.question : msg.finalSummary,
+                content: msg.role === "user" ? msg.question : msg.summary,
               })),
               {
                 role: "user",
@@ -269,23 +253,6 @@ export const useChat = (
               } else if (parsed.type === "content") {
                 accumulatedInsight += parsed.text;
                 setInsightContent(accumulatedInsight);
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastIndex = updated.length - 1;
-                  if (
-                    updated[lastIndex] &&
-                    updated[lastIndex].role === "assistant"
-                  ) {
-                    updated[lastIndex] = {
-                      ...updated[lastIndex],
-                      insights: accumulatedInsight,
-                    };
-                  }
-                  return updated;
-                });
-                ChatStorage.updateLastMessage(chatId, {
-                  insights: accumulatedInsight,
-                });
               } else if (parsed.type === "partialResult") {
               } else if (parsed.type === "result" || parsed.type === "error") {
                 const result = JSON.parse(parsed.text);
@@ -298,14 +265,13 @@ export const useChat = (
                   ) {
                     updated[lastIndex] = {
                       ...updated[lastIndex],
-                      insights: result.summary,
+                      insights: result,
                     };
                   }
                   return updated;
                 });
                 ChatStorage.updateLastMessage(chatId, {
-                  insights: result.summary,
-                  error: result.error,
+                  insights: result,
                 });
               }
             } catch (error) {
@@ -323,13 +289,13 @@ export const useChat = (
                 ) {
                   updated[lastIndex] = {
                     ...updated[lastIndex],
-                    insights: errorMessage,
+                    insightsError: errorMessage,
                   };
                 }
                 return updated;
               });
               ChatStorage.updateLastMessage(chatId, {
-                insights: errorMessage,
+                insightsError: errorMessage,
               });
             }
           }
@@ -344,13 +310,13 @@ export const useChat = (
           if (updated[lastIndex] && updated[lastIndex].role === "assistant") {
             updated[lastIndex] = {
               ...updated[lastIndex],
-              insights: errorMessage,
+              insightsError: errorMessage,
             };
           }
           return updated;
         });
         ChatStorage.updateLastMessage(chatId, {
-          insights: errorMessage,
+          insightsError: errorMessage,
         });
       } finally {
         setIsInsightStreaming(false);
