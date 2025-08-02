@@ -84,6 +84,16 @@ export const SummarySchema = z.object({
     ),
 });
 
+export const InsightsSchema = z.object({
+  Insights: z
+    .string()
+    .describe(
+      "A Markdown format Insights for the data provided by user"
+    ),
+});
+
+//#region Chart Config Schema
+
 // Level 3: Data Series Configuration (deepest level)
 export const DataSeriesItemSchema = z.object({
   key: z.string().describe("The data key identifier"),
