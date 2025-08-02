@@ -169,7 +169,7 @@ export default function ChatPage() {
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto overflow-x-hidden"
             style={{
-              height: "calc(100vh - 120px)", // Fixed height to force scrolling
+              height: "calc(100vh - 120px)", 
               maxHeight: "calc(100vh - 120px)",
             }}
           >
@@ -178,7 +178,6 @@ export default function ChatPage() {
                 <MessageBubble
                   key={message.id + index}
                   message={message}
-                  userId={user}
                   showSuggestions={isLastMessage(index) && message.role === "assistant" && !isStreaming}
                   onSuggestionClick={handleSubmit}
                   isStreaming={isLastMessage(index) ? isStreaming : false}
@@ -189,7 +188,6 @@ export default function ChatPage() {
                       ? (el: HTMLDivElement | null) => setMessageRef(message.id, el)
                       : undefined
                   }
-                  isActive={message.role === "assistant" && activeMessage?.id === message.id}
                 />
               ))}
               <div ref={messagesEndRef} />

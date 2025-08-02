@@ -110,11 +110,6 @@ export function InsightsSidebar({
               <div className="flex items-center gap-2 mb-6">
                 <Lightbulb className="w-5 h-5 text-yellow-500" />
                 <h3 className="font-semibold text-lg">Insights</h3>
-                {message && (
-                  <Badge variant="outline" className="ml-auto text-xs">
-                    Active
-                  </Badge>
-                )}
               </div>
 
               {message && (
