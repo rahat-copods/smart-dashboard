@@ -1,66 +1,49 @@
-import { OpenAI } from 'openai';
-import { ChatCompletionMessageParam } from 'openai/resources/index';
-import { createStreamingParser } from './streamingUtils';
-import { StreamCallback } from './types';
+import { OpenAI } from "openai";
+import { ChatCompletionMessageParam } from "openai/resources/index";
+import { createStreamingParser } from "./streamingUtils";
+import { StreamCallback } from "./types";
+import { zodResponseFormat } from "openai/helpers/zod";
 
 export class AIClient {
   private client: OpenAI;
-
+  private model: string;
   constructor() {
     this.client = new OpenAI({
       apiKey: process.env.AI_API_KEY,
-      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+      baseURL: process.env.AI_BASE_URL,
     });
+    this.model = process.env.AI_MODEL_NAME as string;
   }
 
   async streamGenerate(
-    messages: ChatCompletionMessageParam[], 
-    outputSchema?: { [key: string]: unknown; },
-    streamCallback?: StreamCallback,
+    messages: ChatCompletionMessageParam[],
+    streamCallback: StreamCallback,
+    outputSchema?: any,
     fieldToExtract: string = "reasoning"
   ): Promise<any> {
     const stream = await this.client.chat.completions.create({
-      model: "gemini-2.5-flash",
+      model: this.model,
       messages,
-      temperature: 0.2, 
+      temperature: 0.2,
       top_p: 0.5,
       stream: true,
-      ...(outputSchema ? {
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "structured_response",
-            strict: true,
-            schema: outputSchema,
-          },
-        },
-      } : {}),
+      ...(outputSchema
+        ? {
+            response_format: zodResponseFormat(outputSchema, "query_parsing"),
+          }
+        : {}),
     });
 
     let fullData = "";
-    let parser: ReturnType<typeof createStreamingParser> | null = null;
-
-    // If we have a streamCallback and outputSchema, use field extraction
-    if (streamCallback && outputSchema) {
-      parser = createStreamingParser(fieldToExtract, streamCallback);
-    }
+    let parser = createStreamingParser(fieldToExtract, streamCallback);
 
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
       if (content) {
         fullData += content;
-        
-        if (parser) {
-          // Stream specific field
-          parser.processChunk(content);
-        } else if (streamCallback) {
-          // Stream full content
-          streamCallback(content, "content");
-        }
+        parser.processChunk(content);
       }
     }
-
-    // Return the complete parsed JSON
     return JSON.parse(fullData);
   }
 }

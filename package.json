@@ -48,7 +48,8 @@
     "recharts": "^2.15.4",
     "remark-gfm": "^4.0.1",
     "sql-formatter": "^15.6.6",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "15.3.4",

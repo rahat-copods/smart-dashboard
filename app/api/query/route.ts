@@ -3,9 +3,12 @@ import { AIClient } from "@/lib/api/aiClient";
 import { executeQuery } from "@/lib/api/dbClient";
 import { userSchemas } from "@/lib/api/schema";
 import {
-  chartConfigSchema,
-  queryParsingSchema,
-  sqlGenerationSchema,
+  ChartConfigSchema,
+  QueryParsingSchema,
+  SqlGenerationSchema,
+  ErrorReasonSchema,
+  SummarySchema,
+  QueryParsingResult,
 } from "@/lib/api/outputSchema";
 import {
   getChartConfigPrompt,
@@ -14,7 +17,6 @@ import {
   getSqlGenerationPrompt,
   getSummarizationPrompt,
 } from "@/lib/api/systemPrompts";
-import { QueryParsingResult } from "@/lib/api/types/outputSchema";
 import { StreamCallback } from "@/lib/api/types";
 
 async function parseUserQuery(
@@ -23,15 +25,12 @@ async function parseUserQuery(
   messages: any[],
   streamCallback: StreamCallback
 ): Promise<QueryParsingResult> {
-  streamCallback("Thinking: Preparing to parse query...\n", "status");
   const systemPromptQueryIntent = getQueryParsingPrompt(schemaString);
-
   streamCallback("Analyzing the Query", "status");
-
   const userQueryParsed = await aiClient.streamGenerate(
     [{ role: "system", content: systemPromptQueryIntent }, ...messages],
-    queryParsingSchema,
     streamCallback,
+    QueryParsingSchema,
     "reasoning"
   );
 
@@ -48,7 +47,6 @@ async function generateSqlQuery(
   attempt: number,
   dialect: string
 ) {
-  streamCallback("Thinking", "status");
   const systemPromptQueryGenerate = getSqlGenerationPrompt(
     schemaString,
     dialect
@@ -65,8 +63,8 @@ async function generateSqlQuery(
         content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify(userQueryParsed)}`,
       },
     ],
-    sqlGenerationSchema,
     streamCallback,
+    SqlGenerationSchema,
     "reasoning"
   );
 
@@ -101,7 +99,6 @@ async function explainError(
   messages: any[],
   streamCallback: StreamCallback
 ) {
-  streamCallback("Thinking", "status");
   const systemPromptErrorExplanation = getErrorExplanationPrompt();
 
   streamCallback("Analyzing failure", "status");
@@ -116,11 +113,11 @@ async function explainError(
         content: `**SQL Query:** ${sqlQuery}\n\n**Error:** ${error}`,
       },
     ],
-    undefined, // No schema
-    streamCallback
+    streamCallback,
+    ErrorReasonSchema,
+    "errorReason"
   );
-
-  return errorData;
+  return errorData.errorReason;
 }
 
 async function generateChartConfig(
@@ -142,8 +139,8 @@ async function generateChartConfig(
         content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify(userQueryParsed)}\n\n**SQL Query**:\n${sqlQuery}`,
       },
     ],
-    chartConfigSchema,
     streamCallback,
+    ChartConfigSchema,
     "reasoning"
   );
 
@@ -176,8 +173,9 @@ async function summarizeConversation(
   // No outputSchema = free-form response, streams full content
   const summaryData = await aiClient.streamGenerate(
     [{ role: "system", content: systemPromptSummarization }, ...messages],
-    undefined, // No schema
-    streamCallback
+    streamCallback,
+    SummarySchema,
+    "summary"
   );
 
   return summaryData;
@@ -324,7 +322,7 @@ export async function POST(req: NextRequest) {
                   data: null,
                   chartConfig: null,
                   sqlQuery: sqlResult.sqlQuery,
-                  error: dbResult.error,
+                  error: errorResult,
                   finalSummary: summary,
                 }),
               })
