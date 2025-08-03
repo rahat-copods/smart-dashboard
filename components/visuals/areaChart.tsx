@@ -27,7 +27,12 @@ interface AreaChartProps {
   config: AreaChartConfig;
 }
 export function AreaChartComponent({ config, chartData }: AreaChartProps) {
-  const chartConfig = { ...config.dataSeries } as ChartConfig;
+  const chartConfig = Object.fromEntries(
+  config.dataSeries.map(({ key, label, color }) => [
+    key,
+    { label, color },
+  ])
+) satisfies ChartConfig;
   const formattedChartData = chartData.map((item) => {
     const formattedItem = { ...item };
     config.components.forEach((line) => {
