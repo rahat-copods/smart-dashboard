@@ -15,7 +15,7 @@ import {
 
 export type StreamCallback = (
   content: string,
-  type: "status" | "content" | "error"
+  type: "status" | "content" | "error" | "usage"
 ) => void;
 
 export type DbResult = { data: any[] | null; rowCount: number; error: string | null }

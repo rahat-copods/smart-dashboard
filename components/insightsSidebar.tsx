@@ -70,6 +70,7 @@ interface InsightsSidebarProps {
   userId: string
   executionTime: number
   isStreaming: boolean
+  totalTokensUsed: number
 }
 
 export function InsightsSidebar({
@@ -81,7 +82,8 @@ export function InsightsSidebar({
   generateInsights,
   userId,
   executionTime,
-  isStreaming
+  isStreaming,
+  totalTokensUsed
 }: InsightsSidebarProps) {
   const handleInsightClick = () => {
     if (!message || !message.data || !message.data.length) return
@@ -123,6 +125,7 @@ export function InsightsSidebar({
                   <div className="font-mono text-xs">Message ID: {message.id.slice(0, 8)}...</div>
                   <div className="text-xs mt-1">Data: {message.data ? `${message.data.length} rows` : "No data"}</div>
                   <div className="text-xs mt-1">{isStreaming ? "Thinking" : "Thought"} for: {isStreaming ?executionTime : message?.info?.executionTime}s</div>
+                  <div className="text-xs mt-1">Tokens: {isStreaming ?totalTokensUsed : message?.info?.tokensUsage}</div>
                 </div>
               )}
 

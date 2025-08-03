@@ -3,7 +3,7 @@ import { ChatStorage } from "@/hooks/chatStorage";
 import { AssistantMessage, UserMessage, ChatMessage } from "@/types/chat";
 
 type StreamResponse = {
-  type: "status" | "content" | "partialResult" | "result" | "error";
+  type: "status" | "content" | "partialResult" | "result" | "error" | "usage";
   text: string;
 };
 
@@ -17,11 +17,11 @@ export const useChat = (
   const [streamingStatus, setStreamingStatus] = useState("");
   const [insightContent, setInsightContent] = useState("");
   const [isInsightStreaming, setIsInsightStreaming] = useState(false);
-  const [executionTime, setExecutionTime] = useState("0.00"); // Changed to string for seconds.milliseconds format
+  const [executionTime, setExecutionTime] = useState("0.00");
+  const [totalTokensUsed, setTotalTokensUsed] = useState(0);
 
   const sendQuery = useCallback(
     async (question: string, userId: string) => {
-      // Create user message
       const userMessage: UserMessage = {
         id: crypto.randomUUID(),
         role: "user",
@@ -29,14 +29,12 @@ export const useChat = (
         timestamp: new Date(),
       };
 
-      // Add user message if not the first message (skip if first to avoid duplication)
       const chat = ChatStorage.getChat(chatId);
       if (chat && chat.messages.length > 1) {
         setMessages((prev) => [...prev, userMessage]);
         ChatStorage.addMessage(chatId, userMessage);
       }
 
-      // Add assistant message placeholder
       const assistantMessage: AssistantMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -49,7 +47,7 @@ export const useChat = (
         insights: null,
         insightsError: null,
         error: null,
-        info: { executionTime: 0.00 },
+        info: { executionTime: 0.0, tokensUsage: 0 },
       };
       setMessages((prev) => [...prev, assistantMessage]);
       ChatStorage.addMessage(chatId, assistantMessage);
@@ -60,10 +58,9 @@ export const useChat = (
       let startTime: number | null = null;
       let timerId: NodeJS.Timeout | null = null;
 
-      // Function to format time as seconds.milliseconds
       const formatExecutionTime = (ms: number): string => {
         const seconds = Math.floor(ms / 1000);
-        const milliseconds = Math.floor((ms % 1000) / 10); // Get first two digits of milliseconds
+        const milliseconds = Math.floor((ms % 1000) / 10);
         return `${seconds}.${milliseconds.toString().padStart(2, "0")}`;
       };
 
@@ -106,7 +103,6 @@ export const useChat = (
                 setStreamingStatus(parsed.text);
                 if (!startTime) {
                   startTime = performance.now();
-                  // Start updating executionTime every 100ms
                   timerId = setInterval(() => {
                     if (startTime) {
                       const elapsed = performance.now() - startTime;
@@ -118,6 +114,10 @@ export const useChat = (
               } else if (parsed.type === "content") {
                 accumulatedContent += parsed.text;
                 setStreamedContent(accumulatedContent);
+              } else if (parsed.type === "usage") {
+                const usageData = JSON.parse(parsed.text);
+                const newTokens = usageData.total_tokens || 0;
+                setTotalTokensUsed((prev) => prev + newTokens);
               } else if (parsed.type === "partialResult") {
                 const partialResult = JSON.parse(parsed.text);
                 setMessages((prev) => {
@@ -210,18 +210,15 @@ export const useChat = (
           streamedContent: accumulatedContent,
         });
       } finally {
-        // Clear the interval
         if (timerId) {
           clearInterval(timerId);
         }
 
-        // Calculate final execution time
         const endTime = performance.now();
         const finalExecutionTime = startTime
           ? formatExecutionTime(endTime - startTime)
           : "0.00";
 
-        // Update messages with final execution time
         setMessages((prev) => {
           const updated = [...prev];
           const lastIndex = updated.length - 1;
@@ -231,24 +228,24 @@ export const useChat = (
               info: {
                 ...updated[lastIndex].info,
                 executionTime: +finalExecutionTime,
+                tokensUsage: totalTokensUsed,
               },
             };
           }
           return updated;
         });
 
-        // Update ChatStorage with final execution time
         ChatStorage.updateLastMessage(chatId, {
           info: {
             executionTime: finalExecutionTime,
+            tokensUsage: totalTokensUsed,
           },
         });
 
-        // Reset state
         setIsStreaming(false);
         setStreamingStatus("");
         setStreamedContent("");
-        setExecutionTime("0.00"); // Reset to string format
+        setExecutionTime("0.00");
       }
     },
     [chatId, messages, setMessages]
@@ -304,6 +301,31 @@ export const useChat = (
               } else if (parsed.type === "content") {
                 accumulatedInsight += parsed.text;
                 setInsightContent(accumulatedInsight);
+              } else if (parsed.type === "usage") {
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  if (
+                    updated[lastIndex] &&
+                    updated[lastIndex].role === "assistant"
+                  ) {
+                    updated[lastIndex] = {
+                      ...updated[lastIndex],
+                      info: {
+                        ...updated[lastIndex].info,
+                        tokensUsage: totalTokensUsed,
+                      },
+                    };
+
+                    ChatStorage.updateLastMessage(chatId, {
+                      info: {
+                        ...updated[lastIndex].info,
+                        tokensUsage: totalTokensUsed,
+                      },
+                    });
+                  }
+                  return updated;
+                });
               } else if (parsed.type === "partialResult") {
               } else if (parsed.type === "result" || parsed.type === "error") {
                 const result = JSON.parse(parsed.text);
@@ -336,7 +358,7 @@ export const useChat = (
                 const lastIndex = updated.length - 1;
                 if (
                   updated[lastIndex] &&
-                    updated[lastIndex].role === "assistant"
+                  updated[lastIndex].role === "assistant"
                 ) {
                   updated[lastIndex] = {
                     ...updated[lastIndex],
@@ -386,5 +408,6 @@ export const useChat = (
     isInsightStreaming,
     insightContent,
     executionTime,
+    totalTokensUsed,
   };
 };
