@@ -26,9 +26,11 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
     return formattedItem;
   });
 
-  const upperDomain = Math.ceil(
-    Math.max(...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0))
-  );
+  const upperDomain =
+    Math.ceil(
+      Math.max(...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)) /
+        10
+    ) * 10;
 
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">

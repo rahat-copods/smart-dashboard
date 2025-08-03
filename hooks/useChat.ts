@@ -17,6 +17,7 @@ export const useChat = (
   const [streamingStatus, setStreamingStatus] = useState("");
   const [insightContent, setInsightContent] = useState("");
   const [isInsightStreaming, setIsInsightStreaming] = useState(false);
+  const [executionTime, setExecutionTime] = useState("0.00"); // Changed to string for seconds.milliseconds format
 
   const sendQuery = useCallback(
     async (question: string, userId: string) => {
@@ -48,6 +49,7 @@ export const useChat = (
         insights: null,
         insightsError: null,
         error: null,
+        info: { executionTime: 0.00 },
       };
       setMessages((prev) => [...prev, assistantMessage]);
       ChatStorage.addMessage(chatId, assistantMessage);
@@ -55,6 +57,15 @@ export const useChat = (
       setStreamedContent("");
       setStreamingStatus("Thinking");
       let accumulatedContent = "";
+      let startTime: number | null = null;
+      let timerId: NodeJS.Timeout | null = null;
+
+      // Function to format time as seconds.milliseconds
+      const formatExecutionTime = (ms: number): string => {
+        const seconds = Math.floor(ms / 1000);
+        const milliseconds = Math.floor((ms % 1000) / 10); // Get first two digits of milliseconds
+        return `${seconds}.${milliseconds.toString().padStart(2, "0")}`;
+      };
 
       try {
         const response = await fetch("/api/query", {
@@ -93,7 +104,17 @@ export const useChat = (
 
               if (parsed.type === "status") {
                 setStreamingStatus(parsed.text);
-                accumulatedContent = accumulatedContent + '\n'
+                if (!startTime) {
+                  startTime = performance.now();
+                  // Start updating executionTime every 100ms
+                  timerId = setInterval(() => {
+                    if (startTime) {
+                      const elapsed = performance.now() - startTime;
+                      setExecutionTime(formatExecutionTime(elapsed));
+                    }
+                  }, 100);
+                }
+                accumulatedContent = accumulatedContent + "\n";
               } else if (parsed.type === "content") {
                 accumulatedContent += parsed.text;
                 setStreamedContent(accumulatedContent);
@@ -114,7 +135,6 @@ export const useChat = (
                   }
                   return updated;
                 });
-                // Store partial results in case of error
                 ChatStorage.updateLastMessage(chatId, {
                   ...partialResult,
                   streamedContent: accumulatedContent,
@@ -136,7 +156,6 @@ export const useChat = (
                   }
                   return updated;
                 });
-                // Store final result
                 ChatStorage.updateLastMessage(chatId, {
                   ...result,
                   streamedContent: accumulatedContent,
@@ -186,15 +205,50 @@ export const useChat = (
           }
           return updated;
         });
-        // Store partial results and error
         ChatStorage.updateLastMessage(chatId, {
           error: errorMessage,
           streamedContent: accumulatedContent,
         });
       } finally {
+        // Clear the interval
+        if (timerId) {
+          clearInterval(timerId);
+        }
+
+        // Calculate final execution time
+        const endTime = performance.now();
+        const finalExecutionTime = startTime
+          ? formatExecutionTime(endTime - startTime)
+          : "0.00";
+
+        // Update messages with final execution time
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastIndex = updated.length - 1;
+          if (updated[lastIndex] && updated[lastIndex].role === "assistant") {
+            updated[lastIndex] = {
+              ...updated[lastIndex],
+              info: {
+                ...updated[lastIndex].info,
+                executionTime: +finalExecutionTime,
+              },
+            };
+          }
+          return updated;
+        });
+
+        // Update ChatStorage with final execution time
+        ChatStorage.updateLastMessage(chatId, {
+          info: {
+            executionTime: finalExecutionTime,
+          },
+        });
+
+        // Reset state
         setIsStreaming(false);
         setStreamingStatus("");
         setStreamedContent("");
+        setExecutionTime("0.00"); // Reset to string format
       }
     },
     [chatId, messages, setMessages]
@@ -282,7 +336,7 @@ export const useChat = (
                 const lastIndex = updated.length - 1;
                 if (
                   updated[lastIndex] &&
-                  updated[lastIndex].role === "assistant"
+                    updated[lastIndex].role === "assistant"
                 ) {
                   updated[lastIndex] = {
                     ...updated[lastIndex],
@@ -331,5 +385,6 @@ export const useChat = (
     streamingStatus,
     isInsightStreaming,
     insightContent,
+    executionTime,
   };
 };

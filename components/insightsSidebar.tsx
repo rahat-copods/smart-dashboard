@@ -68,6 +68,8 @@ interface InsightsSidebarProps {
   isInsightStreaming: boolean
   generateInsights: (userId: string, data: Record<string, any>[]) => Promise<void>
   userId: string
+  executionTime: number
+  isStreaming: boolean
 }
 
 export function InsightsSidebar({
@@ -78,6 +80,8 @@ export function InsightsSidebar({
   isInsightStreaming,
   generateInsights,
   userId,
+  executionTime,
+  isStreaming
 }: InsightsSidebarProps) {
   const handleInsightClick = () => {
     if (!message || !message.data || !message.data.length) return
@@ -118,6 +122,7 @@ export function InsightsSidebar({
                   </div>
                   <div className="font-mono text-xs">Message ID: {message.id.slice(0, 8)}...</div>
                   <div className="text-xs mt-1">Data: {message.data ? `${message.data.length} rows` : "No data"}</div>
+                  <div className="text-xs mt-1">{isStreaming ? "Thinking" : "Thought"} for: {isStreaming ?executionTime : message?.info?.executionTime}s</div>
                 </div>
               )}
 
