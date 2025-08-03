@@ -123,12 +123,8 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                 <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted-foreground">
                   <Bot className="w-4 h-4 text-background" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={cn(
-                      "bg-muted/30 border border-muted rounded-lg p-4 space-y-4 transition-all duration-300"
-                    )}
-                  >
+                <div className="flex-1 min-w-0 bg-muted/30 border border-muted  p-1 rounded-lg space-y-4 transition-all duration-300 relative">
+                  <div className="p-3">
                     {/* Display current status and streaming content */}
                     <div className="space-y-2">
                       <button
@@ -158,9 +154,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                       </button>
                       {isContentExpanded && displayContent && (
                         <div className="text-sm text-muted-foreground whitespace-pre-wrap pl-4 border-l-2 border-gray-200">
-                          <MarkdownRenderer>
-                            {displayContent}
-                          </MarkdownRenderer>
+                          <MarkdownRenderer>{displayContent}</MarkdownRenderer>
                         </div>
                       )}
                     </div>
@@ -243,6 +237,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                       </Card>
                     )}
                   </div>
+                  {/* <p className="text-xs text-muted-foreground text-right">{message.id}</p> */}
                 </div>
               </div>
             </div>
