@@ -42,7 +42,6 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
     },
     ref
   ) => {
-    console.log("message", message);
     const isUser = message.role === "user";
     const isAssistant = message.role === "assistant";
 

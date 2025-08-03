@@ -33,8 +33,7 @@ export default function ChatPage() {
     insightContent,
     isInsightStreaming,
     generateInsights,
-    executionTime,
-    totalTokensUsed
+    usageMetrics
   } = useChat(chatId, messages, setMessages)
 
   // Function to set message ref
@@ -206,8 +205,7 @@ export default function ChatPage() {
         <InsightsSidebar
           isOpen={isSidebarOpen}
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          executionTime={+executionTime}
-          totalTokensUsed={totalTokensUsed}
+          usageMetrics={usageMetrics}
           message={activeMessage}
           insightContent={insightContent}
           isInsightStreaming={isInsightStreaming}

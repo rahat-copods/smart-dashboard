@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { ChatStorage } from "@/hooks/chatStorage";
 import { AssistantMessage, UserMessage, ChatMessage } from "@/types/chat";
+import { UsageMetrics } from "@/types";
 
 type StreamResponse = {
   type: "status" | "content" | "partialResult" | "result" | "error" | "usage";
@@ -17,8 +18,13 @@ export const useChat = (
   const [streamingStatus, setStreamingStatus] = useState("");
   const [insightContent, setInsightContent] = useState("");
   const [isInsightStreaming, setIsInsightStreaming] = useState(false);
-  const [executionTime, setExecutionTime] = useState("0.00");
-  const [totalTokensUsed, setTotalTokensUsed] = useState(0);
+  const [usageMetrics, setUsageMetrics] = useState<UsageMetrics>({
+    executionTime: "0.00",
+    totalTokensUsed: 0,
+  });
+
+  // Add ref to track current token usage
+  const currentTokensUsed = useRef(0);
 
   const sendQuery = useCallback(
     async (question: string, userId: string) => {
@@ -54,6 +60,10 @@ export const useChat = (
       setIsStreaming(true);
       setStreamedContent("");
       setStreamingStatus("Thinking");
+      
+      // Reset token counter for this request
+      currentTokensUsed.current = 0;
+      
       let accumulatedContent = "";
       let startTime: number | null = null;
       let timerId: NodeJS.Timeout | null = null;
@@ -106,7 +116,10 @@ export const useChat = (
                   timerId = setInterval(() => {
                     if (startTime) {
                       const elapsed = performance.now() - startTime;
-                      setExecutionTime(formatExecutionTime(elapsed));
+                      setUsageMetrics((prev) => ({
+                        ...prev,
+                        executionTime: formatExecutionTime(elapsed),
+                      }));
                     }
                   }, 100);
                 }
@@ -117,7 +130,13 @@ export const useChat = (
               } else if (parsed.type === "usage") {
                 const usageData = JSON.parse(parsed.text);
                 const newTokens = usageData.total_tokens || 0;
-                setTotalTokensUsed((prev) => prev + newTokens);
+                
+                // Update both ref and state
+                currentTokensUsed.current += newTokens;
+                setUsageMetrics((prev) => ({
+                  ...prev,
+                  totalTokensUsed: prev.totalTokensUsed + newTokens,
+                }));
               } else if (parsed.type === "partialResult") {
                 const partialResult = JSON.parse(parsed.text);
                 setMessages((prev) => {
@@ -215,10 +234,11 @@ export const useChat = (
         }
 
         const endTime = performance.now();
+        let tokensUsed = currentTokensUsed.current;
         const finalExecutionTime = startTime
           ? formatExecutionTime(endTime - startTime)
           : "0.00";
-
+        
         setMessages((prev) => {
           const updated = [...prev];
           const lastIndex = updated.length - 1;
@@ -228,7 +248,7 @@ export const useChat = (
               info: {
                 ...updated[lastIndex].info,
                 executionTime: +finalExecutionTime,
-                tokensUsage: totalTokensUsed,
+                tokensUsage: tokensUsed,
               },
             };
           }
@@ -238,17 +258,17 @@ export const useChat = (
         ChatStorage.updateLastMessage(chatId, {
           info: {
             executionTime: finalExecutionTime,
-            tokensUsage: totalTokensUsed,
+            tokensUsage: tokensUsed, // Now uses the correct value
           },
         });
 
         setIsStreaming(false);
         setStreamingStatus("");
         setStreamedContent("");
-        setExecutionTime("0.00");
+        setUsageMetrics({ executionTime: "0.00", totalTokensUsed: 0 });
       }
     },
-    [chatId, messages, setMessages]
+    [chatId, messages, setMessages] // Remove usageMetrics.totalTokensUsed from dependencies
   );
 
   const generateInsights = useCallback(
@@ -302,6 +322,10 @@ export const useChat = (
                 accumulatedInsight += parsed.text;
                 setInsightContent(accumulatedInsight);
               } else if (parsed.type === "usage") {
+                const usageData = JSON.parse(parsed.text);
+                const newTokens = usageData.total_tokens || 0;
+                currentTokensUsed.current += newTokens;
+                
                 setMessages((prev) => {
                   const updated = [...prev];
                   const lastIndex = updated.length - 1;
@@ -313,14 +337,14 @@ export const useChat = (
                       ...updated[lastIndex],
                       info: {
                         ...updated[lastIndex].info,
-                        tokensUsage: totalTokensUsed,
+                        tokensUsage: currentTokensUsed.current,
                       },
                     };
 
                     ChatStorage.updateLastMessage(chatId, {
                       info: {
                         ...updated[lastIndex].info,
-                        tokensUsage: totalTokensUsed,
+                        tokensUsage: currentTokensUsed.current,
                       },
                     });
                   }
@@ -407,7 +431,6 @@ export const useChat = (
     streamingStatus,
     isInsightStreaming,
     insightContent,
-    executionTime,
-    totalTokensUsed,
+    usageMetrics,
   };
 };
