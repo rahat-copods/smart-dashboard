@@ -85,6 +85,8 @@ ${schema}
    - Analyze previous conversation context to inherit relevant filters, time periods, or scope when generating new queries. If user requests subset of previous data (e.g., "show me sales" after discussing "Q4 sales and purchases"), automatically apply the contextual filters (Q4 timeframe) to the new query.
 8. **No Placeholder Generation**: Do not generate placeholders for SQL queries. if query cannot be generated and require placeholders, set \`error\` with explanation and set sqlQuery, isPartial, and partialReason to null
 9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
+10. **Handling Dates**: By default handle date in \`MMM YYYY\` format unless user explicitly specifies a custom format.
+11. **Visuals and Charts**: Ensure that queries are optimized for efficient data retrieval and rendering of visuals and charts.
 
 ## SQL Best Practices
 - Use proper JOIN syntax when combining tables
@@ -325,6 +327,8 @@ Generate appropriate chart configurations that will best visualize the SQL query
    - Cumulative/volume emphasis → **area**
 6. **Apply logical ordering** to categorical data when possible
 7. **Maintain consistency** with previous analysis patterns when building upon prior work
+8. **Ensure proper axis assignment** Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately (choosing descriptive names over IDs, using readable labels over technical codes, prioritizing human-readable values over system identifiers, and ensuring categorical values are meaningful to the end user rather than database artifacts)
+
 
 Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
 
