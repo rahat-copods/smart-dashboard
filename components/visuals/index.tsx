@@ -40,7 +40,7 @@ export default function ChartsComponent({
   chartData,
   config,
 }: ChartsComponentProps) {
-  const chartTypes = ["bar", "line", "area", "radar"];
+  const chartTypes = ["bar", "line", "area"];
   const [activeChartType, setActiveChartType] = useState<string>(
     chartTypes[Math.floor(Math.random() * chartTypes.length)]
   );

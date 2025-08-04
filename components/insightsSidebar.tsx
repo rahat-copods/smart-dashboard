@@ -106,7 +106,7 @@ export function InsightsSidebar({
     <>
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full bg-background border-l border-border transition-all duration-300 ease-in-out z-40 ${
+        className={`relative h-full bg-background border-l border-border transition-all duration-300 ease-in-out z-40 ${
           isOpen ? "w-80" : "w-12"
         }`}
       >

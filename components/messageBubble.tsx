@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   Brain,
+  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -72,7 +73,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
             <Bot className="w-4 h-4" />
             Follow-up questions:
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 ml-10">
             {message.query.suggestions.map((suggestion, index) => (
               <Button
                 key={index}
@@ -119,7 +120,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
             className="space-y-4 relative"
           >
             <div className="flex justify-start">
-              <div className="flex space-x-3 w-full max-w-4xl">
+              <div className="flex space-x-3 w-4/5">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted-foreground">
                   <Bot className="w-4 h-4 text-background" />
                 </div>
@@ -191,17 +192,27 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                       </div>
                     )}
 
-                    {message.data && message.visuals ? (
-                      message.visuals.visuals.map((visual, index) => (
-                        <ChartsComponent
-                          key={index}
-                          config={visual}
-                          chartData={message.data}
-                        />
-                      ))
-                    ) : (
-                      <DataTableComponent data={message.data} />
-                    )}
+                    {message.data ? (
+                      message.visuals && message.data.length >= 3 ? (
+                        message.visuals.visuals.map((visual, index) => (
+                          <ChartsComponent
+                            key={index}
+                            config={visual}
+                            chartData={message.data}
+                          />
+                        ))
+                      ) : (
+                        <div className="py-2">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Database className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-semibold">
+                              Results
+                            </span>
+                          </div>
+                          <DataTableComponent data={message.data} />
+                        </div>
+                      )
+                    ) : null}
 
                     {message.query && (
                       <Card className="bg-muted/30 border-muted p-1 py-2">
