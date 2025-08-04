@@ -61,7 +61,7 @@ export function AreaChartComponent({ config, chartData }: AreaChartProps) {
           tickLine={false}
           axisLine={false}
           tickMargin={10}
-          domain={[0, upperDomain + upperDomain * 0.1]}
+          domain={[0, upperDomain]}
         />
         <ChartTooltip
           cursor={false}

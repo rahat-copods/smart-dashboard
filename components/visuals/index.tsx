@@ -24,6 +24,13 @@ import { AreaChartComponent } from "./areaChart";
 import { ChartVisual } from "@/lib/api/types";
 import { RadarChartComponent } from "./radarChart";
 
+const chartOptions = [
+  { type: "bar", label: "Bar Chart", icon: BarChart },
+  { type: "line", label: "Line Chart", icon: LineChart },
+  { type: "area", label: "Area Chart", icon: AreaChart },
+  // { type: "radar", label: "Radar Chart", icon: RadarIcon },
+  { type: "table", label: "Data Table", icon: Table },
+];
 interface ChartsComponentProps {
   chartData: any[] | null;
   config: ChartVisual;
@@ -64,26 +71,21 @@ export default function ChartsComponent({
                 {activeChartType === "area" && (
                   <AreaChart className="h-4 w-4" />
                 )}
-                {activeChartType === "radar" && <RadarIcon className="h-4 w-4" />}
+                {activeChartType === "radar" && (
+                  <RadarIcon className="h-4 w-4" />
+                )}
                 {activeChartType === "table" && <Table className="h-4 w-4" />}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setActiveChartType("bar")}>
-                <BarChart className="mr-2 h-4 w-4" /> Bar Chart
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveChartType("line")}>
-                <LineChart className="mr-2 h-4 w-4" /> Line Chart
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveChartType("area")}>
-                <AreaChart className="mr-2 h-4 w-4" /> Area Chart
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveChartType("radar")}>
-                <RadarIcon className="mr-2 h-4 w-4" /> Radar Chart
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveChartType("table")}>
-                <Table className="mr-2 h-4 w-4" /> Data Table
-              </DropdownMenuItem>
+              {chartOptions.map(({ type, label, icon: Icon }) => (
+                <DropdownMenuItem
+                  key={type}
+                  onClick={() => setActiveChartType(type)}
+                >
+                  <Icon className="mr-2 h-4 w-4" /> {label}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

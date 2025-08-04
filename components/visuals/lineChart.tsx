@@ -52,7 +52,7 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
           tickLine={false}
           axisLine={false}
           tickMargin={10}
-          domain={[0, upperDomain + upperDomain * 0.1]}
+          domain={[0, upperDomain]}
         />
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
         <ChartLegend content={<ChartLegendContent />} />
