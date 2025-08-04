@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 
 export function formatCellValue(value: any): string {
-  if (value == null) return "—";
+  if (value == null) return "0";
 
   // ISO 8601 date regex (basic and not foolproof)
   const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?$/;
