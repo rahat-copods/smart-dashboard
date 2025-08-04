@@ -112,7 +112,7 @@ Return exactly these 4 fields:
 - \`isPartial\`: Boolean indicating completeness or null if error  
 - \`partialReason\`: String explaining partial nature or null if complete/error
 - \`error\`: String explaining why query cannot be generated or null if successful
-- \`suggestions\`: List of 3–4 follow-up questions in natural language that a user might ask next, based on the context of the request and response.
+- \`suggestions\`: List of 3–4 follow-up questions in natural language that a user might ask next, based on the context of the request and response. Suggestions should be self-contained and not reference specific entities, values, or context from the current analysis unless that information was explicitly provided in the user query. (avoid references to specific entities like "this user" or "that product" or "this \`entity\`" unless those entities were mentioned in the user's request. When specific entities were provided by the user, reference them directly by name rather than using vague pronouns - for example, if the user mentioned "Jane", use "Jane's performance" or "for Jane" instead of "this user's performance").
 
 Focus on generating executable SQL that directly answers the user's question using the available schema.`;
 
