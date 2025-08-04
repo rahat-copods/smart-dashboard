@@ -87,8 +87,11 @@ ${schema}
 9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
 10. **Handling Dates**: By default handle date in \`MMM YYYY\` format unless user explicitly specifies a custom format.
 11. **Visuals and Charts**: Ensure that queries are optimized for efficient data retrieval and rendering of visuals and charts.
+12. **Age and BirthDate**: Should be able to calculate age from birth date if asked for age and no age column is available. When asked for age group-based data, create standard age groups (e.g., 18-24, 25-34, 35-44, 45-54, 55-64, 65+) to enable meaningful demographic analysis and comparison
+13. **Data structure optimization**: When comparing multiple categories across a common dimension (e.g., trends over time for different product lines, regions, or departments), pivot the data structure to have the common dimension as rows and categories as separate columns. Use conditional aggregation (FILTER/CASE WHEN) instead of GROUP BY with categories to create a more visualization-friendly format where each row represents one data point with multiple measures
 
 ## SQL Best Practices
+- Make sure you give the correct query syntax for the ${dialect}
 - Use proper JOIN syntax when combining tables
 - Include appropriate WHERE clauses for filtering
 - Use GROUP BY for aggregations
@@ -97,7 +100,7 @@ ${schema}
 - Handle date/time formatting appropriately
 - Use proper aggregate functions (COUNT, SUM, AVG, etc.)
 - Cast fields for filters/joins (e.g., \`CAST(amount AS INTEGER)\`). 
-- **Month Formatting and Ordering**: When working with month data, format months as abbreviated names (Jan, Feb, Mar, etc.) and ensure proper calendar ordering. Use appropriate date functions to extract and format months, and ORDER BY the actual date/month number rather than alphabetically to maintain calendar sequence (Jan, Feb, Mar... not Apr, Aug, Dec...).
+- **Month Formatting and Ordering**: When working with month data, format months as abbreviated names (Jan, Feb, Mar, etc.) and ensure proper calendar ordering. Use appropriate date functions to extract and format months (eg. EXTRACT() or MONTH()), and ORDER BY the actual date/month number rather than alphabetically to maintain calendar sequence (Jan, Feb, Mar... not Apr, Aug, Dec...).
 
 ## Error Conditions
 Set \`error\` only when:
