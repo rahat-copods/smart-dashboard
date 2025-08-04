@@ -32,11 +32,21 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
     return formattedItem;
   });
 
-  const upperDomain =
-    Math.ceil(
-      Math.max(...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)) /
+   const calculateUpperDomain = () => {
+    const keys: string[] = config.dataSeries.map((series) => {
+      return series.key;
+    });
+
+    const upperDomains = keys.map((key) => {
+      return (
+        Math.ceil(Math.max(...chartData.map((d) => Number(d[key]) || 0)) / 10) *
         10
-    ) * 10;
+      );
+    });
+
+    return Math.max(...upperDomains);
+  };
+  const upperDomain =calculateUpperDomain()
 
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">

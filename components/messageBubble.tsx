@@ -89,7 +89,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
         </div>
       );
     };
-
+    console.log("message", message);
     if (isUser) {
       return (
         <div className="space-y-4">
@@ -120,7 +120,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
             className="space-y-4 relative"
           >
             <div className="flex justify-start">
-              <div className="flex space-x-3 w-4/5">
+              <div className="flex space-x-3 md:w-4/5">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted-foreground">
                   <Bot className="w-4 h-4 text-background" />
                 </div>

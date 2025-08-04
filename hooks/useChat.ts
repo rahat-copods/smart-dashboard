@@ -60,10 +60,10 @@ export const useChat = (
       setIsStreaming(true);
       setStreamedContent("");
       setStreamingStatus("Thinking");
-      
+
       // Reset token counter for this request
       currentTokensUsed.current = 0;
-      
+
       let accumulatedContent = "";
       let startTime: number | null = null;
       let timerId: NodeJS.Timeout | null = null;
@@ -85,7 +85,10 @@ export const useChat = (
             messages: [
               ...messages.map((msg) => ({
                 role: msg.role,
-                content: msg.role === "user" ? msg.question : msg.summary,
+                content:
+                  msg.role === "user"
+                    ? msg.question
+                    : (msg.summary ?? "no summary, most likely failed message"),
               })),
               { role: "user", content: question },
             ],
@@ -130,7 +133,7 @@ export const useChat = (
               } else if (parsed.type === "usage") {
                 const usageData = JSON.parse(parsed.text);
                 const newTokens = usageData.total_tokens || 0;
-                
+
                 // Update both ref and state
                 currentTokensUsed.current += newTokens;
                 setUsageMetrics((prev) => ({
@@ -238,7 +241,7 @@ export const useChat = (
         const finalExecutionTime = startTime
           ? formatExecutionTime(endTime - startTime)
           : "0.00";
-        
+
         setMessages((prev) => {
           const updated = [...prev];
           const lastIndex = updated.length - 1;
@@ -288,7 +291,10 @@ export const useChat = (
             messages: [
               ...messages.map((msg) => ({
                 role: msg.role,
-                content: msg.role === "user" ? msg.question : msg.summary,
+                content:
+                  msg.role === "user"
+                    ? msg.question
+                    : (msg.summary ?? "no summary, most likely failed message"),
               })),
               {
                 role: "user",
@@ -325,7 +331,7 @@ export const useChat = (
                 const usageData = JSON.parse(parsed.text);
                 const newTokens = usageData.total_tokens || 0;
                 currentTokensUsed.current += newTokens;
-                
+
                 setMessages((prev) => {
                   const updated = [...prev];
                   const lastIndex = updated.length - 1;

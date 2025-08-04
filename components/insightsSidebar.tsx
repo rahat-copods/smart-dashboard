@@ -107,7 +107,7 @@ export function InsightsSidebar({
       {/* Sidebar */}
       <div
         className={`relative h-full bg-background border-l border-border transition-all duration-300 ease-in-out z-40 ${
-          isOpen ? "w-80" : "w-12"
+          isOpen ? "w-96" : "w-12"
         }`}
       >
         {/* Toggle Button */}

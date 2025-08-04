@@ -28,11 +28,8 @@ interface AreaChartProps {
 }
 export function AreaChartComponent({ config, chartData }: AreaChartProps) {
   const chartConfig = Object.fromEntries(
-  config.dataSeries.map(({ key, label, color }) => [
-    key,
-    { label, color },
-  ])
-) satisfies ChartConfig;
+    config.dataSeries.map(({ key, label, color }) => [key, { label, color }])
+  ) satisfies ChartConfig;
   const formattedChartData = chartData.map((item) => {
     const formattedItem = { ...item };
     config.components.forEach((line) => {
@@ -41,11 +38,22 @@ export function AreaChartComponent({ config, chartData }: AreaChartProps) {
     return formattedItem;
   });
 
-  const upperDomain =
-    Math.ceil(
-      Math.max(...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)) /
+  const calculateUpperDomain = () => {
+    const keys: string[] = config.dataSeries.map((series) => {
+      return series.key;
+    });
+
+    const upperDomains = keys.map((key) => {
+      return (
+        Math.ceil(Math.max(...chartData.map((d) => Number(d[key]) || 0)) / 10) *
         10
-    ) * 10;
+      );
+    });
+
+    return Math.max(...upperDomains);
+  };
+  const upperDomain =calculateUpperDomain()
+   
   return (
     <ChartContainer config={chartConfig}>
       <AreaChart accessibilityLayer data={formattedChartData}>
@@ -73,7 +81,7 @@ export function AreaChartComponent({ config, chartData }: AreaChartProps) {
             dataKey={area.dataKey}
             type="natural"
             fill={area.fill}
-            fillOpacity={0.4}
+            fillOpacity={0.1}
             stroke={area.fill}
             stackId={index}
             dot={{ fill: area.fill }}
