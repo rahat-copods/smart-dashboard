@@ -164,7 +164,7 @@ export default function ChatPage() {
 
       <div className="flex flex-1 min-h-0">
         {/* Main Content Area */}
-        <div className={`flex flex-col flex-1 min-h-0 transition-all duration-300 ${isSidebarOpen ? "mr-80" : "mr-0"}`}>
+        <div className={`flex flex-col flex-1 min-h-0 transition-all duration-300 ${isSidebarOpen ? "mr-50" : "mr-0"}`}>
           {/* Messages Container - FIXED HEIGHT */}
           <div
             ref={messagesContainerRef}
