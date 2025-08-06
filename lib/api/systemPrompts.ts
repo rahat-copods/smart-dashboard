@@ -2,10 +2,10 @@ import { ChartConfig, ErrorReasonResult, QueryParsingResult, SqlGenerationResult
 
 export const getQueryParsingPrompt = (
   schema: string,
-) => `You are an expert at understanding user queries and identifying what matters most to them.
+) => `You are an expert at understanding user queries and identifying what matters most to them, including how they want to visualize their data.
 
 ## Your Task
-Analyze the user's query to understand their intent and identify the most important subjects/entities they care about. based on the Schema and previous conversation context (if any).
+Analyze the user's query to understand their intent, identify the most important subjects/entities they care about, and determine the optimal visual representation based on the Schema and previous conversation context (if any).
 
 ## Database Schema Context
 ${schema}
@@ -15,6 +15,14 @@ ${schema}
 - **Contextual Scope**: Maintain time periods, geographic regions, categories, or other dimensional filters from previous queries when they remain relevant to the current request
 - **Smart Context Application**: Only inherit context that logically applies to the new query - ignore irrelevant previous filters
 
+## Visual Configuration Rules
+- **Maximum 4 dimensions per visual**: Each chart/visualization can handle at most 4 dimensions
+- **Dimension allocation**:
+  - X-axis: Usually time, categories, or primary grouping dimension
+  - Y-axis: Typically numeric/metric values
+  - Categorical data (2 slots): Additional grouping/filtering dimensions (color, size, shape, etc.)
+- **Multiple visuals**: If query requires more than 4 dimensions, break into multiple complementary visualizations
+- **Simple queries**: If ≤4 dimensions total, provide single visualization in array
 
 ## Instructions
 1. **Understand Intent**: What is the user really trying to find out or accomplish?
@@ -32,11 +40,16 @@ ${schema}
    - 1-3: Minor detail
    - 0: Mentioned but not relevant
 
-4. **Consider Context**: If previous summary exists, factor in how it affects the current query's interpretation
+4. **Plan Visualizations**: Determine optimal visual representation:
+   - Identify chart type (bar, line, scatter, pie, etc.)
+   - Map dimensions to visual elements (x-axis, y-axis, color, size)
+   - Split complex queries into multiple focused visuals
 
-5. **Identify Primary Focus**: What is the ONE most important thing the user wants to know?
+5. **Consider Context**: If previous summary exists, factor in how it affects the current query's interpretation
 
-6. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
+6. **Identify Primary Focus**: What is the ONE most important thing the user wants to know?
+
+7. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
 
 ## Weight Assignment Guidelines
 - The main metric/outcome gets highest weight
@@ -47,12 +60,19 @@ ${schema}
 
 ## Examples
 Query: "Show me monthly sales trends for our top 5 products in Q4"
-- "monthly sales trends" (weight: 10) - the core request
-- "top 5 products" (weight: 8) - important filter/scope
-- "Q4" (weight: 7) - important time constraint
-- "our" (weight: 2) - company context, assumed
+- Dimensions: Time (monthly), Sales (metric), Products (top 5), Quarter (Q4)
+- Visual: Line chart with months on x-axis, sales on y-axis, colored by product
+- Single visualization (4 dimensions total)
 
-Focus on practical business understanding, not technical database details.`;
+Query: "Compare sales and profit margins by region and product category over the last 2 years"
+- Dimensions: Sales, Profit margins, Region, Product category, Time (2 years)
+- Multiple visuals needed (5 dimensions):
+  - Visual 1: Sales by region and product category (stacked bar)
+  - Visual 2: Profit margins by region and product category (grouped bar)
+  - Both filtered to last 2 years
+
+Focus on practical business understanding and effective data visualization principles.`;
+
 
 export const getSqlGenerationPrompt = (
   schema: string,
