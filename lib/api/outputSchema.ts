@@ -154,11 +154,17 @@ export const InsightsSchema = z.object({
 
 //#region Chart Config Schema
 
-export const FilterSelectSchema = z.object({
-  dataKey: z.string().describe("The column name to filter by"),
-  label: z.string().describe("Human-readable label for the filter select"),
-  defaultValue: z.string().describe("Default selected value or 'all' for no filter"),
-}).describe("Configuration for filter/select dropdown when data has too many dimensions");
+export const FilterSelectSchema = z
+  .object({
+    dataKey: z.string().describe("The column name to filter by"),
+    label: z.string().describe("Human-readable label for the filter select"),
+    defaultValue: z
+      .string()
+      .describe("Default selected value or 'all' for no filter"),
+  })
+  .describe(
+    "Configuration for filter/select dropdown when data has too many dimensions"
+  );
 
 // Level 3: Data Series Configuration
 export const DataSeriesItemSchema = z.object({
@@ -194,6 +200,7 @@ export const AxisSchema = z.object({
   dataKey: z
     .string()
     .describe("The key in chartData objects used for axis values"),
+  label: z.string().describe("Human-readable label for the axis"),
 });
 
 // Level 2: Single Chart Visual Configuration (UPDATED)
@@ -208,9 +215,13 @@ export const ChartVisualSchema = z.object({
     .describe("Configuration for chart components"),
   xAxis: AxisSchema.describe("Configuration for the X-axis"),
   yAxis: AxisSchema.describe("Configuration for the Y-axis"),
-  filterSelect: FilterSelectSchema.nullable().describe("Filter/select configuration for complex data with 4+ dimensions, null if not needed"),
+  filterSelect: FilterSelectSchema.nullable().describe(
+    "Filter/select configuration for complex data with 4+ dimensions, null if not needed"
+  ),
   title: z.string().describe("Chart title"),
-  description: z.string().describe("Chart description explaining what it shows"),
+  description: z
+    .string()
+    .describe("Chart description explaining what it shows"),
 });
 
 // Level 1: Main Chart Config Schema

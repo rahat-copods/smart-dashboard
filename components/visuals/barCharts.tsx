@@ -11,7 +11,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChartVisual as BarChartConfig } from "@/lib/api/types";
 import { formatCellValue } from "@/lib/utils";
 
@@ -32,11 +38,11 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
   // Extract unique filter options
   const filterOptions = useMemo(() => {
     if (!config.filterSelect) return [];
-    
+
     const uniqueValues = Array.from(
       new Set(chartData.map((item) => item[config.filterSelect!.dataKey]))
     ).filter(Boolean);
-    
+
     return uniqueValues;
   }, [chartData, config.filterSelect]);
 
@@ -45,17 +51,14 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
     if (!config.filterSelect || !selectedFilter) {
       return chartData;
     }
-    
+
     return chartData.filter(
       (item) => item[config.filterSelect!.dataKey] === selectedFilter
     );
   }, [chartData, config.filterSelect, selectedFilter]);
 
   const chartConfig = Object.fromEntries(
-    config.dataSeries.map(({ key, label, color }) => [
-      key,
-      { label, color },
-    ])
+    config.dataSeries.map(({ key, label, color }) => [key, { label, color }])
   ) satisfies ChartConfig;
 
   const formattedChartData = filteredData.map((item) => {
@@ -73,14 +76,15 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
 
     const upperDomains = keys.map((key) => {
       return (
-        Math.ceil(Math.max(...filteredData.map((d) => Number(d[key]) || 0)) / 10) *
-        10
+        Math.ceil(
+          Math.max(...filteredData.map((d) => Number(d[key]) || 0)) / 10
+        ) * 10
       );
     });
 
     return Math.max(...upperDomains);
   };
-  
+
   const upperDomain = calculateUpperDomain();
 
   return (
@@ -90,11 +94,15 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
         <div className="flex justify-between items-center">
           <div>
             <h3 className="text-lg font-semibold">{config.title}</h3>
-            <p className="text-sm text-muted-foreground">{config.description}</p>
+            <p className="text-sm text-muted-foreground">
+              {config.description}
+            </p>
           </div>
           <Select value={selectedFilter} onValueChange={setSelectedFilter}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder={`Select ${config.filterSelect.label}`} />
+              <SelectValue
+                placeholder={`Select ${config.filterSelect.label}`}
+              />
             </SelectTrigger>
             <SelectContent>
               {filterOptions.map((option) => (
@@ -115,6 +123,11 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
             tickLine={false}
             tickMargin={10}
             axisLine={false}
+            label={{
+              value: config.xAxis.label ?? "",
+              angle: 0,
+              position: "bottom",
+            }}
           />
           <YAxis
             dataKey={config.yAxis.dataKey}
@@ -122,8 +135,15 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
             axisLine={false}
             tickMargin={10}
             domain={[0, upperDomain]}
+            label={{
+              value: config.yAxis.label ?? "",
+              angle: -90,
+              position: "insideLeft",
+            }}
           />
-          <ChartTooltip content={<ChartTooltipContent className="w-[160px]" />} />
+          <ChartTooltip
+            content={<ChartTooltipContent className="w-[160px]" />}
+          />
           <ChartLegend content={<ChartLegendContent />} />
           {config.components.map((bar, index) => (
             <Bar
