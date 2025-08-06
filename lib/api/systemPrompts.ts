@@ -293,7 +293,14 @@ Generate appropriate chart configurations that will best visualize the SQL query
    - **Option B**: X = Treatment_type, Grouped by month (colored bars/lines per month)
    - **Decision**: Choose based on user intent - are they analyzing treatments over time, or comparing treatments across months?
 
-5. **Axis Selection Priority**:
+5. **Filter/Select Dimension Handling**:
+   When data has 4+ dimensions or would be too complex to visualize all at once:
+   - **Identify filter candidates**: Dimensions that can be used to filter/slice the data
+   - **Choose appropriate filter dimension**: Select categorical columns with reasonable number of unique values
+   - **Set default selection**: Choose "all" or the first/most common value as default
+   - **Filter logic**: The selected dimension should filter the dataset before chart rendering
+
+6. **Axis Selection Priority**:
    - **X-Axis (dataKey)**: 
      * Primary categorical dimension
      * Natural ordering preference (alphabetical, numerical, hierarchical)
@@ -302,19 +309,19 @@ Generate appropriate chart configurations that will best visualize the SQL query
      * Quantitative measures (counts, sums, averages)
      * The metric user wants to "measure"
 
-6. **DataSeries Configuration**:
+7. **DataSeries Configuration**:
    - Create entries for each data column that will be visualized
    - Use friendly labels derived from column names
    - Assign random colors from var(--chart-1), var(--chart-2), var(--chart-3), var(--chart-4), or var(--chart-5)
    - Match property keys to actual SQL column names
-   - there can be multiple data series based on the columns in the query and the user's intent 
+   - There can be multiple data series based on the columns in the query and the user's intent 
 
-7. **Multiple Charts**: Create separate configurations when:
+8. **Multiple Charts**: Create separate configurations when:
    - Data contains unrelated groups requiring different chart types
    - Different metrics need different visualization approaches
    - Multiple distinct comparisons are needed
 
-8. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
+9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
 
 ## Example Mappings
 
@@ -323,40 +330,39 @@ Generate appropriate chart configurations that will best visualize the SQL query
 - xAxis: { dataKey: "department" }
 - Primary focus: Compare departments
 - dataSeries: { 
-    employee_count: { label: "Employee Count", color: "var(--chart-1)" },
-    avg_salary: { label: "Average Salary", color: "var(--chart-2)" }
+    employee_count: { key: "employee_count", label: "Employee Count", color: "var(--chart-1)" },
+    avg_salary: { key: "avg_salary", label: "Average Salary", color: "var(--chart-2)" }
   }
+- No filter needed (simple 3-dimension data)
 
-**Example 2**: \`SELECT product_category, sales_region, total_revenue FROM sales GROUP BY product_category, sales_region\`
+**Example 2**: \`SELECT year, month, specialization, age_18_24_revenue, age_25_34_revenue, age_35_44_revenue, age_45_54_revenue, age_55_64_revenue, age_65_plus_revenue FROM medical_data GROUP BY year, month, specialization\`
+- Chart Type: bar (stacked comparison over time)
+- xAxis: { dataKey: "month" } (time progression)
+- dataSeries: Age group revenue columns (6 series)
+- **Filter dimension**: specialization (too many dimensions for single view)
+- filterSelect: { dataKey: "specialization", label: "Specialization", defaultValue: "Dermatology" }
+
+**Example 3**: \`SELECT product_category, sales_region, sales_rep, total_revenue FROM sales GROUP BY product_category, sales_region, sales_rep\`
 - Chart Type: bar (categorical comparison)
-- **Option A**: X = product_category, Grouped by sales_region
-- **Option B**: X = sales_region, Grouped by product_category
-- **Decision Logic**: Choose based on whether user wants to compare products across regions OR regions across products
-
-**Example 3**: \`SELECT priority_level, status, ticket_count FROM tickets GROUP BY priority_level, status\`
-- Chart Type: bar (comparing priority levels with status breakdown)
-- xAxis: { dataKey: "priority_level" } (natural ordering: Low, Medium, High)
-- Grouped by: status (Open, In Progress, Closed)
-- Focus: How ticket counts vary by priority, broken down by status
-
-**Example 4**: \`SELECT quarter, cumulative_revenue FROM quarterly_growth ORDER BY quarter\`
-- Chart Type: area (showing cumulative growth progression)
-- xAxis: { dataKey: "quarter" }
-- Focus: Cumulative revenue growth over quarters
+- xAxis: { dataKey: "product_category" }
+- dataSeries: { total_revenue: { key: "total_revenue", label: "Total Revenue", color: "var(--chart-1)" } }
+- **Filter dimension**: sales_region (reduce complexity)
+- filterSelect: { dataKey: "sales_region", label: "Sales Region", defaultValue: "North" }
 
 ## Decision Framework
 1. **Consider previous visualization context** (chart types, groupings, dimensions used)
 2. **Identify the primary comparison dimension** (what user wants to compare)
 3. **Identify the measurement** (what user wants to measure)
 4. **Identify secondary groupings** (how to break down the data further)
-5. **Choose chart type** based on data nature and comparison intent:
+5. **Evaluate complexity**: If >4 effective dimensions, choose one for filtering
+6. **Choose chart type** based on data nature and comparison intent:
    - Discrete categories → **bar**
    - Sequential/ordered progression → **line**
    - Cumulative/volume emphasis → **area**
-6. **Apply logical ordering** to categorical data when possible
-7. **Maintain consistency** with previous analysis patterns when building upon prior work
-8. **Ensure proper axis assignment** Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately (choosing descriptive names over IDs, using readable labels over technical codes, prioritizing human-readable values over system identifiers, and ensuring categorical values are meaningful to the end user rather than database artifacts)
-
+7. **Apply logical ordering** to categorical data when possible
+8. **Maintain consistency** with previous analysis patterns when building upon prior work
+9. **Ensure proper axis assignment** Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately (choosing descriptive names over IDs, using readable labels over technical codes, prioritizing human-readable values over system identifiers, and ensuring categorical values are meaningful to the end user rather than database artifacts)
+10. **Configure filter selects** for dimensions that would clutter the visualization
 
 Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
 
