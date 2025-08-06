@@ -99,4 +99,23 @@ export class ChatStorage {
       this.saveChats(chats);
     }
   }
+
+  static updateMessage(chatId: string, messageId: string, updates: any): void {
+    const chats = this.getAllChats();
+    const chatIndex = chats.findIndex(chat => chat.id === chatId);
+    
+    if (chatIndex !== -1) {
+      const messageIndex = chats[chatIndex].messages.findIndex(
+        (msg) => msg.id === messageId
+      );
+      if (messageIndex !== -1) {
+        chats[chatIndex].messages[messageIndex] = {
+          ...chats[chatIndex].messages[messageIndex],
+          ...updates,
+        };
+        chats[chatIndex].updatedAt = new Date();
+        this.saveChats(chats);
+      }
+    }
+  }
 }

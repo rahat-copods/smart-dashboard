@@ -275,160 +275,168 @@ export const useChat = (
   );
 
   const generateInsights = useCallback(
-    async (userId: string, data: Record<string, any>[]) => {
-      setIsInsightStreaming(true);
-      setInsightContent("");
-      let accumulatedInsight = "";
+  async (userId: string, data: Record<string, any>[], messageId: string) => {
+    setIsInsightStreaming(true);
+    setInsightContent("");
+    let accumulatedInsight = "";
 
-      try {
-        const response = await fetch("/api/insights", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            messages: [
-              ...messages.map((msg) => ({
-                role: msg.role,
-                content:
-                  msg.role === "user"
-                    ? msg.question
-                    : (msg.summary ?? "no summary, most likely failed message"),
-              })),
-              {
-                role: "user",
-                content:
-                  "Please give me insights for this data \n" +
-                  JSON.stringify(data),
-              },
-            ],
-          }),
-        });
+    try {
+      const response = await fetch("/api/insights", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          messages: [
+            ...messages.map((msg) => ({
+              role: msg.role,
+              content:
+                msg.role === "user"
+                  ? msg.question
+                  : (msg.summary ?? "no summary, most likely failed message"),
+            })),
+            {
+              role: "user",
+              content:
+                "Please give me insights for this data \n" +
+                JSON.stringify(data),
+            },
+          ],
+        }),
+      });
 
-        if (!response.body) {
-          throw new Error("No response body");
-        }
+      if (!response.body) {
+        throw new Error("No response body");
+      }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n").filter((line) => line.trim());
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n").filter((line) => line.trim());
 
-          for (const line of lines) {
-            try {
-              const parsed: StreamResponse = JSON.parse(line);
+        for (const line of lines) {
+          try {
+            const parsed: StreamResponse = JSON.parse(line);
 
-              if (parsed.type === "status") {
-              } else if (parsed.type === "content") {
-                accumulatedInsight += parsed.text;
-                setInsightContent(accumulatedInsight);
-              } else if (parsed.type === "usage") {
-                const usageData = JSON.parse(parsed.text);
-                const newTokens = usageData.total_tokens || 0;
-                currentTokensUsed.current += newTokens;
+            if (parsed.type === "status") {
+            } else if (parsed.type === "content") {
+              accumulatedInsight += parsed.text;
+              setInsightContent(accumulatedInsight);
+            } else if (parsed.type === "usage") {
+              const usageData = JSON.parse(parsed.text);
+              const newTokens = usageData.total_tokens || 0;
+              currentTokensUsed.current += newTokens;
 
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastIndex = updated.length - 1;
-                  if (
-                    updated[lastIndex] &&
-                    updated[lastIndex].role === "assistant"
-                  ) {
-                    updated[lastIndex] = {
-                      ...updated[lastIndex],
-                      info: {
-                        ...updated[lastIndex].info,
-                        tokensUsage: currentTokensUsed.current,
-                      },
-                    };
-
-                    ChatStorage.updateLastMessage(chatId, {
-                      info: {
-                        ...updated[lastIndex].info,
-                        tokensUsage: currentTokensUsed.current,
-                      },
-                    });
-                  }
-                  return updated;
-                });
-              } else if (parsed.type === "partialResult") {
-              } else if (parsed.type === "result" || parsed.type === "error") {
-                const result = JSON.parse(parsed.text);
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastIndex = updated.length - 1;
-                  if (
-                    updated[lastIndex] &&
-                    updated[lastIndex].role === "assistant"
-                  ) {
-                    updated[lastIndex] = {
-                      ...updated[lastIndex],
-                      insights: result,
-                    };
-                  }
-                  return updated;
-                });
-                ChatStorage.updateLastMessage(chatId, {
-                  insights: result,
-                });
-              }
-            } catch (error) {
-              console.error("Error parsing insights stream chunk:", error);
-              const errorMessage =
-                error instanceof Error
-                  ? error.message
-                  : "Failed to parse insights response";
               setMessages((prev) => {
                 const updated = [...prev];
-                const lastIndex = updated.length - 1;
+                const messageIndex = updated.findIndex(
+                  (msg) => msg.id === messageId
+                );
                 if (
-                  updated[lastIndex] &&
-                  updated[lastIndex].role === "assistant"
+                  messageIndex !== -1 &&
+                  updated[messageIndex].role === "assistant"
                 ) {
-                  updated[lastIndex] = {
-                    ...updated[lastIndex],
-                    insightsError: errorMessage,
-                  };
+                  updated[messageIndex] = {
+                    ...updated[messageIndex],
+                    info: {
+                      ...updated[messageIndex].info,
+                      tokensUsage: currentTokensUsed.current,
+                    },
+                  } as AssistantMessage;
+
+                  ChatStorage.updateMessage(chatId, messageId, {
+                    info: {
+                      ...updated[messageIndex].info,
+                      tokensUsage: currentTokensUsed.current,
+                    },
+                  });
                 }
                 return updated;
               });
-              ChatStorage.updateLastMessage(chatId, {
-                insightsError: errorMessage,
+            } else if (parsed.type === "partialResult") {
+            } else if (parsed.type === "result" || parsed.type === "error") {
+              const result = JSON.parse(parsed.text);
+              setMessages((prev) => {
+                const updated = [...prev];
+                const messageIndex = updated.findIndex(
+                  (msg) => msg.id === messageId
+                );
+                if (
+                  messageIndex !== -1 &&
+                  updated[messageIndex].role === "assistant"
+                ) {
+                  updated[messageIndex] = {
+                    ...updated[messageIndex],
+                    insights: result,
+                  } as AssistantMessage;
+                }
+                return updated;
+              });
+              ChatStorage.updateMessage(chatId, messageId, {
+                insights: result,
               });
             }
+          } catch (error) {
+            console.error("Error parsing insights stream chunk:", error);
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Failed to parse insights response";
+            setMessages((prev) => {
+              const updated = [...prev];
+              const messageIndex = updated.findIndex(
+                (msg) => msg.id === messageId
+              );
+              if (
+                messageIndex !== -1 &&
+                updated[messageIndex].role === "assistant"
+              ) {
+                updated[messageIndex] = {
+                  ...updated[messageIndex],
+                  insightsError: errorMessage,
+                } as AssistantMessage;
+              }
+              return updated;
+            });
+            ChatStorage.updateMessage(chatId, messageId, {
+              insightsError: errorMessage,
+            });
           }
         }
-      } catch (error) {
-        console.error("Error generating insights:", error);
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error occurred";
-        setMessages((prev) => {
-          const updated = [...prev];
-          const lastIndex = updated.length - 1;
-          if (updated[lastIndex] && updated[lastIndex].role === "assistant") {
-            updated[lastIndex] = {
-              ...updated[lastIndex],
-              insightsError: errorMessage,
-            };
-          }
-          return updated;
-        });
-        ChatStorage.updateLastMessage(chatId, {
-          insightsError: errorMessage,
-        });
-      } finally {
-        setIsInsightStreaming(false);
-        setInsightContent("");
       }
-    },
-    [chatId, messages, setMessages]
-  );
-
+    } catch (error) {
+      console.error("Error generating insights:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      setMessages((prev) => {
+        const updated = [...prev];
+        const messageIndex = updated.findIndex((msg) => msg.id === messageId);
+        if (
+          messageIndex !== -1 &&
+          updated[messageIndex].role === "assistant"
+        ) {
+          updated[messageIndex] = {
+            ...updated[messageIndex],
+            insightsError: errorMessage,
+          } as AssistantMessage;
+        }
+        return updated;
+      });
+      ChatStorage.updateMessage(chatId, messageId, {
+        insightsError: errorMessage,
+      });
+    } finally {
+      setIsInsightStreaming(false);
+      setInsightContent("");
+    }
+  },
+  [chatId, messages, setMessages]
+);
   return {
     sendQuery,
     generateInsights,
