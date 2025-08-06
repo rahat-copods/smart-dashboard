@@ -67,7 +67,7 @@ async function generateSqlQuery(
       ...messages.slice(0, -1),
       {
         ...messages[messages.length - 1],
-        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({...userQueryParsed, reasoning: null})}`,
+        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({ ...userQueryParsed, reasoning: null })}`,
       },
     ],
     streamCallback,
@@ -95,7 +95,6 @@ async function executeSqlQuery(
   } else {
     streamCallback("Query failed", "status");
   }
-
   return dbResult;
 }
 
@@ -143,7 +142,7 @@ async function generateChartConfig(
       ...messages.slice(0, -1),
       {
         ...messages[messages.length - 1],
-        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({...userQueryParsed, reasoning: null})}\n\n**SQL Query**:\n${sqlQuery}`,
+        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({ ...userQueryParsed, reasoning: null })}\n\n**SQL Query**:\n${sqlQuery}`,
       },
     ],
     streamCallback,
@@ -168,10 +167,10 @@ async function summarizeConversation(
 ): Promise<SummaryResult> {
   const systemPromptSummarization = getSummarizationPrompt(
     userQuery,
-    {...userQueryParsed, reasoning: "null"},
-    {...sqlResult, reasoning: "null"},
+    { ...userQueryParsed, reasoning: "null" },
+    { ...sqlResult, reasoning: "null" },
     dbResult,
-    chartResult && {...chartResult, reasoning: "null"},
+    chartResult && { ...chartResult, reasoning: "null" },
     errorResult
   );
 
@@ -181,7 +180,7 @@ async function summarizeConversation(
   const summaryData = await aiClient.streamGenerate(
     [{ role: "system", content: systemPromptSummarization }, ...messages],
     streamCallback,
-    SummarySchema,
+    SummarySchema
   );
 
   return summaryData;
@@ -207,7 +206,7 @@ export async function POST(req: NextRequest) {
       const encoder = new TextEncoder();
       const streamCallback: StreamCallback = (
         text: string,
-        type: "status" | "content" | "error"
+        type: "status" | "content" | "error" | "usage"
       ) => {
         controller.enqueue(
           encoder.encode(JSON.stringify({ type, text }) + "\n")
@@ -236,28 +235,56 @@ export async function POST(req: NextRequest) {
         let dbResult = null;
         let attempt = 0;
         const maxAttempts = 3;
+        const previousAttempts: {
+          query: string | null;
+          error: string | null;
+        }[] = [];
 
         while (
           attempt < maxAttempts &&
           (!dbResult?.data || dbResult?.rowCount === 0)
         ) {
           attempt++;
+
+          // Prepare messages for this attempt
+          let attemptMessages = [...messages];
+
+          if (attempt > 1) {
+            // Add previous attempts' queries and errors
+            const previousAttemptInfo = previousAttempts
+              .map(
+                (prev, index) =>
+                  `**Previous Attempt ${index + 1}**:\n` +
+                  `Query: ${prev.query || "None"}\n` +
+                  `Error: ${prev.error || "None"}`
+              )
+              .join("\n\n");
+            console.log("previousAttemptInfo", previousAttemptInfo);
+            attemptMessages = [
+              ...messages.slice(0, -1),
+              {
+                ...messages[messages.length - 1],
+                content:
+                  `${messages[messages.length - 1].content}\n\n` +
+                  `**Parsed Query**:\n${JSON.stringify({ ...userQueryParsed, reasoning: null })}\n\n` +
+                  (previousAttemptInfo
+                    ? `**Previous Attempts**:\n${previousAttemptInfo}\n\n`
+                    : ""),
+              },
+            ];
+          }
+
           sqlResult = await generateSqlQuery(
             aiClient,
             userQueryParsed,
             schemaString,
-            messages,
+            attemptMessages,
             streamCallback,
             dbUrl.split(":")[0]
           );
 
           // Check if sqlResult contains an error and rest is null
-          if (
-            sqlResult.error &&
-            !sqlResult.sqlQuery &&
-            !sqlResult.partialReason &&
-            !sqlResult.isPartial
-          ) {
+          if (sqlResult.error && !sqlResult.sqlQuery) {
             const summary = await summarizeConversation(
               aiClient,
               userQuery,
@@ -292,6 +319,14 @@ export async function POST(req: NextRequest) {
             streamCallback
           );
 
+          // Store this attempt's query and error
+          previousAttempts.push({
+            query: sqlResult.sqlQuery,
+            error:
+              dbResult.error ||
+              (dbResult.rowCount === 0 ? "0 rows returned" : null),
+          });
+
           if (dbResult.data || dbResult.rowCount > 0) {
             break;
           } else if (attempt < maxAttempts) {
@@ -307,11 +342,28 @@ export async function POST(req: NextRequest) {
           (!dbResult.data || dbResult.rowCount === 0) &&
           attempt === maxAttempts
         ) {
+          // Use the last attempt's messages with all previous attempts
+          const finalAttemptMessages = [
+            ...messages.slice(0, -1),
+            {
+              ...messages[messages.length - 1],
+              content:
+                `${messages[messages.length - 1].content}\n\n` +
+                `**Parsed Query**:\n${JSON.stringify({ ...userQueryParsed, reasoning: null })}\n\n` +
+                `**Previous Attempts**:\n${previousAttempts
+                  .map(
+                    (prev, index) =>
+                      `Attempt ${index + 1}:\nQuery: ${prev.query || "None"}\nError: ${prev.error || "None"}`
+                  )
+                  .join("\n\n")}`,
+            },
+          ];
+
           errorResult = await explainError(
             aiClient,
             sqlResult?.sqlQuery as string,
             dbResult.error || "0 rows returned",
-            messages,
+            finalAttemptMessages,
             streamCallback
           );
           const summary = await summarizeConversation(

@@ -69,6 +69,7 @@ ${schema}
 - **Smart Context Application**: Only inherit context that logically applies to the new query - ignore irrelevant previous filters
 
 ## Instructions
+0. **IMPORTANT STEP**: make sure you validate the query against the dialect(${dialect}).
 1. **Generate SQL**: Create a valid SQL query that answers the user's request using the provided schema - if user clearly says "explain" or "describe" the data structure, assume they want a data list. 
 2. **Schema Validation**: Ensure all table names, column names, and relationships exist in the schema
 3. **Query Completeness**: 
@@ -89,6 +90,10 @@ ${schema}
 11. **Visuals and Charts**: Ensure that queries are optimized for efficient data retrieval and rendering of visuals and charts.
 12. **Age and BirthDate**: Should be able to calculate age from birth date if asked for age and no age column is available. When asked for age group-based data, create standard age groups (e.g., 18-24, 25-34, 35-44, 45-54, 55-64, 65+) to enable meaningful demographic analysis and comparison
 13. **Data structure optimization**: When comparing multiple categories across a common dimension (e.g., trends over time for different product lines, regions, or departments), pivot the data structure to have the common dimension as rows and categories as separate columns. Use conditional aggregation (FILTER/CASE WHEN) instead of GROUP BY with categories to create a more visualization-friendly format where each row represents one data point with multiple measures
+14. - **Dialect-Specific Syntax Rules**: 
+  - For PostgreSQL: When using complex expressions in SELECT with aliases, repeat the full expression in GROUP BY and ORDER BY clauses instead of using the alias name, as PostgreSQL requires the actual expression for proper execution
+  - For age calculations in PostgreSQL: Use \`DATE_PART('year', AGE(CURRENT_DATE, birth_date_column))\` for reliable age extraction
+  - Always test dialect-specific functions and syntax patterns to ensure compatibility
 
 ## SQL Best Practices
 - Make sure you give the correct query syntax for the ${dialect}
