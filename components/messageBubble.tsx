@@ -127,7 +127,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                 <div className="flex-1 min-w-0 bg-muted/30 border border-muted  p-1 rounded-lg space-y-4 transition-all duration-300 relative">
                   <div className="p-3">
                     {/* Display current status and streaming content */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 mb-2">
                       <button
                         className="flex items-center space-x-1 text-sm font-normal focus:outline-none group hover:text-primary text-muted-foreground"
                         onClick={() => setIsContentExpanded(!isContentExpanded)}
@@ -178,7 +178,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                         </div>
                       )}
 
-                    {message.error && (
+                    {message.error || message.query?.error && (
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                           <AlertCircle className="w-4 h-4 text-muted-foreground" />
@@ -187,7 +187,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {message.error}
+                          {message.error ?? message.query?.error}
                         </div>
                       </div>
                     )}
@@ -214,7 +214,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                       )
                     ) : null}
 
-                    {message.query && (
+                    {message.query?.sqlQuery && (
                       <Card className="bg-muted/30 border-muted p-1 py-2">
                         <CardContent
                           className={isQueryExpanded ? "p-3" : "px-3 py-2"}
