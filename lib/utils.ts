@@ -1,10 +1,9 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
-
 
 export function formatCellValue(value: any): string {
   if (value == null) return "0";
@@ -15,6 +14,7 @@ export function formatCellValue(value: any): string {
   // Check if it's an ISO date string
   if (typeof value === "string" && isoDateRegex.test(value)) {
     const date = new Date(value);
+
     if (!isNaN(date.getTime())) {
       // Format as: 01 Aug 2025, 06:00 PM (local time)
       return date.toLocaleString("en-GB", {
@@ -30,6 +30,7 @@ export function formatCellValue(value: any): string {
 
   // Try to convert to number
   const numValue = Number(value);
+
   if (!isNaN(numValue)) {
     return numValue % 1 !== 0
       ? numValue.toFixed(2) // Decimal

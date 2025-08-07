@@ -1,5 +1,7 @@
 "use client";
 
+import type { ChatMessage } from "@/types/chat";
+
 import {
   User,
   Bot,
@@ -12,15 +14,16 @@ import {
   Brain,
   Database,
 } from "lucide-react";
+import { useState, forwardRef } from "react";
+
+import ChartsComponent from "./visuals";
+import DataTableComponent from "./visuals/dataTableComponent";
+import MarkdownRenderer from "./markdownRenderer";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState, forwardRef } from "react";
-import type { ChatMessage } from "@/types/chat";
-import ChartsComponent from "./visuals";
 import { cn } from "@/lib/utils";
-import DataTableComponent from "./visuals/dataTableComponent";
-import MarkdownRenderer from "./markdownRenderer";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -41,7 +44,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
       streamedContent = "",
       streamingStatus = "",
     },
-    ref
+    ref,
   ) => {
     const isUser = message.role === "user";
     const isAssistant = message.role === "assistant";
@@ -77,9 +80,9 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
             {message.query.suggestions.map((suggestion, index) => (
               <Button
                 key={index}
-                variant="outline"
-                size="sm"
                 className="text-sm h-auto py-2 px-3 whitespace-normal text-left justify-start transition-colors bg-transparent"
+                size="sm"
+                variant="outline"
                 onClick={() => onSuggestionClick(suggestion)}
               >
                 {suggestion}
@@ -89,7 +92,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
         </div>
       );
     };
-    console.log("message", message);
+
     if (isUser) {
       return (
         <div className="space-y-4">
@@ -116,8 +119,8 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
         <>
           <div
             ref={ref}
-            data-message-id={message.id}
             className="space-y-4 relative"
+            data-message-id={message.id}
           >
             <div className="flex justify-start">
               <div className="flex space-x-3 md:w-4/5">
@@ -139,7 +142,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                           <ChevronRight
                             className={cn(
                               "absolute inset-0 w-4 h-4 transition-all duration-200 transform opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100",
-                              isContentExpanded && "rotate-90"
+                              isContentExpanded && "rotate-90",
                             )}
                             strokeWidth={1.5}
                           />
@@ -147,7 +150,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                         <span
                           className={cn(
                             isStreaming &&
-                              "animate-gradient bg-gradient-to-r from-[var(--muted-foreground)] via-[var(--text-primary)] to-[var(--muted-foreground)] bg-[length:300%_100%] bg-left bg-clip-text text-transparent"
+                              "animate-gradient bg-gradient-to-r from-[var(--muted-foreground)] via-[var(--text-primary)] to-[var(--muted-foreground)] bg-[length:300%_100%] bg-left bg-clip-text text-transparent",
                           )}
                         >
                           {currentStatus}
@@ -168,7 +171,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                             <span className="text-sm font-semibold text-primary">
                               Partial Result
                             </span>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge className="text-xs" variant="outline">
                               Incomplete
                             </Badge>
                           </div>
@@ -178,27 +181,28 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                         </div>
                       )}
 
-                    {message.error || message.query?.error && (
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-semibold text-muted-foreground">
-                            Error Occurred
-                          </span>
+                    {message.error ||
+                      (message.query?.error && (
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <AlertCircle className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-semibold text-muted-foreground">
+                              Error Occurred
+                            </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {message.error ?? message.query?.error}
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {message.error ?? message.query?.error}
-                        </div>
-                      </div>
-                    )}
+                      ))}
 
                     {message.data ? (
                       message.visuals && message.data.length >= 3 ? (
                         message.visuals.visuals.map((visual, index) => (
                           <ChartsComponent
                             key={index}
-                            config={visual}
                             chartData={message.data}
+                            config={visual}
                           />
                         ))
                       ) : (
@@ -259,7 +263,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
     }
 
     return null;
-  }
+  },
 );
 
 MessageBubble.displayName = "MessageBubble";

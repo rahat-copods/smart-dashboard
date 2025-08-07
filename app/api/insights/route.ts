@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ChatCompletionMessageParam } from "openai/resources/index";
+
 import { AIClient } from "@/lib/api/aiClient";
 import { getInsightsPrompt } from "@/lib/api/systemPrompts";
 import { userSchemas } from "@/lib/api/schema";
-import { ChatCompletionMessageParam } from "openai/resources/index";
 import { InsightsResult, StreamCallback } from "@/lib/api/types";
 import { InsightsSchema } from "@/lib/api/outputSchema";
 
@@ -10,7 +11,7 @@ async function generateDataInsights(
   aiClient: AIClient,
   schema: string,
   messages: ChatCompletionMessageParam[],
-  streamCallback: StreamCallback
+  streamCallback: StreamCallback,
 ): Promise<InsightsResult> {
   streamCallback("Generating summary...", "status");
 
@@ -26,10 +27,11 @@ async function generateDataInsights(
     ],
     streamCallback,
     InsightsSchema,
-    "insights"
+    "insights",
   );
 
   streamCallback("Summary generated", "status");
+
   return insights;
 }
 
@@ -49,10 +51,10 @@ export async function POST(req: NextRequest) {
       const encoder = new TextEncoder();
       const streamCallback: StreamCallback = (
         text: string,
-        type: "status" | "content" | "error"
+        type: "status" | "content" | "error",
       ) => {
         controller.enqueue(
-          encoder.encode(JSON.stringify({ type, text }) + "\n")
+          encoder.encode(JSON.stringify({ type, text }) + "\n"),
         );
       };
 
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest) {
           aiClient,
           userSchema,
           messages,
-          streamCallback
+          streamCallback,
         );
 
         controller.enqueue(
@@ -70,20 +72,21 @@ export async function POST(req: NextRequest) {
             JSON.stringify({
               type: "result",
               text: JSON.stringify(insights),
-            })
-          )
+            }),
+          ),
         );
         controller.close();
       } catch (error: any) {
         const errorMessage = error.message || "Unknown error";
+
         streamCallback(`Error: ${errorMessage}\n`, "error");
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
               type: "error",
               text: errorMessage,
-            })
-          )
+            }),
+          ),
         );
         controller.close();
       }

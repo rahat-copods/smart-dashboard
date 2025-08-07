@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ChatCompletionMessageParam } from "openai/resources/index";
+
 import { AIClient } from "@/lib/api/aiClient";
 import { executeQuery } from "@/lib/api/dbClient";
 import { userSchemas } from "@/lib/api/schema";
@@ -25,24 +27,25 @@ import {
   StreamCallback,
   SummaryResult,
 } from "@/lib/api/types";
-import { ChatCompletionMessageParam } from "openai/resources/index";
 
 async function parseUserQuery(
   aiClient: AIClient,
   schemaString: string,
   messages: any[],
-  streamCallback: StreamCallback
+  streamCallback: StreamCallback,
 ): Promise<QueryParsingResult> {
   const systemPromptQueryIntent = getQueryParsingPrompt(schemaString);
+
   streamCallback("Analyzing the Query", "status");
   const userQueryParsed = await aiClient.streamGenerate(
     [{ role: "system", content: systemPromptQueryIntent }, ...messages],
     streamCallback,
     QueryParsingSchema,
-    "reasoning"
+    "reasoning",
   );
 
   streamCallback("Query analysis complete", "status");
+
   return userQueryParsed;
 }
 
@@ -52,11 +55,11 @@ async function generateSqlQuery(
   schemaString: string,
   messages: ChatCompletionMessageParam[],
   streamCallback: StreamCallback,
-  dialect: string
+  dialect: string,
 ): Promise<SqlGenerationResult> {
   const systemPromptQueryGenerate = getSqlGenerationPrompt(
     schemaString,
-    dialect
+    dialect,
   );
 
   streamCallback("Generating Query", "status");
@@ -67,22 +70,23 @@ async function generateSqlQuery(
       ...messages.slice(0, -1),
       {
         ...messages[messages.length - 1],
-        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({ ...userQueryParsed, reasoning: null , visualConfigs: null}) }`,
+        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({ ...userQueryParsed, reasoning: null, visualConfigs: null })}`,
       },
     ],
     streamCallback,
     SqlGenerationSchema,
-    "reasoning"
+    "reasoning",
   );
 
   streamCallback("Query generated", "status");
+
   return sqlResult;
 }
 
 async function executeSqlQuery(
   sqlQuery: string,
   dbUrl: string,
-  streamCallback: StreamCallback
+  streamCallback: StreamCallback,
 ): Promise<DbResult> {
   streamCallback("Executing Query", "status");
   const dbResult = await executeQuery(sqlQuery, dbUrl);
@@ -90,11 +94,12 @@ async function executeSqlQuery(
   if (dbResult.data || dbResult.rowCount > 0) {
     streamCallback(
       `Data Found: Retrieved ${dbResult.rowCount} rows.\n`,
-      "status"
+      "status",
     );
   } else {
     streamCallback("Query failed", "status");
   }
+
   return dbResult;
 }
 
@@ -103,7 +108,7 @@ async function explainError(
   sqlQuery: string,
   error: string,
   messages: ChatCompletionMessageParam[],
-  streamCallback: StreamCallback
+  streamCallback: StreamCallback,
 ): Promise<ErrorReasonResult> {
   const systemPromptErrorExplanation = getErrorExplanationPrompt();
 
@@ -121,8 +126,9 @@ async function explainError(
     ],
     streamCallback,
     ErrorReasonSchema,
-    "errorReason"
+    "errorReason",
   );
+
   return errorData;
 }
 
@@ -131,7 +137,7 @@ async function generateChartConfig(
   sqlQuery: string,
   userQueryParsed: QueryParsingResult,
   messages: any[],
-  streamCallback: StreamCallback
+  streamCallback: StreamCallback,
 ): Promise<ChartConfig> {
   streamCallback("Generating visuals", "status");
   const systemPromptChartConfig = getChartConfigPrompt();
@@ -147,10 +153,11 @@ async function generateChartConfig(
     ],
     streamCallback,
     ChartConfigSchema,
-    "reasoning"
+    "reasoning",
   );
 
   streamCallback("Visuals Generated", "status");
+
   return chartResult;
 }
 
@@ -163,7 +170,7 @@ async function summarizeConversation(
   chartResult: ChartConfig | null,
   errorResult: ErrorReasonResult | null = null,
   messages: any[],
-  streamCallback: StreamCallback
+  streamCallback: StreamCallback,
 ): Promise<SummaryResult> {
   const systemPromptSummarization = getSummarizationPrompt(
     userQuery,
@@ -171,7 +178,7 @@ async function summarizeConversation(
     { ...sqlResult, reasoning: "null" },
     dbResult,
     chartResult && { ...chartResult, reasoning: "null" },
-    errorResult
+    errorResult,
   );
 
   streamCallback("Summarizing", "status");
@@ -180,7 +187,7 @@ async function summarizeConversation(
   const summaryData = await aiClient.streamGenerate(
     [{ role: "system", content: systemPromptSummarization }, ...messages],
     streamCallback,
-    SummarySchema
+    SummarySchema,
   );
 
   return summaryData;
@@ -206,10 +213,10 @@ export async function POST(req: NextRequest) {
       const encoder = new TextEncoder();
       const streamCallback: StreamCallback = (
         text: string,
-        type: "status" | "content" | "error" | "usage"
+        type: "status" | "content" | "error" | "usage",
       ) => {
         controller.enqueue(
-          encoder.encode(JSON.stringify({ type, text }) + "\n")
+          encoder.encode(JSON.stringify({ type, text }) + "\n"),
         );
       };
 
@@ -219,8 +226,9 @@ export async function POST(req: NextRequest) {
           aiClient,
           schemaString,
           messages,
-          streamCallback
+          streamCallback,
         );
+
         console.log("\nstep 1 complete");
 
         // Step 2: SQL Generation (up to 3 attempts)
@@ -256,9 +264,10 @@ export async function POST(req: NextRequest) {
                 (prev, index) =>
                   `**Previous Attempt ${index + 1}**:\n` +
                   `Query: ${prev.query || "None"}\n` +
-                  `Error: ${prev.error || "None"}`
+                  `Error: ${prev.error || "None"}`,
               )
               .join("\n\n");
+
             console.log("previousAttemptInfo", previousAttemptInfo);
             attemptMessages = [
               ...messages.slice(0, -1),
@@ -280,7 +289,7 @@ export async function POST(req: NextRequest) {
             schemaString,
             attemptMessages,
             streamCallback,
-            dbUrl.split(":")[0]
+            dbUrl.split(":")[0],
           );
 
           // Check if sqlResult contains an error and rest is null
@@ -294,8 +303,9 @@ export async function POST(req: NextRequest) {
               null,
               { errorReason: sqlResult.error },
               messages,
-              streamCallback
+              streamCallback,
             );
+
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -306,17 +316,18 @@ export async function POST(req: NextRequest) {
                     summary: summary.summary,
                     error: null,
                   }),
-                })
-              )
+                }),
+              ),
             );
             controller.close();
+
             return;
           }
 
           dbResult = await executeSqlQuery(
             sqlResult.sqlQuery as string,
             dbUrl,
-            streamCallback
+            streamCallback,
           );
 
           // Store this attempt's query and error
@@ -337,6 +348,7 @@ export async function POST(req: NextRequest) {
 
         // Step 3: Error Explanation (if 3 attempts fail)
         let errorResult = null;
+
         if (
           dbResult &&
           (!dbResult.data || dbResult.rowCount === 0) &&
@@ -353,7 +365,7 @@ export async function POST(req: NextRequest) {
                 `**Previous Attempts**:\n${previousAttempts
                   .map(
                     (prev, index) =>
-                      `Attempt ${index + 1}:\nQuery: ${prev.query || "None"}\nError: ${prev.error || "None"}`
+                      `Attempt ${index + 1}:\nQuery: ${prev.query || "None"}\nError: ${prev.error || "None"}`,
                   )
                   .join("\n\n")}`,
             },
@@ -364,7 +376,7 @@ export async function POST(req: NextRequest) {
             sqlResult?.sqlQuery as string,
             dbResult.error || "0 rows returned",
             finalAttemptMessages,
-            streamCallback
+            streamCallback,
           );
           const summary = await summarizeConversation(
             aiClient,
@@ -375,8 +387,9 @@ export async function POST(req: NextRequest) {
             null,
             errorResult,
             messages,
-            streamCallback
+            streamCallback,
           );
+
           controller.enqueue(
             encoder.encode(
               JSON.stringify({
@@ -387,10 +400,11 @@ export async function POST(req: NextRequest) {
                   summary: summary.summary,
                   error: errorResult.errorReason,
                 }),
-              })
-            )
+              }),
+            ),
           );
           controller.close();
+
           return;
         }
         console.log("\nstep 3 complete");
@@ -401,8 +415,9 @@ export async function POST(req: NextRequest) {
           sqlResult?.sqlQuery as string,
           userQueryParsed,
           messages,
-          streamCallback
+          streamCallback,
         );
+
         console.log("\nstep 4 complete");
 
         // Step 5: Summarize Conversation
@@ -415,8 +430,9 @@ export async function POST(req: NextRequest) {
           chartResult,
           null,
           messages,
-          streamCallback
+          streamCallback,
         );
+
         console.log("\nstep 5 complete");
 
         // Final response with all relevant data
@@ -431,12 +447,13 @@ export async function POST(req: NextRequest) {
                 error: null,
                 data: dbResult?.data,
               }),
-            })
-          )
+            }),
+          ),
         );
         controller.close();
       } catch (error: any) {
         const errorMessage = error.message || "Unknown error";
+
         streamCallback(`Error: ${errorMessage}\n`, "error");
         controller.enqueue(
           encoder.encode(
@@ -449,8 +466,8 @@ export async function POST(req: NextRequest) {
                 error: errorMessage,
                 summary: null,
               }),
-            })
-          )
+            }),
+          ),
         );
         controller.close();
       }

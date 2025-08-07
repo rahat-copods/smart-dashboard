@@ -1,14 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import {
   LineChart,
   BarChart,
@@ -17,12 +9,22 @@ import {
   Database,
   RadarIcon,
 } from "lucide-react";
+
 import { BarChartComponent } from "./barCharts";
 import { LineChartComponent } from "./lineChart";
 import DataTableComponent from "./dataTableComponent";
 import { AreaChartComponent } from "./areaChart";
-import { ChartVisual } from "@/lib/api/types";
 import { RadarChartComponent } from "./radarChart";
+
+import { ChartVisual } from "@/lib/api/types";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 const chartOptions = [
   { type: "bar", label: "Bar Chart", icon: BarChart },
@@ -31,6 +33,7 @@ const chartOptions = [
   // { type: "radar", label: "Radar Chart", icon: RadarIcon },
   { type: "table", label: "Data Table", icon: Table },
 ];
+
 interface ChartsComponentProps {
   chartData: any[] | null;
   config: ChartVisual;
@@ -42,10 +45,11 @@ export default function ChartsComponent({
 }: ChartsComponentProps) {
   const chartTypes = ["bar", "line", "area"];
   const [activeChartType, setActiveChartType] = useState<string>(
-    chartTypes[Math.floor(Math.random() * chartTypes.length)]
+    chartTypes[Math.floor(Math.random() * chartTypes.length)],
   );
 
   if (!chartData) return null;
+
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
       <Tabs
@@ -60,9 +64,9 @@ export default function ChartsComponent({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="outline"
-                size="icon"
                 aria-label="Select chart type"
+                size="icon"
+                variant="outline"
               >
                 {activeChartType === "bar" && <BarChart className="h-4 w-4" />}
                 {activeChartType === "line" && (
@@ -90,19 +94,19 @@ export default function ChartsComponent({
           </DropdownMenu>
         </div>
 
-        <TabsContent value="bar" className="mt-0">
-          <BarChartComponent config={config} chartData={chartData} />
+        <TabsContent className="mt-0" value="bar">
+          <BarChartComponent chartData={chartData} config={config} />
         </TabsContent>
-        <TabsContent value="line" className="mt-0">
-          <LineChartComponent config={config} chartData={chartData} />
+        <TabsContent className="mt-0" value="line">
+          <LineChartComponent chartData={chartData} config={config} />
         </TabsContent>
-        <TabsContent value="area" className="mt-0">
-          <AreaChartComponent config={config} chartData={chartData} />
+        <TabsContent className="mt-0" value="area">
+          <AreaChartComponent chartData={chartData} config={config} />
         </TabsContent>
-        <TabsContent value="radar" className="mt-0">
-          <RadarChartComponent config={config} chartData={chartData} />
+        <TabsContent className="mt-0" value="radar">
+          <RadarChartComponent chartData={chartData} config={config} />
         </TabsContent>
-        <TabsContent value="table" className="mt-0">
+        <TabsContent className="mt-0" value="table">
           <DataTableComponent data={chartData} />
         </TabsContent>
       </Tabs>

@@ -1,6 +1,9 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+
+import { FilterSelect } from "./filterSelect";
+
 import {
   ChartContainer,
   ChartLegend,
@@ -10,7 +13,6 @@ import {
 } from "@/components/ui/chart";
 import { ChartVisual as BarChartConfig } from "@/lib/api/types";
 import { useChartLogic } from "@/hooks/useChartLogic";
-import { FilterSelect } from "./filterSelect";
 
 interface BarChartProps {
   chartData: any[];
@@ -26,35 +28,33 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
     formattedChartData,
     upperDomain,
   } = useChartLogic(chartData, config);
-console.log(formattedChartData)
+
   return (
     <div className="w-full space-y-4">
       <FilterSelect
         config={config}
+        filterOptions={filterOptions}
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
-        filterOptions={filterOptions}
       />
 
-      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
         <BarChart accessibilityLayer data={formattedChartData}>
           <CartesianGrid vertical={false} />
           <XAxis
-            dataKey={config.xAxis.dataKey}
-            tickLine={false}
-            tickMargin={10}
             axisLine={false}
+            dataKey={config.xAxis.dataKey}
             label={{
               value: config.xAxis.label ?? "",
               angle: 0,
               position: "bottom",
             }}
+            tickLine={false}
+            tickMargin={10}
           />
           <YAxis
-            dataKey={config.yAxis.dataKey}
-            tickLine={false}
             axisLine={false}
-            tickMargin={10}
+            dataKey={config.yAxis.dataKey}
             domain={[0, upperDomain]}
             label={{
               value: config.yAxis.label ?? "",
@@ -62,7 +62,9 @@ console.log(formattedChartData)
               position: "left",
               offset: 0,
             }}
-          />       
+            tickLine={false}
+            tickMargin={10}
+          />
           <ChartTooltip
             content={<ChartTooltipContent className="w-[160px]" />}
           />
@@ -72,8 +74,8 @@ console.log(formattedChartData)
               key={index}
               dataKey={bar.dataKey}
               fill={bar.fill}
-              radius={4}
               maxBarSize={40}
+              radius={4}
             />
           ))}
         </BarChart>

@@ -803,8 +803,7 @@ export const userSchemas: any = {
   },
   user03: {
     user_id: "user03",
-    db_url:
-      "postgresql://postgres:admin@localhost:5432/hospital",
+    db_url: "postgresql://postgres:admin@localhost:5432/hospital",
     schema: {
       appointments: {
         columns: [

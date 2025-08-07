@@ -1,15 +1,18 @@
 import React, { useState } from "react";
-import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import { Button } from "../ui/button";
+
 import { formatCellValue } from "@/lib/utils";
 
-export default function DataTableComponent({data}: {data:any[]}) {
+export default function DataTableComponent({ data }: { data: any[] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+
   if (!data) {
-    return null
+    return null;
   }
-  if ( data.length === 0) {
+  if (data.length === 0) {
     return (
       <div className="text-sm text-center py-8 text-muted-foreground border rounded-md">
         No data found
@@ -85,10 +88,10 @@ export default function DataTableComponent({data}: {data:any[]}) {
           {totalPages > 1 && (
             <>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Previous
@@ -96,6 +99,7 @@ export default function DataTableComponent({data}: {data:any[]}) {
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   let pageNum;
+
                   if (totalPages <= 5) {
                     pageNum = i + 1;
                   } else if (currentPage <= 3) {
@@ -105,13 +109,14 @@ export default function DataTableComponent({data}: {data:any[]}) {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
+
                   return (
                     <Button
                       key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNum)}
                       className="w-8 h-8 p-0"
+                      size="sm"
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      onClick={() => setCurrentPage(pageNum)}
                     >
                       {pageNum}
                     </Button>
@@ -119,12 +124,12 @@ export default function DataTableComponent({data}: {data:any[]}) {
                 })}
               </div>
               <Button
-                variant="outline"
+                disabled={currentPage === totalPages}
                 size="sm"
+                variant="outline"
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
-                disabled={currentPage === totalPages}
               >
                 Next
                 <ChevronRight className="w-4 h-4" />

@@ -1,6 +1,9 @@
 "use client";
 
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+
+import { FilterSelect } from "./filterSelect";
+
 import {
   ChartContainer,
   ChartLegend,
@@ -10,7 +13,6 @@ import {
 } from "@/components/ui/chart";
 import { ChartVisual as LineChartConfig } from "@/lib/api/types";
 import { useChartLogic } from "@/hooks/useChartLogic";
-import { FilterSelect } from "./filterSelect";
 
 interface LineChartProps {
   chartData: any[];
@@ -31,30 +33,28 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
     <div className="w-full space-y-4">
       <FilterSelect
         config={config}
+        filterOptions={filterOptions}
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
-        filterOptions={filterOptions}
       />
 
-      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
         <LineChart accessibilityLayer data={formattedChartData}>
           <CartesianGrid vertical={false} />
           <XAxis
-            dataKey={config.xAxis.dataKey}
-            tickLine={false}
-            tickMargin={8}
             axisLine={false}
+            dataKey={config.xAxis.dataKey}
             label={{
               value: config.xAxis.label ?? "",
               angle: 0,
               position: "bottom",
             }}
+            tickLine={false}
+            tickMargin={8}
           />
           <YAxis
-            dataKey={config.yAxis.dataKey}
-            tickLine={false}
             axisLine={false}
-            tickMargin={10}
+            dataKey={config.yAxis.dataKey}
             domain={[0, upperDomain]}
             label={{
               value: config.yAxis.label ?? "",
@@ -62,19 +62,21 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
               position: "left",
               offset: 0,
             }}
+            tickLine={false}
+            tickMargin={10}
           />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+          <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
           <ChartLegend content={<ChartLegendContent />} />
           {config.components.map((line, index) => (
             <Line
               key={index}
               dataKey={line.dataKey}
-              type="natural"
-              stroke={line.fill}
-              strokeWidth={2}
               dot={{
                 fill: line.fill,
               }}
+              stroke={line.fill}
+              strokeWidth={2}
+              type="natural"
             />
           ))}
         </LineChart>

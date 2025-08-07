@@ -1,8 +1,12 @@
 import { OpenAI } from "openai";
-import { ChatCompletionMessageParam, CompletionUsage } from "openai/resources/index";
+import {
+  ChatCompletionMessageParam,
+  CompletionUsage,
+} from "openai/resources/index";
+import { zodResponseFormat } from "openai/helpers/zod";
+
 import { createStreamingParser } from "./streamingUtils";
 import { StreamCallback } from "./types";
-import { zodResponseFormat } from "openai/helpers/zod";
 
 export class AIClient {
   private client: OpenAI;
@@ -19,7 +23,7 @@ export class AIClient {
     messages: ChatCompletionMessageParam[],
     streamCallback: StreamCallback,
     outputSchema?: any,
-    fieldToExtract: string = "reasoning"
+    fieldToExtract: string = "reasoning",
   ): Promise<any> {
     const stream = await this.client.chat.completions.create({
       model: this.model,
@@ -39,9 +43,9 @@ export class AIClient {
     let parser = createStreamingParser(fieldToExtract, streamCallback);
 
     for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || "";
       if (chunk.choices.length > 0) {
         const content = chunk.choices[0]?.delta?.content || "";
+
         if (content) {
           fullData += content;
           parser.processChunk(content);
@@ -50,6 +54,7 @@ export class AIClient {
         streamCallback(JSON.stringify(chunk.usage as CompletionUsage), "usage");
       }
     }
+
     return JSON.parse(fullData);
   }
 }

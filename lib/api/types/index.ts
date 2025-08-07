@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import {
   AxisSchema,
   ChartConfigSchema,
@@ -15,10 +16,14 @@ import {
 
 export type StreamCallback = (
   content: string,
-  type: "status" | "content" | "error" | "usage"
+  type: "status" | "content" | "error" | "usage",
 ) => void;
 
-export type DbResult = { data: any[] | null; rowCount: number; error: string | null }
+export type DbResult = {
+  data: any[] | null;
+  rowCount: number;
+  error: string | null;
+};
 
 // Inferred TypeScript type
 export type KeySubject = z.infer<typeof KeySubjectSchema>;

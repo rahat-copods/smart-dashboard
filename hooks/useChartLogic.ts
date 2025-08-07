@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+
 import { ChartConfig } from "@/components/ui/chart";
 import { ChartVisual } from "@/lib/api/types";
 import { formatCellValue } from "@/lib/utils";
@@ -7,8 +8,9 @@ export function useChartLogic(chartData: any[], config: ChartVisual) {
   const [selectedFilter, setSelectedFilter] = useState(() => {
     if (!config.filterSelect) return "";
     const uniqueValues = Array.from(
-      new Set(chartData.map((item) => item[config.filterSelect!.dataKey]))
+      new Set(chartData.map((item) => item[config.filterSelect!.dataKey])),
     ).filter(Boolean);
+
     return uniqueValues[0] || "";
   });
 
@@ -17,7 +19,7 @@ export function useChartLogic(chartData: any[], config: ChartVisual) {
     if (!config.filterSelect) return [];
 
     const uniqueValues = Array.from(
-      new Set(chartData.map((item) => item[config.filterSelect!.dataKey]))
+      new Set(chartData.map((item) => item[config.filterSelect!.dataKey])),
     ).filter(Boolean);
 
     return uniqueValues;
@@ -30,7 +32,7 @@ export function useChartLogic(chartData: any[], config: ChartVisual) {
     }
 
     return chartData.filter(
-      (item) => item[config.filterSelect!.dataKey] === selectedFilter
+      (item) => item[config.filterSelect!.dataKey] === selectedFilter,
     );
   }, [chartData, config.filterSelect, selectedFilter]);
 
@@ -41,9 +43,9 @@ export function useChartLogic(chartData: any[], config: ChartVisual) {
         config.dataSeries.map(({ key, label, color }) => [
           key,
           { label, color },
-        ])
+        ]),
       ) satisfies ChartConfig,
-    [config.dataSeries]
+    [config.dataSeries],
   );
 
   // Format chart data
@@ -51,19 +53,20 @@ export function useChartLogic(chartData: any[], config: ChartVisual) {
     () =>
       filteredData.map((item) => {
         const formattedItem = { ...item };
+
         // Format component data keys
         config.components.forEach((component) => {
           formattedItem[component.dataKey] = formatCellValue(
-            item[component.dataKey]
+            item[component.dataKey],
           );
         });
         // Format x-axis data key
         formattedItem[config.xAxis.dataKey] = formatCellValue(
-          item[config.xAxis.dataKey]
+          item[config.xAxis.dataKey],
         );
         // Format y-axis data key
         formattedItem[config.yAxis.dataKey] = formatCellValue(
-          item[config.yAxis.dataKey]
+          item[config.yAxis.dataKey],
         );
 
         return formattedItem;
@@ -73,7 +76,7 @@ export function useChartLogic(chartData: any[], config: ChartVisual) {
       config.components,
       config.xAxis.dataKey,
       config.yAxis.dataKey,
-    ]
+    ],
   );
 
   // Calculate upper domain
@@ -83,7 +86,7 @@ export function useChartLogic(chartData: any[], config: ChartVisual) {
     const upperDomains = keys.map((key) => {
       return (
         Math.ceil(
-          Math.max(...filteredData.map((d) => Number(d[key]) || 0)) / 10
+          Math.max(...filteredData.map((d) => Number(d[key]) || 0)) / 10,
         ) * 10
       );
     });

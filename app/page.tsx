@@ -1,8 +1,11 @@
 "use client";
 
 import type React from "react";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Database, Send, Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Database, Send, Loader2 } from "lucide-react";
 import { ChatHeader } from "@/components/chatHeader";
 import { ChatStorage } from "@/hooks/chatStorage";
 import { ChatMessage } from "@/types/chat";
@@ -47,6 +49,7 @@ export default function HomePage() {
       ChatStorage.addMessage(newChat.id, userMessage);
       router.push(`/chat/${newChat.id}`);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error("Failed to create chat:", err);
     } finally {
       setIsLoading(false);
@@ -89,10 +92,10 @@ export default function HomePage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-2 ">
-                <Label htmlFor="userId" className="text-base font-medium">
+                <Label className="text-base font-medium" htmlFor="userId">
                   Select Test Database
                 </Label>
                 <Select value={userId} onValueChange={setUserId}>
@@ -117,25 +120,25 @@ export default function HomePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="query" className="text-base font-medium">
+                <Label className="text-base font-medium" htmlFor="query">
                   Ask a question
                 </Label>
                 <div className="relative">
                   <Textarea
+                    className="resize-none text-base pr-12 min-h-[120px]"
+                    disabled={isLoading}
                     id="query"
                     placeholder="e.g., Show me the top 10 customers by revenue this month"
+                    rows={4}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    disabled={isLoading}
-                    rows={4}
-                    className="resize-none text-base pr-12 min-h-[120px]"
                   />
                   <Button
-                    type="submit"
+                    className="absolute bottom-3 right-3 h-8 w-8"
                     disabled={isLoading || !userId || !query.trim()}
                     size="icon"
-                    className="absolute bottom-3 right-3 h-8 w-8"
+                    type="submit"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -161,10 +164,10 @@ export default function HomePage() {
               {examples.map((example, index) => (
                 <button
                   key={index}
+                  className="p-3 text-left text-sm bg-card border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
                   type="button"
                   onClick={() => handleExampleClick(example)}
-                  disabled={isLoading}
-                  className="p-3 text-left text-sm bg-card border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {example}
                 </button>

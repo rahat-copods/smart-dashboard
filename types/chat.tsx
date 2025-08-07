@@ -25,7 +25,7 @@ export interface AssistantMessage extends BaseMessage {
   summary: string | null;
   insights: InsightsResult | null;
   insightsError: string | null;
-  info: {executionTime: number, tokensUsage: number}
+  info: { executionTime: number; tokensUsage: number };
 }
 
 export type ChatMessage = UserMessage | AssistantMessage;

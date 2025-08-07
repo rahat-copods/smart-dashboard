@@ -7,9 +7,12 @@ import {
   MessageSquare,
   Trash2,
   Database,
-  PanelLeft,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
+
+import { ThemeSwitch } from "./theme-switch";
+
 import {
   Sidebar,
   SidebarContent,
@@ -30,29 +33,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Chat } from "@/types/chat";
 import { ChatStorage } from "@/hooks/chatStorage";
-import { ThemeSwitch } from "./theme-switch";
-import { useState } from "react";
 
-
-export function AppSidebar({  ...props }) {
-  const [currentChatId, setCurrentChatId ]=useState<string | null>(null); 
+export function AppSidebar({ ...props }) {
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [searchQuery, setSearchQuery] = React.useState("");
   const router = useRouter();
   const pathname = usePathname();
   const { state } = useSidebar();
+
   React.useEffect(() => {
-    setCurrentChatId(pathname.split("/")[2])
+    setCurrentChatId(pathname.split("/")[2]);
     loadChats();
   }, [pathname]);
 
   const loadChats = () => {
     const allChats = ChatStorage.getAllChats();
+
     setChats(allChats);
   };
 
   const filteredChats = chats.filter((chat) =>
-    chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+    chat.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleNewChat = () => {
@@ -107,9 +109,9 @@ export function AppSidebar({  ...props }) {
         {/* New Chat Button */}
         <div className={isCollapsed ? "mx-auto" : "px-3 pb-2"}>
           <Button
-            onClick={handleNewChat}
             className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-2"
             size={isCollapsed ? "icon" : "default"}
+            onClick={handleNewChat}
           >
             <PenSquare className="h-4 w-4" />
             {!isCollapsed && <span className="ml-2">New Chat</span>}
@@ -125,10 +127,10 @@ export function AppSidebar({  ...props }) {
               <div className="relative px-1">
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
+                  className="pl-10 h-9 bg-background/50 border-border/50 focus:border-border focus:bg-background"
                   placeholder="Search chats..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-9 bg-background/50 border-border/50 focus:border-border focus:bg-background"
                 />
               </div>
             </SidebarGroupContent>
@@ -161,10 +163,10 @@ export function AppSidebar({  ...props }) {
                 : filteredChats.map((chat) => (
                     <SidebarMenuItem key={chat.id}>
                       <SidebarMenuButton
-                        onClick={() => handleChatClick(chat.id)}
-                        isActive={currentChatId === chat.id}
                         className="w-full justify-start py-4"
+                        isActive={currentChatId === chat.id}
                         tooltip={chat.title}
+                        onClick={() => handleChatClick(chat.id)}
                       >
                         <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
                         {!isCollapsed && (
@@ -177,8 +179,8 @@ export function AppSidebar({  ...props }) {
                       </SidebarMenuButton>
                       {!isCollapsed && (
                         <SidebarMenuAction
-                          onClick={(e) => handleDeleteChat(chat.id, e)}
                           showOnHover
+                          onClick={(e) => handleDeleteChat(chat.id, e)}
                         >
                           <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                           <span className="sr-only">Delete chat</span>

@@ -1,12 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import type { AssistantMessage } from "@/types/chat";
+
 import {
   PanelRightClose,
   PanelRightOpen,
@@ -14,8 +9,16 @@ import {
   Brain,
   Eye,
 } from "lucide-react";
-import type { AssistantMessage } from "@/types/chat";
+
 import MarkdownRenderer from "./markdownRenderer";
+
+import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { UsageMetrics } from "@/types";
 
 // Helper function to parse markdown into card sections
@@ -52,6 +55,7 @@ const parseMarkdownIntoCards = (markdown: string) => {
   // Process the remaining parts, which should now start with '## '
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
+
     if (part.startsWith("## ")) {
       // This is a new heading
       currentTitle = part.substring(3).trim(); // Remove "## "
@@ -64,6 +68,7 @@ const parseMarkdownIntoCards = (markdown: string) => {
       cards.push({ title: currentTitle, content: currentContent });
     }
   }
+
   return cards;
 };
 
@@ -76,7 +81,7 @@ interface InsightsSidebarProps {
   generateInsights: (
     userId: string,
     data: Record<string, any>[],
-    messageId: string
+    messageId: string,
   ) => Promise<void>;
   userId: string;
   isStreaming: boolean;
@@ -115,10 +120,10 @@ export function InsightsSidebar({
         {/* Toggle Button */}
         <div className="absolute top-4 left-3">
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
             className="h-8 w-8 p-0"
+            size="sm"
+            variant="ghost"
+            onClick={onToggle}
           >
             {isOpen ? (
               <PanelRightClose className="w-4 h-4" />
@@ -165,20 +170,20 @@ export function InsightsSidebar({
                 </div>
               )}
               <Button
-                onClick={handleInsightClick}
-                disabled={isInsightStreaming || !message?.data?.length}
                 className="w-full"
+                disabled={isInsightStreaming || !message?.data?.length}
+                onClick={handleInsightClick}
               >
                 {isInsightStreaming ? "Generating..." : "Generate Insights"}
               </Button>
               {parsedCards.length > 0 ? (
-                <Accordion type="single" collapsible className="w-full">
+                <Accordion collapsible className="w-full" type="single">
                   {parsedCards.map((card, index) => (
                     <AccordionItem key={index} value={`item-${index}`}>
                       <AccordionTrigger className="">
                         <div className="flex text-left gap-2 items-center">
-                        <Brain className="w-4 h-4" />
-                        {card.title}
+                          <Brain className="w-4 h-4" />
+                          {card.title}
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
@@ -194,7 +199,8 @@ export function InsightsSidebar({
                     <>
                       <p className="text-sm">No insights available</p>
                       <p className="text-xs mt-1">
-                        Click "Generate Insights" to analyze this message
+                        Click &quot;Generate Insights&quot; to analyze this
+                        message
                       </p>
                     </>
                   ) : (
