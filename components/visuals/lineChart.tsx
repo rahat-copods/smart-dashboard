@@ -66,7 +66,7 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
             tickMargin={10}
           />
           <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
-          <ChartLegend content={<ChartLegendContent />} />
+          <ChartLegend content={<ChartLegendContent className="mt-2" />} />
           {config.components.map((line, index) => (
             <Line
               key={index}

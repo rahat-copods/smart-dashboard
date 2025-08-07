@@ -185,9 +185,9 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
                       (message.query?.error && (
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
-                            <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm font-semibold text-muted-foreground">
-                              Error Occurred
+                            <AlertCircle className="w-4 h-4 text-orange-400" />
+                            <span className="text-sm font-semibold text-orange-400">
+                              Insufficient info.
                             </span>
                           </div>
                           <div className="text-sm text-muted-foreground">

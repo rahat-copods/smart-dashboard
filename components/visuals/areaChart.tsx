@@ -81,7 +81,7 @@ export function AreaChartComponent({ config, chartData }: AreaChartProps) {
               type="natural"
             />
           ))}
-          <ChartLegend content={<ChartLegendContent />} />
+          <ChartLegend content={<ChartLegendContent className="mt-2" />} />
         </AreaChart>
       </ChartContainer>
     </div>

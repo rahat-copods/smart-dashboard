@@ -65,9 +65,7 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
             tickLine={false}
             tickMargin={10}
           />
-          <ChartTooltip
-            content={<ChartTooltipContent className="w-[160px]" />}
-          />
+          <ChartTooltip content={<ChartTooltipContent className="w-fit " />} />
           <ChartLegend content={<ChartLegendContent className="mt-2" />} />
           {config.components.map((bar, index) => (
             <Bar
