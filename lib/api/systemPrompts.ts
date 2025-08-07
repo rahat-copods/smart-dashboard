@@ -376,8 +376,6 @@ Always respond in this markdown structure with correct headings:
 ## Recommended Actions
 *Specific next steps based on the analysis*
 
-## Follow-up Questions
-*3-4 targeted questions to deepen understanding*
 
 ## Context Management Rules
 
