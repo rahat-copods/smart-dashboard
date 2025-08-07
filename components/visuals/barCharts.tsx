@@ -26,7 +26,7 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
     formattedChartData,
     upperDomain,
   } = useChartLogic(chartData, config);
-
+console.log(formattedChartData)
   return (
     <div className="w-full space-y-4">
       <FilterSelect

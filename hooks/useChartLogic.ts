@@ -35,21 +35,45 @@ export function useChartLogic(chartData: any[], config: ChartVisual) {
   }, [chartData, config.filterSelect, selectedFilter]);
 
   // Chart configuration
-  const chartConfig = useMemo(() => 
-    Object.fromEntries(
-      config.dataSeries.map(({ key, label, color }) => [key, { label, color }])
-    ) satisfies ChartConfig, [config.dataSeries]
+  const chartConfig = useMemo(
+    () =>
+      Object.fromEntries(
+        config.dataSeries.map(({ key, label, color }) => [
+          key,
+          { label, color },
+        ])
+      ) satisfies ChartConfig,
+    [config.dataSeries]
   );
 
   // Format chart data
-  const formattedChartData = useMemo(() => 
-    filteredData.map((item) => {
-      const formattedItem = { ...item };
-      config.components.forEach((component) => {
-        formattedItem[component.dataKey] = formatCellValue(item[component.dataKey]);
-      });
-      return formattedItem;
-    }), [filteredData, config.components]
+  const formattedChartData = useMemo(
+    () =>
+      filteredData.map((item) => {
+        const formattedItem = { ...item };
+        // Format component data keys
+        config.components.forEach((component) => {
+          formattedItem[component.dataKey] = formatCellValue(
+            item[component.dataKey]
+          );
+        });
+        // Format x-axis data key
+        formattedItem[config.xAxis.dataKey] = formatCellValue(
+          item[config.xAxis.dataKey]
+        );
+        // Format y-axis data key
+        formattedItem[config.yAxis.dataKey] = formatCellValue(
+          item[config.yAxis.dataKey]
+        );
+
+        return formattedItem;
+      }),
+    [
+      filteredData,
+      config.components,
+      config.xAxis.dataKey,
+      config.yAxis.dataKey,
+    ]
   );
 
   // Calculate upper domain
