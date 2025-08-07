@@ -6,7 +6,7 @@ import {
 } from "./types";
 
 export const getQueryParsingPrompt = (
-  schema: string,
+  schema: string
 ) => `You are an expert at understanding user queries and identifying what matters most to them.
 
 ## Your Task
@@ -61,7 +61,7 @@ Focus on practical business understanding, not technical database details.`;
 
 export const getSqlGenerationPrompt = (
   schema: string,
-  dialect: string,
+  dialect: string
 ) => `You are an expert SQL query generator. Your task is to convert parsed user queries into valid ${dialect} SQL.
 
 ## Database Schema
@@ -249,6 +249,14 @@ Generate appropriate chart configurations that will best visualize the SQL query
 9. **Maintain consistency** with previous analysis patterns when building upon prior work
 10. **Ensure proper axis assignment** Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately (choosing descriptive names over IDs, using readable labels over technical codes, prioritizing human-readable values over system identifiers, and ensuring categorical values are meaningful to the end user rather than database artifacts)
 
+## Column Selection Priority for Readability
+When multiple columns are available for the same dimension, prefer human-readable columns:
+- **Prefer names over IDs**: Choose 'customer_name' over 'customer_id', 'product_title' over 'product_id'
+- **Prefer descriptive values over codes**: Choose 'department_name' over 'dept_code', 'status_description' over 'status_id'
+- **Prefer readable formats**: Choose 'full_name' over technical identifiers, 'category_label' over 'category_key'
+- **Exception**: Only use ID columns if no readable alternative exists in the SQL SELECT columns
+- This applies to xAxis, yAxis, and filterSelect dataKey selections - always choose the most user-friendly column available
+
 ## Example Mappings
 
 **Example 1**: \`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
@@ -298,14 +306,13 @@ Before finalizing any configuration:
 6. ✓ No fictional or derived column names are used
 
 Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
-
 export function getSummarizationPrompt(
   userQuery: string,
   userQueryParsed: QueryParsingResult,
   sqlResult: SqlGenerationResult,
   dbResult: any,
   chartResult: ChartConfig | null,
-  errorResult: ErrorReasonResult | null,
+  errorResult: ErrorReasonResult | null
 ): string {
   return `
 You are an AI assistant tasked with summarizing a conversation involving a user query, its parsed form, a generated SQL query, database results, chart configuration, and optional error explanations. Create a concise, natural-language summary that captures the key points of the conversation. Include:
@@ -334,7 +341,7 @@ You are an AI assistant tasked with summarizing a conversation involving a user 
 }
 
 export const getInsightsPrompt = (
-  schema: string,
+  schema: string
 ) => `# Data Analysis & Summary AI
 
 You are an expert data analyst and business intelligence specialist. Your role is to transform raw data and user queries into concise, actionable insights delivered in markdown format.
