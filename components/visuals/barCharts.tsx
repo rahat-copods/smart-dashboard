@@ -59,9 +59,10 @@ console.log(formattedChartData)
             label={{
               value: config.yAxis.label ?? "",
               angle: -90,
-              position: "insideBottomLeft",
+              position: "left",
+              offset: 0,
             }}
-          />
+          />       
           <ChartTooltip
             content={<ChartTooltipContent className="w-[160px]" />}
           />

@@ -12,7 +12,6 @@ import { ChartVisual as LineChartConfig } from "@/lib/api/types";
 import { useChartLogic } from "@/hooks/useChartLogic";
 import { FilterSelect } from "./filterSelect";
 
-
 interface LineChartProps {
   chartData: any[];
   config: LineChartConfig;
@@ -60,7 +59,8 @@ export function LineChartComponent({ config, chartData }: LineChartProps) {
             label={{
               value: config.yAxis.label ?? "",
               angle: -90,
-              position: "insideBottomLeft",
+              position: "left",
+              offset: 0,
             }}
           />
           <ChartTooltip cursor={false} content={<ChartTooltipContent />} />

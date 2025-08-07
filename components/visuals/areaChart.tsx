@@ -59,7 +59,8 @@ export function AreaChartComponent({ config, chartData }: AreaChartProps) {
             label={{
               value: config.yAxis.label ?? "",
               angle: -90,
-              position: "insideBottomLeft",
+              position: "left",
+              offset: 0,
             }}
           />
           <ChartTooltip
