@@ -166,6 +166,15 @@ export const getChartConfigPrompt =
 ## Your Task
 Generate appropriate chart configurations that will best visualize the SQL query results based on the user's intent and data structure. Consider any previous visualization context to maintain consistency and build upon prior analysis.
 
+## CRITICAL RULE: EXACT COLUMN MATCHING
+**YOU MUST ONLY USE ACTUAL SQL QUERY COLUMN NAMES**
+- dataSeries keys MUST exactly match the SELECT column names from the SQL query
+- components dataKey MUST exactly match the SELECT column names from the SQL query
+- xAxis/yAxis dataKey MUST exactly match the SELECT column names from the SQL query
+- DO NOT create fictional columns like "Male", "Female", "Active", "Inactive" unless these are the EXACT column names returned by the SQL query
+- DO NOT transform or interpret column names - use them exactly as they appear in the SELECT statement
+- If the SQL query returns columns like "total_sales", "product_count", then these are the ONLY columns you can reference
+
 ## Configuration Guidelines
 
 1. **Previous Context Awareness**: 
@@ -194,46 +203,57 @@ Generate appropriate chart configurations that will best visualize the SQL query
      * Primary categorical dimension
      * Natural ordering preference (alphabetical, numerical, hierarchical)
      * The dimension user wants to "compare across"
+     * **MUST be an exact column name from SQL SELECT**
    - **Y-Axis**: 
      * Quantitative measures (counts, sums, averages)
      * The metric user wants to "measure"
+     * **MUST be an exact column name from SQL SELECT**
 
 6. **DataSeries Configuration**:
-   - Create entries for each data column that will be visualized
+   - **CRITICAL**: Create entries ONLY for columns that exist in the SQL query SELECT statement
+   - Use exact SQL column names as keys
    - Use friendly labels derived from column names
    - Assign random colors from var(--chart-1), var(--chart-2), var(--chart-3), var(--chart-4), or var(--chart-5)
-   - Match property keys to actual SQL column names
-   - There can be multiple data series based on the columns in the query and the user's intent 
+   - Match property keys to actual SQL column names exactly
+   - There can be multiple data series based on the columns in the query and the user's intent
 
-7. **Multiple Charts**: Create separate configurations when:
+7. **Components Configuration**:
+   - **CRITICAL**: dataKey values MUST exactly match SQL SELECT column names
+   - DO NOT create components for non-existent columns
+   - Each component represents one actual data column from the SQL result
+
+8. **Multiple Charts**: Create separate configurations when:
    - Data contains unrelated groups requiring different chart types
    - Different metrics need different visualization approaches
    - Multiple distinct comparisons are needed
 
-8. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
-9. **Filter/Select Dimension Handling**:
-   When data has more than or equal to 4 dimensions or would be too complex to visualize all at once:
-   - **Identify filter candidates**: Dimensions that can be used to filter/slice the data
-   - **Choose appropriate filter dimension**: Select categorical columns.
-   - **Filter logic**: The selected dimension should filter the dataset before chart rendering
+9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
+
+10. **Filter/Select Dimension Handling**:
+    When data has more than or equal to 4 dimensions or would be too complex to visualize all at once:
+    - **Identify filter candidates**: Dimensions that can be used to filter/slice the data
+    - **Choose appropriate filter dimension**: Select categorical columns **that exist in the SQL query**
+    - **Filter logic**: The selected dimension should filter the dataset before chart rendering
 
 ## Decision Framework
-1. **Consider previous visualization context** (chart types, groupings, dimensions used)
-2. **Identify the primary comparison dimension** (what user wants to compare)
-3. **Identify the measurement** (what user wants to measure)
-4. **Identify secondary groupings** (how to break down the data further)
-5. **Evaluate complexity**: If >4 effective dimensions, choose one column  for filtering
-6. **Choose chart type** based on data nature and comparison intent:
+1. **FIRST**: List all SELECT columns from the SQL query - these are your ONLY available data points
+2. **Consider previous visualization context** (chart types, groupings, dimensions used)
+3. **Identify the primary comparison dimension** (what user wants to compare) - must be from SQL columns
+4. **Identify the measurement** (what user wants to measure) - must be from SQL columns
+5. **Identify secondary groupings** (how to break down the data further) - must be from SQL columns
+6. **Evaluate complexity**: If >4 effective dimensions, choose one column for filtering
+7. **Choose chart type** based on data nature and comparison intent:
    - Discrete categories → **bar**
    - Sequential/ordered progression → **line**
    - Cumulative/volume emphasis → **area**
-7. **Apply logical ordering** to categorical data when possible
-8. **Maintain consistency** with previous analysis patterns when building upon prior work
-9. **Ensure proper axis assignment** Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately (choosing descriptive names over IDs, using readable labels over technical codes, prioritizing human-readable values over system identifiers, and ensuring categorical values are meaningful to the end user rather than database artifacts)
+8. **Apply logical ordering** to categorical data when possible
+9. **Maintain consistency** with previous analysis patterns when building upon prior work
+10. **Ensure proper axis assignment** Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately (choosing descriptive names over IDs, using readable labels over technical codes, prioritizing human-readable values over system identifiers, and ensuring categorical values are meaningful to the end user rather than database artifacts)
 
 ## Example Mappings
 
 **Example 1**: \`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
+- Available columns: department, employee_count, avg_salary
 - Chart Type: bar (comparing departments)
 - xAxis: { dataKey: "department", label: "Departments" }
 - yAxis: { dataKey: "avg_salary", label: "Average Salary" }
@@ -248,12 +268,14 @@ Generate appropriate chart configurations that will best visualize the SQL query
   }
 
 **Example 2**: \`SELECT product_category, sales_region, total_revenue FROM sales GROUP BY product_category, sales_region\`
+- Available columns: product_category, sales_region, total_revenue
 - Primary focus: Compare products across regions
 - **Option A**: X = product_category, Grouped by sales_region
 - **Option B**: X = sales_region, Grouped by product_category
 - **Decision Logic**: Choose based on whether user wants to compare products across regions OR regions across products
 
 **Example 3**: \`SELECT priority_level, status, ticket_count FROM tickets GROUP BY priority_level, status\`
+- Available columns: priority_level, status, ticket_count
 - Chart Type: bar (comparing priority levels with status breakdown)
 - xAxis: { dataKey: "priority_level", label: "Priority Level"} (natural ordering: Low, Medium, High)
 - yAxis: { dataKey: "ticket_count", label: "Ticket Count" }
@@ -261,10 +283,20 @@ Generate appropriate chart configurations that will best visualize the SQL query
 - Focus: How ticket counts vary by priority, broken down by status
 
 **Example 4**: \`SELECT quarter, cumulative_revenue FROM quarterly_growth ORDER BY quarter\`
+- Available columns: quarter, cumulative_revenue
 - Chart Type: area (showing cumulative growth progression)
 - xAxis: { dataKey: "quarter", label: "Quarters" }
 - yAxis: { dataKey: "cumulative_revenue", label: "Cumulative Revenue" }
 - Focus: Cumulative revenue growth over quarters
+
+## VALIDATION CHECKLIST
+Before finalizing any configuration:
+1. ✓ All dataSeries keys match actual SQL SELECT column names
+2. ✓ All components dataKey values match actual SQL SELECT column names  
+3. ✓ xAxis dataKey matches an actual SQL SELECT column name
+4. ✓ yAxis dataKey matches an actual SQL SELECT column name
+5. ✓ filterSelect dataKey (if used) matches an actual SQL SELECT column name
+6. ✓ No fictional or derived column names are used
 
 Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
 
