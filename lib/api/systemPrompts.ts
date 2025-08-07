@@ -82,6 +82,7 @@ ${schema}
 4. **Error Handling**: 
    - If the schema doesn't contain relevant tables/columns for the query, set \`error\` with explanation
    - If the request is completely incompatible with available data, set \`error\` with explanation
+   - **Ambiguous Query Handling**: If the user query is too vague or can be interpreted in multiple ways, set \`error\` with a clarification message like "This query can be interpreted as [interpretation 1] or [interpretation 2]. Please clarify what you're looking for." Include specific examples based on the available schema to help guide the user
    - When \`error\` is set, make \`sqlQuery\`, \`isPartial\`, and \`partialReason\` all null
 5. **Dialect Alignment**: Ensure dialect-aligned syntax.
 6. **Data Interpretation and Mapping**:
@@ -94,7 +95,7 @@ ${schema}
 11. **Visuals and Charts**: Ensure that queries are optimized for efficient data retrieval and rendering of visuals and charts.
 12. **Age and BirthDate**: Should be able to calculate age from birth date if asked for age and no age column is available. When asked for age group-based data, create standard age groups (e.g., 18-24, 25-34, 35-44, 45-54, 55-64, 65+) to enable meaningful demographic analysis and comparison
 13. **Data structure optimization**: When comparing multiple categories across a common dimension (e.g., trends over time for different product lines, regions, or departments), pivot the data structure to have the common dimension as rows and categories as separate columns. Use conditional aggregation (FILTER/CASE WHEN) instead of GROUP BY with categories to create a more visualization-friendly format where each row represents one data point with multiple measures
-14. **Intelligent Data Pivoting**: Whenever possible and when the available data from previous context supports it, pivot categorical or logical groupings into columns rather than rows. This applies to:
+14. **Intelligent Data Pivoting**: Whenever possible and when the available data supports it, pivot categorical or logical groupings into columns rather than rows. This applies to:
    - **Categorical Data**: Gender (Male/Female columns), Status (Active/Inactive columns), Product Types, Departments, etc.
    - **Logical Number Groups**: Age ranges (18-24, 25-34, etc.), Score ranges (0-50, 51-100), Price tiers, etc.
    - **Time Periods**: Months, Quarters, Years as separate columns when comparing across periods
@@ -123,9 +124,10 @@ Set \`error\` only when:
 - Required columns don't exist in any available tables
 - Query type is fundamentally incompatible with available data structure
 - Schema is completely unrelated to the user's request
+- **User query is ambiguous or vague**: When the request can be interpreted in multiple significantly different ways, provide clarification options based on the available schema data
 
 ## Response Format
-Return exactly these 4 fields:
+Return exactly these 4 fields:   
 - \`sqlQuery\`: Valid SQL string or null if error
 - \`isPartial\`: Boolean indicating completeness or null if error  
 - \`partialReason\`: String explaining partial nature or null if complete/error
