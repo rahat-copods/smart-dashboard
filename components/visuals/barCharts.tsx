@@ -1,25 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-
 import {
-  ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ChartVisual as BarChartConfig } from "@/lib/api/types";
-import { formatCellValue } from "@/lib/utils";
+import { useChartLogic } from "@/hooks/useChartLogic";
+import { FilterSelect } from "./filterSelect";
 
 interface BarChartProps {
   chartData: any[];
@@ -27,93 +18,23 @@ interface BarChartProps {
 }
 
 export function BarChartComponent({ config, chartData }: BarChartProps) {
-  const [selectedFilter, setSelectedFilter] = useState(() => {
-    if (!config.filterSelect) return "";
-    const uniqueValues = Array.from(
-      new Set(chartData.map((item) => item[config.filterSelect!.dataKey]))
-    ).filter(Boolean);
-    return uniqueValues[0] || "";
-  });
-
-  // Extract unique filter options
-  const filterOptions = useMemo(() => {
-    if (!config.filterSelect) return [];
-
-    const uniqueValues = Array.from(
-      new Set(chartData.map((item) => item[config.filterSelect!.dataKey]))
-    ).filter(Boolean);
-
-    return uniqueValues;
-  }, [chartData, config.filterSelect]);
-
-  // Filter data based on selected filter
-  const filteredData = useMemo(() => {
-    if (!config.filterSelect || !selectedFilter) {
-      return chartData;
-    }
-
-    return chartData.filter(
-      (item) => item[config.filterSelect!.dataKey] === selectedFilter
-    );
-  }, [chartData, config.filterSelect, selectedFilter]);
-
-  const chartConfig = Object.fromEntries(
-    config.dataSeries.map(({ key, label, color }) => [key, { label, color }])
-  ) satisfies ChartConfig;
-
-  const formattedChartData = filteredData.map((item) => {
-    const formattedItem = { ...item };
-    config.components.forEach((bar) => {
-      formattedItem[bar.dataKey] = formatCellValue(item[bar.dataKey]);
-    });
-    return formattedItem;
-  });
-
-  const calculateUpperDomain = () => {
-    const keys: string[] = config.dataSeries.map((series) => {
-      return series.key;
-    });
-
-    const upperDomains = keys.map((key) => {
-      return (
-        Math.ceil(
-          Math.max(...filteredData.map((d) => Number(d[key]) || 0)) / 10
-        ) * 10
-      );
-    });
-
-    return Math.max(...upperDomains);
-  };
-
-  const upperDomain = calculateUpperDomain();
+  const {
+    selectedFilter,
+    setSelectedFilter,
+    filterOptions,
+    chartConfig,
+    formattedChartData,
+    upperDomain,
+  } = useChartLogic(chartData, config);
 
   return (
     <div className="w-full space-y-4">
-      {/* Filter Select - Only show if filterSelect config exists */}
-      {config.filterSelect && (
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold">{config.title}</h3>
-            <p className="text-sm text-muted-foreground">
-              {config.description}
-            </p>
-          </div>
-          <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue
-                placeholder={`Select ${config.filterSelect.label}`}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {filterOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <FilterSelect
+        config={config}
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+        filterOptions={filterOptions}
+      />
 
       <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
         <BarChart accessibilityLayer data={formattedChartData}>
@@ -138,13 +59,13 @@ export function BarChartComponent({ config, chartData }: BarChartProps) {
             label={{
               value: config.yAxis.label ?? "",
               angle: -90,
-              position: "insideLeft",
+              position: "insideBottomLeft",
             }}
           />
           <ChartTooltip
             content={<ChartTooltipContent className="w-[160px]" />}
           />
-          <ChartLegend content={<ChartLegendContent />} />
+          <ChartLegend content={<ChartLegendContent className="mt-2" />} />
           {config.components.map((bar, index) => (
             <Bar
               key={index}
