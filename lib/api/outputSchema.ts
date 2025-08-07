@@ -77,12 +77,12 @@ export const QueryParsingSchema = z.object({
       "How previous conversation context affects understanding of this query"
     ),
   summary: z.string().describe("Brief summary of what the user is asking for"),
-  visualConfigs: z
-    .array(VisualConfigSchema)
-    .min(1)
-    .describe(
-      "Array of visualization configurations. Single item if ≤4 dimensions, multiple items if complex query requires splitting"
-    ),
+  // visualConfigs: z
+  //   .array(VisualConfigSchema)
+  //   .min(1)
+  //   .describe(
+  //     "Array of visualization configurations. Single item if ≤4 dimensions, multiple items if complex query requires splitting"
+  //   ),
   reasoning: z
     .string()
     .describe(

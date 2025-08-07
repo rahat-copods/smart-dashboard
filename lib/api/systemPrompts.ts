@@ -1,11 +1,16 @@
-import { ChartConfig, ErrorReasonResult, QueryParsingResult, SqlGenerationResult } from "./types";
+import {
+  ChartConfig,
+  ErrorReasonResult,
+  QueryParsingResult,
+  SqlGenerationResult,
+} from "./types";
 
 export const getQueryParsingPrompt = (
-  schema: string,
-) => `You are an expert at understanding user queries and identifying what matters most to them, including how they want to visualize their data.
+  schema: string
+) => `You are an expert at understanding user queries and identifying what matters most to them.
 
 ## Your Task
-Analyze the user's query to understand their intent, identify the most important subjects/entities they care about, and determine the optimal visual representation based on the Schema and previous conversation context (if any).
+Analyze the user's query to understand their intent and identify the most important subjects/entities they care about. based on the Schema and previous conversation context (if any).
 
 ## Database Schema Context
 ${schema}
@@ -15,14 +20,6 @@ ${schema}
 - **Contextual Scope**: Maintain time periods, geographic regions, categories, or other dimensional filters from previous queries when they remain relevant to the current request
 - **Smart Context Application**: Only inherit context that logically applies to the new query - ignore irrelevant previous filters
 
-## Visual Configuration Rules
-- **Maximum 4 dimensions per visual**: Each chart/visualization can handle at most 4 dimensions
-- **Dimension allocation**:
-  - X-axis: Usually time, categories, or primary grouping dimension
-  - Y-axis: Typically numeric/metric values
-  - Categorical data (2 slots): Additional grouping/filtering dimensions (color, size, shape, etc.)
-- **Multiple visuals**: If query requires more than 4 dimensions, break into multiple complementary visualizations
-- **Simple queries**: If ≤4 dimensions total, provide single visualization in array
 
 ## Instructions
 1. **Understand Intent**: What is the user really trying to find out or accomplish?
@@ -40,16 +37,11 @@ ${schema}
    - 1-3: Minor detail
    - 0: Mentioned but not relevant
 
-4. **Plan Visualizations**: Determine optimal visual representation:
-   - Identify chart type (bar, line, scatter, pie, etc.)
-   - Map dimensions to visual elements (x-axis, y-axis, color, size)
-   - Split complex queries into multiple focused visuals
+4. **Consider Context**: If previous summary exists, factor in how it affects the current query's interpretation
 
-5. **Consider Context**: If previous summary exists, factor in how it affects the current query's interpretation
+5. **Identify Primary Focus**: What is the ONE most important thing the user wants to know?
 
-6. **Identify Primary Focus**: What is the ONE most important thing the user wants to know?
-
-7. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
+6. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
 
 ## Weight Assignment Guidelines
 - The main metric/outcome gets highest weight
@@ -60,19 +52,12 @@ ${schema}
 
 ## Examples
 Query: "Show me monthly sales trends for our top 5 products in Q4"
-- Dimensions: Time (monthly), Sales (metric), Products (top 5), Quarter (Q4)
-- Visual: Line chart with months on x-axis, sales on y-axis, colored by product
-- Single visualization (4 dimensions total)
+- "monthly sales trends" (weight: 10) - the core request
+- "top 5 products" (weight: 8) - important filter/scope
+- "Q4" (weight: 7) - important time constraint
+- "our" (weight: 2) - company context, assumed
 
-Query: "Compare sales and profit margins by region and product category over the last 2 years"
-- Dimensions: Sales, Profit margins, Region, Product category, Time (2 years)
-- Multiple visuals needed (5 dimensions):
-  - Visual 1: Sales by region and product category (stacked bar)
-  - Visual 2: Profit margins by region and product category (grouped bar)
-  - Both filtered to last 2 years
-
-Focus on practical business understanding and effective data visualization principles.`;
-
+Focus on practical business understanding, not technical database details.`;
 
 export const getSqlGenerationPrompt = (
   schema: string,
@@ -81,7 +66,6 @@ export const getSqlGenerationPrompt = (
 
 ## Database Schema
 ${schema}
-
 
 ## Context Inheritance Rules
 - **Inherit Relevant Filters**: When user requests partial information (e.g., "give me sales" after discussing "sales and purchase for Q4"), automatically apply relevant filters from previous context (e.g., Q4 timeframe)
@@ -110,7 +94,13 @@ ${schema}
 11. **Visuals and Charts**: Ensure that queries are optimized for efficient data retrieval and rendering of visuals and charts.
 12. **Age and BirthDate**: Should be able to calculate age from birth date if asked for age and no age column is available. When asked for age group-based data, create standard age groups (e.g., 18-24, 25-34, 35-44, 45-54, 55-64, 65+) to enable meaningful demographic analysis and comparison
 13. **Data structure optimization**: When comparing multiple categories across a common dimension (e.g., trends over time for different product lines, regions, or departments), pivot the data structure to have the common dimension as rows and categories as separate columns. Use conditional aggregation (FILTER/CASE WHEN) instead of GROUP BY with categories to create a more visualization-friendly format where each row represents one data point with multiple measures
-14. - **Dialect-Specific Syntax Rules**: 
+14. **Intelligent Data Pivoting**: Whenever possible and when the available data from previous context supports it, pivot categorical or logical groupings into columns rather than rows. This applies to:
+   - **Categorical Data**: Gender (Male/Female columns), Status (Active/Inactive columns), Product Types, Departments, etc.
+   - **Logical Number Groups**: Age ranges (18-24, 25-34, etc.), Score ranges (0-50, 51-100), Price tiers, etc.
+   - **Time Periods**: Months, Quarters, Years as separate columns when comparing across periods
+   - **Performance Metrics**: Different KPIs or metrics as individual columns for easier comparison
+   - Use conditional aggregation (\`SUM(CASE WHEN category = 'value' THEN amount END) AS category_value\`) or dialect-specific pivot functions to transform row-based categorical data into column-based format for better visualization and analysis
+15. - **Dialect-Specific Syntax Rules**: 
   - For PostgreSQL: When using complex expressions in SELECT with aliases, repeat the full expression in GROUP BY and ORDER BY clauses instead of using the alias name, as PostgreSQL requires the actual expression for proper execution
   - For age calculations in PostgreSQL: Use \`DATE_PART('year', AGE(CURRENT_DATE, birth_date_column))\` for reliable age extraction
   - Always test dialect-specific functions and syntax patterns to ensure compatibility
@@ -143,9 +133,8 @@ Return exactly these 4 fields:
 - \`suggestions\`: List of 3–4 follow-up questions in natural language that a user might ask next, based on the context of the request and response. Suggestions should be self-contained and not reference specific entities, values, or context from the current analysis unless that information was explicitly provided in the user query. (avoid references to specific entities like "this user" or "that product" or "this \`entity\`" unless those entities were mentioned in the user's request. When specific entities were provided by the user, reference them directly by name rather than using vague pronouns - for example, if the user mentioned "Jane", use "Jane's performance" or "for Jane" instead of "this user's performance").
 
 Focus on generating executable SQL that directly answers the user's question using the available schema.`;
-
-export const getErrorExplanationPrompt = (
-) => `You are a helpful assistant explaining database query issues to non-technical users.
+export const getErrorExplanationPrompt =
+  () => `You are a helpful assistant explaining database query issues to non-technical users.
 
 ## Your Task
 Write a clear, user-friendly explanation in markdown format about why the query couldn't be completed.
@@ -168,107 +157,12 @@ Return only the markdown explanation text. No JSON, no schema - just clear, help
 
 Focus on being helpful and encouraging the user to try again with different parameters or questions.`;
 
-// export const getChartConfigPrompt = (
-// ) => `You are an expert at creating shadcn/recharts visualization configurations based on SQL queries and user intent.
 
-// ## Your Task
-// Generate appropriate chart/graph configurations that will best visualize the SQL query results based on the user's intent and data structure. Consider any previous visualization context to maintain consistency and build upon prior analysis.
-
-// ## Chart Categories
-// **Charts** (type: "chart"): Traditional data visualizations
-// - **bar**: Categorical comparisons, discrete values, distribution across categories
-// - **line**: Sequential data, trends, ordered progression (not limited to time)
-// - **area**: Cumulative data, filled regions, volume/magnitude emphasis
-
-// **Graphs** (type: "graph"): Specialized visualizations
-// - **pie**: Proportions, percentages, parts of a whole
-// - **radar**: Multivariate comparisons, multiple metrics simultaneously
-// - **radial**: Circular representations, progress indicators, radial comparisons
-
-// ## Configuration Guidelines
-
-// 1. **Previous Context Awareness**: 
-//    - Maintain consistency with previous visualizations when applicable
-//    - If user previously viewed sales by region, and now asks for "show profit", apply the same regional breakdown
-//    - Preserve chart types, groupings, and dimensional choices that were successful in prior analysis
-//    - Inherit relevant filters, time periods, or categorical groupings from previous visualizations
-
-// 2. **Analyze SQL Structure**: Examine SELECT columns, GROUP BY, aggregations to understand data shape and relationships
-
-// 3. **Smart Axis Mapping Strategy**:
-//    - **Primary Dimension**: Identify the main categorical or grouping column (usually from GROUP BY)
-//    - **Metrics**: Identify aggregated values (COUNT, SUM, AVG, etc.)
-//    - **Secondary Grouping**: Look for additional categorical dimensions
-
-// 4. **Multi-Dimensional Data Handling**:
-//    When you have multiple dimensions (e.g., category, status, region), choose the most logical grouping:
-   
-//    **Example**: treatment_type, count, month
-//    - **Option A**: X = Month, Grouped by treatment_type (colored bars/lines per treatment)
-//    - **Option B**: X = Treatment_type, Grouped by month (colored bars/lines per month)
-//    - **Decision**: Choose based on user intent - are they analyzing treatments over time, or comparing treatments across months?
-
-// 5. **Axis Selection Priority**:
-//    - **X-Axis (dataKey)**: 
-//      * Primary categorical dimension
-//      * Natural ordering preference (alphabetical, numerical, hierarchical)
-//      * The dimension user wants to "compare across"
-//    - **Y-Axis**: 
-//      * Quantitative measures (counts, sums, averages)
-//      * The metric user wants to "measure"
-
-// 6. **DataSeries Configuration**:
-//    - Create entries for each data column that will be visualized
-//    - Use friendly labels derived from column names
-//    - Assign colors from var(--chart-1) through var(--chart-5)
-//    - Match property keys to actual SQL column names
-
-// 7. **Multiple Visuals**: Create separate configurations when:
-//    - Data contains unrelated groups requiring different chart types
-//    - Different metrics need different visualization approaches
-//    - Multiple distinct comparisons are needed
-
-// ## Example Mappings
-
-// **Example 1**: \`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
-// - xAxis: { dataKey: "department" }
-// - Primary focus: Compare departments
-// - dataSeries: { 
-//     employee_count: { label: "Employee Count", color: "var(--chart-1)" },
-//     avg_salary: { label: "Average Salary", color: "var(--chart-2)" }
-//   }
-
-// **Example 2**: \`SELECT product_category, sales_region, total_revenue FROM sales GROUP BY product_category, sales_region\`
-// - **Option A**: X = product_category, Grouped by sales_region
-// - **Option B**: X = sales_region, Grouped by product_category
-// - **Decision Logic**: Choose based on whether user wants to compare products across regions OR regions across products
-
-// **Example 3**: \`SELECT priority_level, status, ticket_count FROM tickets GROUP BY priority_level, status\`
-// - xAxis: { dataKey: "priority_level" } (natural ordering: Low, Medium, High)
-// - Grouped by: status (Open, In Progress, Closed)
-// - Focus: How ticket counts vary by priority, broken down by status
-
-// ## Decision Framework
-// 1. **Consider previous visualization context** (chart types, groupings, dimensions used)
-// 2. **Identify the primary comparison dimension** (what user wants to compare)
-// 3. **Identify the measurement** (what user wants to measure)
-// 4. **Identify secondary groupings** (how to break down the data further)
-// 5. **Choose chart type** based on data nature and comparison intent
-// 6. **Apply logical ordering** to categorical data when possible
-// 7. **Maintain consistency** with previous analysis patterns when building upon prior work
-
-// Focus on creating configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
-
-export const getChartConfigPrompt = (
-) => `You are an expert at creating shadcn/recharts chart configurations based on SQL queries and user intent.
+export const getChartConfigPrompt =
+  () => `You are an expert at creating shadcn/recharts chart configurations based on SQL queries and user intent.
 
 ## Your Task
 Generate appropriate chart configurations that will best visualize the SQL query results based on the user's intent and data structure. Consider any previous visualization context to maintain consistency and build upon prior analysis.
-
-## Available Chart Types
-- **bar**: Categorical comparisons, discrete values, distribution across categories
-- **line**: Sequential data, trends, ordered progression (not limited to time)
-- **area**: Cumulative data, filled regions, volume/magnitude emphasis
 
 ## Configuration Guidelines
 
@@ -293,14 +187,7 @@ Generate appropriate chart configurations that will best visualize the SQL query
    - **Option B**: X = Treatment_type, Grouped by month (colored bars/lines per month)
    - **Decision**: Choose based on user intent - are they analyzing treatments over time, or comparing treatments across months?
 
-5. **Filter/Select Dimension Handling**:
-   When data has 4+ dimensions or would be too complex to visualize all at once:
-   - **Identify filter candidates**: Dimensions that can be used to filter/slice the data
-   - **Choose appropriate filter dimension**: Select categorical columns with reasonable number of unique values
-   - **Set default selection**: Choose "all" or the first/most common value as default
-   - **Filter logic**: The selected dimension should filter the dataset before chart rendering
-
-6. **Axis Selection Priority**:
+5. **Axis Selection Priority**:
    - **X-Axis (dataKey)**: 
      * Primary categorical dimension
      * Natural ordering preference (alphabetical, numerical, hierarchical)
@@ -309,52 +196,31 @@ Generate appropriate chart configurations that will best visualize the SQL query
      * Quantitative measures (counts, sums, averages)
      * The metric user wants to "measure"
 
-7. **DataSeries Configuration**:
+6. **DataSeries Configuration**:
    - Create entries for each data column that will be visualized
    - Use friendly labels derived from column names
    - Assign random colors from var(--chart-1), var(--chart-2), var(--chart-3), var(--chart-4), or var(--chart-5)
    - Match property keys to actual SQL column names
    - There can be multiple data series based on the columns in the query and the user's intent 
 
-8. **Multiple Charts**: Create separate configurations when:
+7. **Multiple Charts**: Create separate configurations when:
    - Data contains unrelated groups requiring different chart types
    - Different metrics need different visualization approaches
    - Multiple distinct comparisons are needed
 
-9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
-
-## Example Mappings
-
-**Example 1**: \`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
-- Chart Type: bar (comparing departments)
-- xAxis: { dataKey: "department" }
-- Primary focus: Compare departments
-- dataSeries: { 
-    employee_count: { key: "employee_count", label: "Employee Count", color: "var(--chart-1)" },
-    avg_salary: { key: "avg_salary", label: "Average Salary", color: "var(--chart-2)" }
-  }
-- No filter needed (simple 3-dimension data)
-
-**Example 2**: \`SELECT year, month, specialization, age_18_24_revenue, age_25_34_revenue, age_35_44_revenue, age_45_54_revenue, age_55_64_revenue, age_65_plus_revenue FROM medical_data GROUP BY year, month, specialization\`
-- Chart Type: bar (stacked comparison over time)
-- xAxis: { dataKey: "month" } (time progression)
-- dataSeries: Age group revenue columns (6 series)
-- **Filter dimension**: specialization (too many dimensions for single view)
-- filterSelect: { dataKey: "specialization", label: "Specialization", defaultValue: "Dermatology" }
-
-**Example 3**: \`SELECT product_category, sales_region, sales_rep, total_revenue FROM sales GROUP BY product_category, sales_region, sales_rep\`
-- Chart Type: bar (categorical comparison)
-- xAxis: { dataKey: "product_category" }
-- dataSeries: { total_revenue: { key: "total_revenue", label: "Total Revenue", color: "var(--chart-1)" } }
-- **Filter dimension**: sales_region (reduce complexity)
-- filterSelect: { dataKey: "sales_region", label: "Sales Region", defaultValue: "North" }
+8. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
+9. **Filter/Select Dimension Handling**:
+   When data has more than or equal to 4 dimensions or would be too complex to visualize all at once:
+   - **Identify filter candidates**: Dimensions that can be used to filter/slice the data
+   - **Choose appropriate filter dimension**: Select categorical columns.
+   - **Filter logic**: The selected dimension should filter the dataset before chart rendering
 
 ## Decision Framework
 1. **Consider previous visualization context** (chart types, groupings, dimensions used)
 2. **Identify the primary comparison dimension** (what user wants to compare)
 3. **Identify the measurement** (what user wants to measure)
 4. **Identify secondary groupings** (how to break down the data further)
-5. **Evaluate complexity**: If >4 effective dimensions, choose one for filtering
+5. **Evaluate complexity**: If >4 effective dimensions, choose one column  for filtering
 6. **Choose chart type** based on data nature and comparison intent:
    - Discrete categories → **bar**
    - Sequential/ordered progression → **line**
@@ -362,7 +228,41 @@ Generate appropriate chart configurations that will best visualize the SQL query
 7. **Apply logical ordering** to categorical data when possible
 8. **Maintain consistency** with previous analysis patterns when building upon prior work
 9. **Ensure proper axis assignment** Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately (choosing descriptive names over IDs, using readable labels over technical codes, prioritizing human-readable values over system identifiers, and ensuring categorical values are meaningful to the end user rather than database artifacts)
-10. **Configure filter selects** for dimensions that would clutter the visualization
+
+## Example Mappings
+
+**Example 1**: \`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
+- Chart Type: bar (comparing departments)
+- xAxis: { dataKey: "department", label: "Departments" }
+- yAxis: { dataKey: "avg_salary", label: "Average Salary" }
+- Primary focus: Compare departments
+- dataSeries: { 
+    employee_count: { key: "employee_count", label: "Employee Count", color: "var(--chart-1)" },
+    avg_salary: { key: "avg_salary", label: "Average Salary", color: "var(--chart-2)" }
+  }
+- components: { 
+    employee_count: { dataKey: "employee_count", fill: "var(--chart-1)" },
+    avg_salary: { dataKey: "avg_salary", fill: "var(--chart-2)" }
+  }
+
+**Example 2**: \`SELECT product_category, sales_region, total_revenue FROM sales GROUP BY product_category, sales_region\`
+- Primary focus: Compare products across regions
+- **Option A**: X = product_category, Grouped by sales_region
+- **Option B**: X = sales_region, Grouped by product_category
+- **Decision Logic**: Choose based on whether user wants to compare products across regions OR regions across products
+
+**Example 3**: \`SELECT priority_level, status, ticket_count FROM tickets GROUP BY priority_level, status\`
+- Chart Type: bar (comparing priority levels with status breakdown)
+- xAxis: { dataKey: "priority_level", label: "Priority Level"} (natural ordering: Low, Medium, High)
+- yAxis: { dataKey: "ticket_count", label: "Ticket Count" }
+- Grouped by: status (Open, In Progress, Closed)
+- Focus: How ticket counts vary by priority, broken down by status
+
+**Example 4**: \`SELECT quarter, cumulative_revenue FROM quarterly_growth ORDER BY quarter\`
+- Chart Type: area (showing cumulative growth progression)
+- xAxis: { dataKey: "quarter", label: "Quarters" }
+- yAxis: { dataKey: "cumulative_revenue", label: "Cumulative Revenue" }
+- Focus: Cumulative revenue growth over quarters
 
 Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
 
@@ -388,9 +288,9 @@ You are an AI assistant tasked with summarizing a conversation involving a user 
 - Parsed Query: ${JSON.stringify(userQueryParsed)}
 - SQL Query: ${sqlResult.sqlQuery}
 - Partial Reason: ${sqlResult.partialReason}
-- Database Result: ${dbResult ? `Rows: ${dbResult.rowCount}, Error: ${dbResult.error || 'None'}` : 'None'}
-- Chart Config: ${chartResult ? JSON.stringify(chartResult.visuals) : 'None'}
-- Error Explanation: ${errorResult ? JSON.stringify(errorResult) : 'None'}
+- Database Result: ${dbResult ? `Rows: ${dbResult.rowCount}, Error: ${dbResult.error || "None"}` : "None"}
+- Chart Config: ${chartResult ? JSON.stringify(chartResult.visuals) : "None"}
+- Error Explanation: ${errorResult ? JSON.stringify(errorResult) : "None"}
 
 **Instructions**:
 - Write a concise summary in natural language.
@@ -400,9 +300,8 @@ You are an AI assistant tasked with summarizing a conversation involving a user 
 `;
 }
 
-
 export const getInsightsPrompt = (
-  schema: string,
+  schema: string
 ) => `# Data Analysis & Summary AI
 
 You are an expert data analyst and business intelligence specialist. Your role is to transform raw data and user queries into concise, actionable insights delivered in markdown format.
@@ -486,4 +385,4 @@ Your response should enable the user to:
 3. **Explore** further with targeted follow-up questions
 4. **Trust** the analysis based on clear limitations/assumptions
 
-Remember: You're not just reporting data - you're providing business intelligence that drives decisions.`
+Remember: You're not just reporting data - you're providing business intelligence that drives decisions.`;

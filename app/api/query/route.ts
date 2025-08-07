@@ -67,7 +67,7 @@ async function generateSqlQuery(
       ...messages.slice(0, -1),
       {
         ...messages[messages.length - 1],
-        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({ ...userQueryParsed, reasoning: null })}`,
+        content: `${messages[messages.length - 1].content}\n\n**Parsed Query**:\n${JSON.stringify({ ...userQueryParsed, reasoning: null , visualConfigs: null}) }`,
       },
     ],
     streamCallback,
