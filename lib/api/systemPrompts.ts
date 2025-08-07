@@ -6,7 +6,7 @@ import {
 } from "./types";
 
 export const getQueryParsingPrompt = (
-  schema: string
+  schema: string,
 ) => `You are an expert at understanding user queries and identifying what matters most to them.
 
 ## Your Task
@@ -61,7 +61,7 @@ Focus on practical business understanding, not technical database details.`;
 
 export const getSqlGenerationPrompt = (
   schema: string,
-  dialect: string
+  dialect: string,
 ) => `You are an expert SQL query generator. Your task is to convert parsed user queries into valid ${dialect} SQL.
 
 ## Database Schema
@@ -312,7 +312,7 @@ export function getSummarizationPrompt(
   sqlResult: SqlGenerationResult,
   dbResult: any,
   chartResult: ChartConfig | null,
-  errorResult: ErrorReasonResult | null
+  errorResult: ErrorReasonResult | null,
 ): string {
   return `
 You are an AI assistant tasked with summarizing a conversation involving a user query, its parsed form, a generated SQL query, database results, chart configuration, and optional error explanations. Create a concise, natural-language summary that captures the key points of the conversation. Include:
@@ -341,7 +341,7 @@ You are an AI assistant tasked with summarizing a conversation involving a user 
 }
 
 export const getInsightsPrompt = (
-  schema: string
+  schema: string,
 ) => `# Data Analysis & Summary AI
 
 You are an expert data analyst and business intelligence specialist. Your role is to transform raw data and user queries into concise, actionable insights delivered in markdown format.
