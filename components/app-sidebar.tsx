@@ -54,7 +54,7 @@ export function AppSidebar({ ...props }) {
   };
 
   const filteredChats = chats.filter((chat) =>
-    chat.title.toLowerCase().includes(searchQuery.toLowerCase()),
+    chat.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleNewChat = () => {
@@ -76,7 +76,9 @@ export function AppSidebar({ ...props }) {
   };
 
   const isCollapsed = state === "collapsed";
-
+  if (pathname === "/login") {
+    return null;
+  }
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader
