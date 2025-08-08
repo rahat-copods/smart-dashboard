@@ -160,18 +160,15 @@ Return only the markdown explanation text. No JSON, no schema - just clear, help
 Focus on being helpful and encouraging the user to try again with different parameters or questions.`;
 
 export const getChartConfigPrompt =
-  () => `You are an expert at creating shadcn/recharts chart configurations based on SQL queries and user intent.
+  () => `You are an expert at creating chart configurations based on SQL queries and user intent.
 
 ## Your Task
 Generate appropriate chart configurations that will best visualize the SQL query results based on the user's intent and data structure. Consider any previous visualization context to maintain consistency and build upon prior analysis.
 
 ## CRITICAL RULE: EXACT COLUMN MATCHING
 **YOU MUST ONLY USE ACTUAL SQL QUERY COLUMN NAMES**
-- dataSeries keys MUST exactly match the SELECT column names from the SQL query
-- components dataKey MUST exactly match the SELECT column names from the SQL query
-- xAxis/yAxis dataKey MUST exactly match the SELECT column names from the SQL query
-- filterKey, seriesKey, valueKey, and sortKey MUST exactly match the SELECT column names from the SQL query
-- DO NOT create fictional columns like "Male", "Female", "Active", "Inactive" unless these are the EXACT column names returned by the SQL query
+- All keys (filterKey, seriesKey, valueKey, sortKey, xAxis.key, yAxis.key) MUST exactly match the SELECT column names from the SQL query
+- DO NOT create fictional columns unless these are the EXACT column names returned by the SQL query
 - DO NOT transform or interpret column names - use them exactly as they appear in the SELECT statement
 - If the SQL query returns columns like "total_sales", "product_count", then these are the ONLY columns you can reference
 
@@ -191,69 +188,65 @@ Generate appropriate chart configurations that will best visualize the SQL query
    - **Secondary Grouping**: Look for additional categorical dimensions
 
 4. **Multi-Dimensional Data Handling**:
-   When you have multiple dimensions (e.g., category, status, region), choose the most logical grouping:
-   
-   **Example**: treatment_type, count, month
-   - **Option A**: X = Month, Grouped by treatment_type (colored bars/lines per treatment)
-   - **Option B**: X = Treatment_type, Grouped by month (colored bars/lines per month)
-   - **Decision**: Choose based on user intent - are they analyzing treatments over time, or comparing treatments across months?
+   When you have multiple dimensions (e.g., category, status, region), choose the most logical grouping based on user intent and data complexity.
 
 5. **Axis Selection Priority**:
-   - **X-Axis (dataKey)**: 
+   - **X-Axis (key)**: 
      * Primary categorical dimension
      * Natural ordering preference (alphabetical, numerical, hierarchical)
      * The dimension user wants to "compare across"
      * **MUST be an exact column name from SQL SELECT**
-   - **Y-Axis**: 
+   - **Y-Axis (key)**: 
      * Quantitative measures (counts, sums, averages)
      * The metric user wants to "measure"
      * **MUST be an exact column name from SQL SELECT**
 
-6. **DataSeries Configuration**:
-   - **CRITICAL**: Create entries ONLY for columns that exist in the SQL query SELECT statement
-   - Use exact SQL column names as keys
-   - Use friendly labels derived from column names
-   - Assign random colors from var(--chart-1), var(--chart-2), var(--chart-3), var(--chart-4), or var(--chart-5)
-   - Match property keys to actual SQL column names exactly
-   - There can be multiple data series based on the columns in the query and the user's intent
-   - **seriesKey**: Optional key whose unique values will form different series (e.g., for stacked bars). If provided, the chart will pivot the data to create separate bars/segments for each unique value of this key. Must match exact SQL SELECT column name.
-   - **sortKey**: Optional key to define the sort order of the data series. If provided, the data will be sorted based on this column. Must match exact SQL SELECT column name.
+6. **isPivoted Logic**:
+   - **isPivoted = true**: When the SQL query itself contains pivoting logic (CASE WHEN statements creating multiple metric columns)
+     * Example: 'SUM(CASE WHEN age < 18 THEN amount ELSE 0 END) AS Revenue_0_17'
+     * In this case: 'seriesKey = null' (data is already pivoted)
+     * 'valueKey' contains multiple metric columns created by the pivot
+   - **isPivoted = false**: When the SQL query returns normalized/unpivoted data
+     * Data needs to be pivoted for visualization purposes
+     * 'seriesKey' contains the column that should be used to create multiple series
+     * 'valueKey' typically contains one metric column
 
-7. **Components Configuration**:
-   - **CRITICAL**: dataKey values MUST exactly match SQL SELECT column names
-   - DO NOT create components for non-existent columns
-   - Each component represents one actual data column from the SQL result
-   - **valueKey**: An array of keys from the data objects representing the numerical values to be plotted (e.g., the height of the bars). Each key must match an exact SQL SELECT column name.
+7. **Key Configurations**:
+   - **filterKey**: Use when dimensions are too complex to display all at once. Choose a categorical column that can filter the dataset. Must match exact SQL SELECT column name.
+   - **seriesKey**: 
+     * When 'isPivoted = false': Column whose unique values will form different series (e.g., for stacked/grouped bars)
+     * When 'isPivoted = true': Always 'null' (data is already pivoted by SQL)
+     * Must match exact SQL SELECT column name when not null
+   - **valueKey**: Array of metric columns to be plotted
+     * When 'isPivoted = false': Usually contains one metric column
+     * When 'isPivoted = true': Contains multiple metric columns created by SQL pivot
+     * Each entry must match exact SQL SELECT column names
+   - **sortKey**: Column to define sort order. Must match exact SQL SELECT column name.
 
 8. **Multiple Charts**: Create separate configurations when:
    - Data contains unrelated groups requiring different chart types
    - Different metrics need different visualization approaches
    - Multiple distinct comparisons are needed
-   - **isPivoted**: Indicates whether the data is pivoted (this decision is made based on the sql query provided). If true, the chart is expecting pivoted data, if False chart will transform data if required.
 
 9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
 
-10. **Filter/Select Dimension Handling**:
-    When data has more than or equal to 4 dimensions or would be too complex to visualize all at once:
-    - **Identify filter candidates**: Dimensions that can be used to filter/slice the data
-    - **Choose appropriate filter dimension**: Select categorical columns **that exist in the SQL query**
-    - **Filter logic**: The selected dimension should filter the dataset before chart rendering
-    - **filterKey**: Optional key to filter the data by. If provided, a dropdown will appear to allow users to select a specific category to display. Must match exact SQL SELECT column name.
-
 ## Decision Framework
 1. **FIRST**: List all SELECT columns from the SQL query - these are your ONLY available data points
-2. **Consider previous visualization context** (chart types, groupings, dimensions used)
-3. **Identify the primary comparison dimension** (what user wants to compare) - must be from SQL columns
-4. **Identify the measurement** (what user wants to measure) - must be from SQL columns
-5. **Identify secondary groupings** (how to break down the data further) - must be from SQL columns
-6. **Evaluate complexity**: If >4 effective dimensions, choose one column for filtering
-7. **Choose chart type** based on data nature and comparison intent:
+2. **Identify if SQL query contains pivoting**: Look for CASE WHEN statements creating multiple metric columns
+   - If YES: 'isPivoted = true', 'seriesKey = null', 'valueKey = [multiple metric columns]'
+   - If NO: 'isPivoted = false', choose logical 'seriesKey', 'valueKey = [single metric column]'
+3. **Consider previous visualization context** (chart types, groupings, dimensions used)
+4. **Identify the primary comparison dimension** (what user wants to compare) - must be from SQL columns
+5. **Identify the measurement** (what user wants to measure) - must be from SQL columns
+6. **Identify secondary groupings** (how to break down the data further) - must be from SQL columns
+7. **Evaluate complexity**: If >4 effective dimensions, choose one column for filtering
+8. **Choose chart type** based on data nature and comparison intent:
    - Discrete categories → **bar**
    - Sequential/ordered progression → **line**
    - Cumulative/volume emphasis → **area**
-8. **Apply logical ordering** to categorical data when possible, using sortKey if provided
-9. **Maintain consistency** with previous analysis patterns when building upon prior work
-10. **Ensure proper axis assignment** Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately (choosing descriptive names over IDs, using readable labels over technical codes, prioritizing human-readable values over system identifiers, and ensuring categorical values are meaningful to the end user rather than database artifacts)
+9. **Apply logical ordering** to categorical data when possible, using sortKey if provided
+10. **Maintain consistency** with previous analysis patterns when building upon prior work
+11. **Ensure proper axis assignment**: Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately
 
 ## Column Selection Priority for Readability
 When multiple columns are available for the same dimension, prefer human-readable columns:
@@ -261,90 +254,71 @@ When multiple columns are available for the same dimension, prefer human-readabl
 - **Prefer descriptive values over codes**: Choose 'department_name' over 'dept_code', 'status_description' over 'status_id'
 - **Prefer readable formats**: Choose 'full_name' over technical identifiers, 'category_label' over 'category_key'
 - **Exception**: Only use ID columns if no readable alternative exists in the SQL SELECT columns
-- This applies to xAxis, yAxis, filterKey, seriesKey, valueKey, and sortKey selections - always choose the most user-friendly column available
+- This applies to all key selections - always choose the most user-friendly column available
 
 ## Example Mappings
 
-**Example 1**: \`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
+**Example 1 - Non-Pivoted Data**: 
+\`SELECT department, employee_count, avg_salary FROM company_stats GROUP BY department\`
 - Available columns: department, employee_count, avg_salary
-- Chart Type: bar (comparing departments)
-- xAxis: { dataKey: "department", label: "Departments" }
-- yAxis: { dataKey: "avg_salary", label: "Average Salary" }
-- valueKey: ["avg_salary", "employee_count"]
-- seriesKey: null
+- Chart Type: bar
+- isPivoted: false
+- xAxis: { key: "department", label: "Departments" }
+- yAxis: { key: "avg_salary", label: "Average Salary" }
+- valueKey: ["avg_salary"]
+- seriesKey: null (single metric, no grouping needed)
 - filterKey: null
 - sortKey: "department"
-- isPivoted: false
-- Primary focus: Compare departments
-- dataSeries: { 
-    employee_count: { key: "employee_count", label: "Employee Count", color: "var(--chart-1)" },
-    avg_salary: { key: "avg_salary", label: "Average Salary", color: "var(--chart-2)" }
-  }
-- components: { 
-    employee_count: { dataKey: "employee_count", fill: "var(--chart-1)" },
-    avg_salary: { dataKey: "avg_salary", fill: "var(--chart-2)" }
-  }
 
-**Example 2**: \`SELECT product_category, sales_region, total_revenue FROM sales GROUP BY product_category, sales_region\`
+**Example 2 - Non-Pivoted with Series**: 
+\`SELECT product_category, sales_region, total_revenue FROM sales GROUP BY product_category, sales_region\`
 - Available columns: product_category, sales_region, total_revenue
-- Primary focus: Compare products across regions
-- **Option A**: X = product_category, Grouped by sales_region
-  - xAxis: { dataKey: "product_category", label: "Product Category" }
-  - yAxis: { dataKey: "total_revenue", label: "Total Revenue" }
-  - valueKey: ["total_revenue"]
-  - seriesKey: "sales_region"
-  - filterKey: null
-  - sortKey: "product_category"
-  - isPivoted: false
-- **Option B**: X = sales_region, Grouped by product_category
-  - xAxis: { dataKey: "sales_region", label: "Sales Region" }
-  - yAxis: { dataKey: "total_revenue", label: "Total Revenue" }
-  - valueKey: ["total_revenue"]
-  - seriesKey: "product_category"
-  - filterKey: null
-  - sortKey: "sales_region"
-  - isPivoted: false
-- **Decision Logic**: Choose based on whether user wants to compare products across regions OR regions across products
-
-**Example 3**: \`SELECT priority_level, status, ticket_count FROM tickets GROUP BY priority_level, status\`
-- Available columns: priority_level, status, ticket_count
-- Chart Type: bar (comparing priority levels with status breakdown)
-- xAxis: { dataKey: "priority_level", label: "Priority Level"} (natural ordering: Low, Medium, High)
-- yAxis: { dataKey: "ticket_count", label: "Ticket Count" }
-- valueKey: ["ticket_count"]
-- seriesKey: "status"
-- filterKey: null
-- sortKey: "priority_level"
+- Chart Type: bar
 - isPivoted: false
-- Grouped by: status (Open, In Progress, Closed)
-- Focus: How ticket counts vary by priority, broken down by status
-
-**Example 4**: \`SELECT quarter, cumulative_revenue FROM quarterly_growth ORDER BY quarter\`
-- Available columns: quarter, cumulative_revenue
-- Chart Type: area (showing cumulative growth progression)
-- xAxis: { dataKey: "quarter", label: "Quarters" }
-- yAxis: { dataKey: "cumulative_revenue", label: "Cumulative Revenue" }
-- valueKey: ["cumulative_revenue"]
-- seriesKey: null
+- xAxis: { key: "product_category", label: "Product Category" }
+- yAxis: { key: "total_revenue", label: "Total Revenue" }
+- valueKey: ["total_revenue"]
+- seriesKey: "sales_region" (group by region)
 - filterKey: null
-- sortKey: "quarter"
+- sortKey: "product_category"
+
+**Example 3 - Pivoted Data**: 
+\`SELECT month, SUM(CASE WHEN region='North' THEN sales ELSE 0 END) AS north_sales, SUM(CASE WHEN region='South' THEN sales ELSE 0 END) AS south_sales FROM sales GROUP BY month\`
+- Available columns: month, north_sales, south_sales
+- Chart Type: line
+- isPivoted: true
+- xAxis: { key: "month", label: "Month" }
+- yAxis: { key: "Sales", label: "Sales Revenue" }
+- valueKey: ["north_sales", "south_sales"]
+- seriesKey: null (data already pivoted by SQL)
+- filterKey: null
+- sortKey: "month"
+
+**Example 4 - Complex Data with Filter**: 
+\`SELECT month_year, specialization, patient_age_group, total_revenue FROM revenue_data GROUP BY month_year, specialization, patient_age_group\`
+- Available columns: month_year, specialization, patient_age_group, total_revenue
+- Chart Type: line
 - isPivoted: false
-- Focus: Cumulative revenue growth over quarters
+- xAxis: { key: "month_year", label: "Month" }
+- yAxis: { key: "total_revenue", label: "Total Revenue" }
+- valueKey: ["total_revenue"]
+- seriesKey: "patient_age_group" (group by age)
+- filterKey: "specialization" (too many combinations, filter by specialty)
+- sortKey: "month_year"
 
 ## VALIDATION CHECKLIST
 Before finalizing any configuration:
-1. ✓ All dataSeries keys match actual SQL SELECT column names
-2. ✓ All components dataKey values match actual SQL SELECT column names  
-3. ✓ xAxis dataKey matches an actual SQL SELECT column name
-4. ✓ yAxis dataKey matches an actual SQL SELECT column name
+1. ✓ All key values match actual SQL SELECT column names exactly
+2. ✓ isPivoted correctly reflects whether SQL query contains pivoting logic
+3. ✓ When isPivoted = true, seriesKey = null and valueKey contains multiple metrics
+4. ✓ When isPivoted = false, seriesKey (if used) contains grouping column and valueKey contains single metric
 5. ✓ filterKey (if used) matches an actual SQL SELECT column name
-6. ✓ seriesKey (if used) matches an actual SQL SELECT column name
-7. ✓ valueKey entries match actual SQL SELECT column names
-8. ✓ sortKey (if used) matches an actual SQL SELECT column name
-9. ✓ isPivoted reflects whether the data structure requires pivoting while rendering
-10. ✓ No fictional or derived column names are used
+6. ✓ sortKey (if used) matches an actual SQL SELECT column name
+7. ✓ xAxis.key and yAxis.key match actual SQL SELECT column names
+8. ✓ No fictional or derived column names are used
 
 Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
+
 export function getSummarizationPrompt(
   userQuery: string,
   userQueryParsed: QueryParsingResult,
