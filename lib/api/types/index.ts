@@ -4,8 +4,6 @@ import {
   AxisSchema,
   ChartConfigSchema,
   ChartVisualSchema,
-  ComponentSchema,
-  DataSeriesItemSchema,
   ErrorReasonSchema,
   InsightsSchema,
   KeySubjectSchema,
@@ -32,8 +30,6 @@ export type SqlGenerationResult = z.infer<typeof SqlGenerationSchema>;
 export type ErrorReasonResult = z.infer<typeof ErrorReasonSchema>;
 export type SummaryResult = z.infer<typeof SummarySchema>;
 export type InsightsResult = z.infer<typeof InsightsSchema>;
-export type DataSeriesItem = z.infer<typeof DataSeriesItemSchema>;
-export type Component = z.infer<typeof ComponentSchema>;
 export type Axis = z.infer<typeof AxisSchema>;
 export type ChartVisual = z.infer<typeof ChartVisualSchema>;
 export type ChartConfig = z.infer<typeof ChartConfigSchema>;

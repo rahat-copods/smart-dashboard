@@ -1,8 +1,7 @@
 export const userSchemas: any = {
   user01: {
     user_id: "user01",
-    db_url:
-      "d4e3ba0b561f99219c1b56c25cf4f3d4a9f5d48aeb3b21ee4a263b6f51e205acb0658722015b15fdc4170a5b7dc16e50d2e85b374b27633fc95690ee89b30d13:5a6d5f73ea2c5dc4adba1d959008bed5",
+    db_url: "postgresql://postgres:admin@localhost:5432/sample",
     schema: {
       actor: {
         columns: [
