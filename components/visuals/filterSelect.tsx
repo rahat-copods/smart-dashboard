@@ -9,7 +9,7 @@ import { ChartVisual } from "@/lib/api/types";
 
 interface FilterSelectProps {
   config: ChartVisual;
-  selectedFilter: string;
+  selectedFilter: string | undefined;
   onFilterChange: (value: string) => void;
   filterOptions: string[];
 }
@@ -26,10 +26,10 @@ export function FilterSelect({
         <h3 className="text-lg font-semibold">{config.title}</h3>
         <p className="text-sm text-muted-foreground">{config.description}</p>
       </div>
-      {config.filterSelect && (
+      {config.filterKey && filterOptions.length > 0 &&  (
         <Select value={selectedFilter} onValueChange={onFilterChange}>
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={`Select ${config.filterSelect.label}`} />
+            <SelectValue placeholder={`Select ${config.filterKey}`} />
           </SelectTrigger>
           <SelectContent>
             {filterOptions.map((option) => (

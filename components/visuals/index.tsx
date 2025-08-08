@@ -44,9 +44,7 @@ export default function ChartsComponent({
   config,
 }: ChartsComponentProps) {
   const chartTypes = ["bar", "line", "area"];
-  const [activeChartType, setActiveChartType] = useState<string>(
-    chartTypes[Math.floor(Math.random() * chartTypes.length)],
-  );
+  const [activeChartType, setActiveChartType] = useState<string>(config.type);
 
   if (!chartData) return null;
 
@@ -95,13 +93,13 @@ export default function ChartsComponent({
         </div>
 
         <TabsContent className="mt-0" value="bar">
-          <BarChartComponent chartData={chartData} config={config} />
+          <BarChartComponent data={chartData} config={config} />
         </TabsContent>
         <TabsContent className="mt-0" value="line">
-          <LineChartComponent chartData={chartData} config={config} />
+          <LineChartComponent data={chartData} config={config} />
         </TabsContent>
         <TabsContent className="mt-0" value="area">
-          <AreaChartComponent chartData={chartData} config={config} />
+          <AreaChartComponent data={chartData} config={config} />
         </TabsContent>
         <TabsContent className="mt-0" value="radar">
           <RadarChartComponent chartData={chartData} config={config} />

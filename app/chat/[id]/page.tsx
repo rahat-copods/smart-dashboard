@@ -187,7 +187,7 @@ export default function ChatPage() {
       <div className="flex flex-1 min-h-0">
         {/* Main Content Area */}
         <div
-          className={`flex flex-col min-h-0 transition-all duration-300 w-full`}
+          className={`flex flex-col min-h-0 transition-all duration-300 w-4/5`}
         >
           {/* Messages Container - FIXED HEIGHT */}
           <div
