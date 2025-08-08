@@ -14,7 +14,6 @@ import { BarChartComponent } from "./barCharts";
 import { LineChartComponent } from "./lineChart";
 import DataTableComponent from "./dataTableComponent";
 import { AreaChartComponent } from "./areaChart";
-import { RadarChartComponent } from "./radarChart";
 
 import { ChartVisual } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
@@ -93,16 +92,13 @@ export default function ChartsComponent({
         </div>
 
         <TabsContent className="mt-0" value="bar">
-          <BarChartComponent data={chartData} config={config} />
+          <BarChartComponent config={config} data={chartData} />
         </TabsContent>
         <TabsContent className="mt-0" value="line">
-          <LineChartComponent data={chartData} config={config} />
+          <LineChartComponent config={config} data={chartData} />
         </TabsContent>
         <TabsContent className="mt-0" value="area">
-          <AreaChartComponent data={chartData} config={config} />
-        </TabsContent>
-        <TabsContent className="mt-0" value="radar">
-          <RadarChartComponent chartData={chartData} config={config} />
+          <AreaChartComponent config={config} data={chartData} />
         </TabsContent>
         <TabsContent className="mt-0" value="table">
           <DataTableComponent data={chartData} />

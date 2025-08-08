@@ -1,17 +1,19 @@
 import { useState, useMemo } from "react";
+
 import { ChartConfig } from "@/components/ui/chart";
 import { formatCellValue } from "@/lib/utils";
 import { ChartVisual } from "@/lib/api/types";
 
 export function useChartLogic<T extends Record<string, any>>(
   rawData: T[],
-  config: ChartVisual
+  config: ChartVisual,
 ) {
   // Identify unique values for the filter dropdown if filterKey is provided
   const uniqueFilterValues = useMemo(() => {
     if (!config.filterKey) return [];
+
     return Array.from(
-      new Set(rawData.map((item) => item[config.filterKey!] as string))
+      new Set(rawData.map((item) => item[config.filterKey!] as string)),
     ).sort();
   }, [rawData, config.filterKey]);
 
@@ -22,7 +24,7 @@ export function useChartLogic<T extends Record<string, any>>(
 
   // Determine if we're working with pivoted data
   const isPivoted = config.isPivoted || config.valueKey.length > 1;
-  
+
   // Get the series keys based on whether data is pivoted or not
   const seriesKeys = useMemo(() => {
     if (isPivoted) {
@@ -30,7 +32,7 @@ export function useChartLogic<T extends Record<string, any>>(
     } else if (!isPivoted && config.seriesKey) {
       // For non-pivoted data, extract unique series values
       return Array.from(
-        new Set(rawData.map((item) => item[config.seriesKey!] as string))
+        new Set(rawData.map((item) => item[config.seriesKey!] as string)),
       ).sort();
     } else {
       return ["value"]; // Default single series
@@ -44,20 +46,20 @@ export function useChartLogic<T extends Record<string, any>>(
     // Apply filter if filterKey and a selectedFilterValue are present
     if (config.filterKey && selectedFilterValue) {
       processedData = processedData.filter(
-        (item) => item[config.filterKey!] === selectedFilterValue
+        (item) => item[config.filterKey!] === selectedFilterValue,
       );
     }
 
     if (isPivoted) {
       // For pivoted data, just filter and format - no transformation needed
-      let result = processedData.map(item => {
+      let result = processedData.map((item) => {
         const formattedItem: Record<string, any> = { ...item };
-        
+
         // Ensure all valueKey columns have numeric values
-        config.valueKey.forEach(key => {
+        config.valueKey.forEach((key) => {
           formattedItem[key] = parseFloat(item[key] as string) || 0;
         });
-        
+
         return formattedItem;
       });
 
@@ -66,9 +68,11 @@ export function useChartLogic<T extends Record<string, any>>(
         result.sort((a, b) => {
           const aVal = a[config.sortKey!];
           const bVal = b[config.sortKey!];
-          if (typeof aVal === 'string' && typeof bVal === 'string') {
+
+          if (typeof aVal === "string" && typeof bVal === "string") {
             return aVal.localeCompare(bVal);
           }
+
           return (aVal as number) - (bVal as number);
         });
       }
@@ -80,6 +84,7 @@ export function useChartLogic<T extends Record<string, any>>(
 
       processedData.forEach((item) => {
         const currentXAxisValue = item[config.xAxis.key] as string;
+
         if (!transformedMap.has(currentXAxisValue)) {
           transformedMap.set(currentXAxisValue, {
             [config.xAxis.key]: currentXAxisValue,
@@ -95,11 +100,13 @@ export function useChartLogic<T extends Record<string, any>>(
         if (config.seriesKey) {
           // If seriesKey is provided, pivot the data
           const currentSeriesValue = item[config.seriesKey] as string;
+
           currentXAxisEntry[currentSeriesValue] =
             (currentXAxisEntry[currentSeriesValue] || 0) + value;
         } else {
           // If no seriesKey, sum all values for this xAxisKey under a generic 'value' key
-          currentXAxisEntry["value"] = (currentXAxisEntry["value"] || 0) + value;
+          currentXAxisEntry["value"] =
+            (currentXAxisEntry["value"] || 0) + value;
         }
       });
 
@@ -119,9 +126,10 @@ export function useChartLogic<T extends Record<string, any>>(
         if (a.month_num !== undefined && b.month_num !== undefined) {
           return (a.month_num as number) - (b.month_num as number);
         }
+
         // Fallback to string comparison if month_num is not available
         return String(a[config.xAxis.key]).localeCompare(
-          String(b[config.xAxis.key])
+          String(b[config.xAxis.key]),
         );
       });
 
@@ -142,14 +150,15 @@ export function useChartLogic<T extends Record<string, any>>(
   // Dynamically create chartConfig based on identified series keys
   const chartConfig = useMemo(() => {
     const chartConf: ChartConfig = {};
-    
+
     seriesKeys.forEach((seriesVal, index) => {
       chartConf[seriesVal] = {
-        label: seriesVal === "value" ? (config.yAxis.label || "Value") : seriesVal,
+        label:
+          seriesVal === "value" ? config.yAxis.label || "Value" : seriesVal,
         color: `var(--chart-${(index % 5) + 1})`,
       };
     });
-    
+
     return chartConf;
   }, [seriesKeys, config.yAxis.label]);
 
@@ -161,10 +170,10 @@ export function useChartLogic<T extends Record<string, any>>(
     () =>
       transformedData.map((item) => {
         const formattedItem: Record<string, any> = { ...item };
-        
+
         // Format x-axis data key for display
         formattedItem[config.xAxis.key as string] = formatCellValue(
-          item[config.xAxis.key]
+          item[config.xAxis.key],
         );
 
         // Format the value keys for display
@@ -181,7 +190,7 @@ export function useChartLogic<T extends Record<string, any>>(
 
         return formattedItem;
       }),
-    [transformedData, config.xAxis.key, dataKeysToRender]
+    [transformedData, config.xAxis.key, dataKeysToRender],
   );
 
   // Calculate upper domain
@@ -190,10 +199,11 @@ export function useChartLogic<T extends Record<string, any>>(
     const upperDomains = keys.map((key) => {
       return (
         Math.ceil(
-          Math.max(...transformedData.map((d) => Number(d[key]) || 0)) / 10
+          Math.max(...transformedData.map((d) => Number(d[key]) || 0)) / 10,
         ) * 10
       );
     });
+
     return Math.max(...upperDomains);
   }, [transformedData, dataKeysToRender]);
 

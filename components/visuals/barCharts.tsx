@@ -45,10 +45,7 @@ export function BarChartComponent({ config, data }: BarChartProps) {
       />
 
       <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
-        <BarChart
-          accessibilityLayer
-          data={formattedChartData}
-        >
+        <BarChart accessibilityLayer data={formattedChartData}>
           <CartesianGrid vertical={false} />
           <XAxis
             axisLine={false}
@@ -96,9 +93,9 @@ export function BarChartComponent({ config, data }: BarChartProps) {
                 key={index}
                 dataKey={key as string}
                 fill={`var(--color-${key as string})`}
-                stackId={shouldStack ? "a" : undefined}
                 maxBarSize={40}
                 radius={radius}
+                stackId={shouldStack ? "a" : undefined}
               />
             );
           })}

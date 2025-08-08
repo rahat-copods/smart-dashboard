@@ -26,7 +26,7 @@ export function FilterSelect({
         <h3 className="text-lg font-semibold">{config.title}</h3>
         <p className="text-sm text-muted-foreground">{config.description}</p>
       </div>
-      {config.filterKey && filterOptions.length > 0 &&  (
+      {config.filterKey && filterOptions.length > 0 && (
         <Select value={selectedFilter} onValueChange={onFilterChange}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder={`Select ${config.filterKey}`} />

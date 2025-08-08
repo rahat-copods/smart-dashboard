@@ -29,7 +29,7 @@ export const VisualConfigSchema = z.object({
           .enum(["color", "size", "shape", "pattern"])
           .describe("How to represent this dimension visually"),
         label: z.string().describe("Human-readable label for this dimension"),
-      })
+      }),
     )
     .max(2)
     .describe("Additional categorical dimensions (max 2)"),
@@ -41,7 +41,7 @@ export const VisualConfigSchema = z.object({
         condition: z
           .string()
           .describe("Filter condition (e.g., 'top 5', 'Q4 2024', '> 1000')"),
-      })
+      }),
     )
     .describe("Applied filters for this visualization"),
 
@@ -74,7 +74,7 @@ export const QueryParsingSchema = z.object({
     .string()
     .nullable()
     .describe(
-      "How previous conversation context affects understanding of this query"
+      "How previous conversation context affects understanding of this query",
     ),
   summary: z.string().describe("Brief summary of what the user is asking for"),
   // visualConfigs: z
@@ -86,7 +86,7 @@ export const QueryParsingSchema = z.object({
   reasoning: z
     .string()
     .describe(
-      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)"
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)",
     ),
 });
 
@@ -99,29 +99,29 @@ export const SqlGenerationSchema = z.object({
     .boolean()
     .nullable()
     .describe(
-      "Whether the SQL query is incomplete or partial (null if error occurred)"
+      "Whether the SQL query is incomplete or partial (null if error occurred)",
     ),
   partialReason: z
     .string()
     .nullable()
     .describe(
-      "Reason why the query is partial, if applicable (null if not partial or error occurred)"
+      "Reason why the query is partial, if applicable (null if not partial or error occurred)",
     ),
   error: z
     .string()
     .nullable()
     .describe(
-      "Error message when query cannot be generated due to schema mismatch or incompatible request"
+      "Error message when query cannot be generated due to schema mismatch or incompatible request",
     ),
   suggestions: z
     .array(z.string())
     .describe(
-      "A list of 3–4 natural language follow-up questions that could be asked next, based on the current question and response — e.g., filtering further, comparing results, or digging deeper into related metrics."
+      "A list of 3–4 natural language follow-up questions that could be asked next, based on the current question and response — e.g., filtering further, comparing results, or digging deeper into related metrics.",
     ),
   reasoning: z
     .string()
     .describe(
-      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)"
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)",
     ),
 });
 
@@ -129,7 +129,7 @@ export const ErrorReasonSchema = z.object({
   errorReason: z
     .string()
     .describe(
-      "brief explanation of why the request failed or could not be processed (40-50 words) in Markdown format"
+      "brief explanation of why the request failed or could not be processed (40-50 words) in Markdown format",
     ),
 });
 
@@ -137,7 +137,7 @@ export const SummarySchema = z.object({
   summary: z
     .string()
     .describe(
-      "A Markdown format Summary for the conversion of the user query to SQL (150-200 words)"
+      "A Markdown format Summary for the conversion of the user query to SQL (150-200 words)",
     ),
 });
 
@@ -148,7 +148,7 @@ export const InsightsSchema = z.object({
   suggestions: z
     .array(z.string())
     .describe(
-      "A list of 2-3 natural language follow-up questions that could be asked next, based on the insights provided — e.g., filtering further, comparing results, or digging deeper into related metrics."
+      "A list of 2-3 natural language follow-up questions that could be asked next, based on the insights provided — e.g., filtering further, comparing results, or digging deeper into related metrics.",
     ),
 });
 
@@ -236,26 +236,27 @@ export const ChartVisualSchema = z.object({
     .string()
     .nullable()
     .describe(
-      "Optional key to filter the data by. If provided, a dropdown will appear to allow users to select a specific category to display. Must match exact SQL SELECT column name."
+      "Optional key to filter the data by. If provided, a dropdown will appear to allow users to select a specific category to display. Must match exact SQL SELECT column name.",
     ),
   seriesKey: z
     .string()
     .nullable()
     .describe(
-      "Optional key whose unique values will form different series (e.g., for stacked bars). If provided, the chart will pivot the data to create separate bars/segments for each unique value of this key. Must match exact SQL SELECT column name."
+      "Optional key whose unique values will form different series (e.g., for stacked bars). If provided, the chart will pivot the data to create separate bars/segments for each unique value of this key. Must match exact SQL SELECT column name.",
     ),
   xAxis: AxisSchema.describe("Configuration for the X-axis"),
   yAxis: AxisSchema.describe("Configuration for the Y-axis"),
   valueKey: z
     .array(z.string())
     .describe(
-      "The key from the data objects representing the numerical value to be plotted (e.g., the height of the bars). Must match exact SQL SELECT column name."
+      "The key from the data objects representing the numerical value to be plotted (e.g., the height of the bars). Must match exact SQL SELECT column name.",
     ),
   isPivoted: z.boolean().describe("Whether the data is pivoted or not"),
   sortKey: z
-    .string().nullable()
+    .string()
+    .nullable()
     .describe(
-      "The key from the data objects representing the column to use for sort order of the data series. Must match exact SQL SELECT column name."
+      "The key from the data objects representing the column to use for sort order of the data series. Must match exact SQL SELECT column name.",
     ),
 });
 
@@ -265,11 +266,11 @@ export const ChartConfigSchema = z.object({
     .array(ChartVisualSchema)
     .min(1)
     .describe(
-      "An array of one or more chart configurations, each defining a specific visualization to represent the SQL query results."
+      "An array of one or more chart configurations, each defining a specific visualization to represent the SQL query results.",
     ),
   reasoning: z
     .string()
     .describe(
-      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)"
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)",
     ),
 });

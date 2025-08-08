@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       const encoder = new TextEncoder();
       const streamCallback: StreamCallback = (
         text: string,
-        type: "status" | "content" | "error",
+        type: "status" | "content" | "error" | "usage",
       ) => {
         controller.enqueue(
           encoder.encode(JSON.stringify({ type, text }) + "\n"),
