@@ -225,6 +225,16 @@ export function useChartLogic<T extends Record<string, any>>(
     return Math.max(...upperDomains);
   }, [transformedData, dataKeysToRender]);
 
+    const summedUpperDomain = useMemo(() => {
+    const summedValues = transformedData.map((d) => {
+      return dataKeysToRender.reduce((sum, key) => {
+        return sum + (Number(d[key]) || 0);
+      }, 0);
+    });
+
+    return Math.ceil(Math.max(...summedValues) / 10) * 10;
+  }, [transformedData, dataKeysToRender, upperDomain]);
+
   return {
     selectedFilterValue,
     setSelectedFilterValue,
@@ -233,5 +243,6 @@ export function useChartLogic<T extends Record<string, any>>(
     formattedChartData,
     dataKeysToRender,
     upperDomain,
+    summedUpperDomain
   };
 }

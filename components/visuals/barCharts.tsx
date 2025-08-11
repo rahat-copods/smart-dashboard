@@ -28,6 +28,7 @@ export function BarChartComponent({ config, data }: BarChartProps) {
     formattedChartData,
     dataKeysToRender,
     upperDomain,
+    summedUpperDomain
   } = useChartLogic(data, config);
 
   const shouldStack = config.seriesKey || dataKeysToRender.length > 1;
@@ -61,7 +62,7 @@ export function BarChartComponent({ config, data }: BarChartProps) {
           <YAxis
             axisLine={false}
             dataKey={config.yAxis.key}
-            domain={[0, upperDomain]}
+            domain={[0, shouldStack ? summedUpperDomain : upperDomain]}
             label={{
               value: config.yAxis.label ?? "",
               angle: -90,
