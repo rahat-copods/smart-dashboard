@@ -28,7 +28,7 @@ export function formatCellValue(value: any): string {
   // Currency detection & normalization
   if (typeof value === "string") {
     // Detect a currency pattern like "$1,234.56", "₹12,000", "EUR 1.234,56"
-    const currencyLike = /^[^\d\-+]*\d[\d,.\s]*$/;
+    const currencyLike = /^(?:[\$€£₹¥]|[A-Z]{3}\s)?[\d,]+(?:\.\d+)?$/;
     if (currencyLike.test(value.trim())) {
       // Strip non-numeric characters except . and -
       const cleaned = value.replace(/[^\d.-]/g, "");
