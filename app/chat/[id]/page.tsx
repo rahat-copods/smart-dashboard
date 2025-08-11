@@ -161,6 +161,7 @@ export default function ChatPage() {
 
   // Auto-scroll to bottom when messages change
   const scrolledToBottom = useRef(false);
+
   useEffect(() => {
     if (!scrolledToBottom.current && messages.length > 0) {
       scrolledToBottom.current = true;

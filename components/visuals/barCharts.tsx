@@ -28,14 +28,14 @@ export function BarChartComponent({ config, data }: BarChartProps) {
     formattedChartData,
     dataKeysToRender,
     upperDomain,
-    summedUpperDomain
+    summedUpperDomain,
   } = useChartLogic(data, config);
 
   const shouldStack = config.seriesKey || dataKeysToRender.length > 1;
   const RADIUS_BOTTOM: [number, number, number, number] = [0, 0, 8, 8];
   const RADIUS_TOP: [number, number, number, number] = [8, 8, 0, 0];
   const RADIUS_NONE: [number, number, number, number] = [0, 0, 0, 0];
-console.log(config)
+
   return (
     <div className="w-full space-y-4">
       <FilterSelect

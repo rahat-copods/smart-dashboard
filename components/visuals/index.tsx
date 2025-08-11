@@ -42,7 +42,6 @@ export default function ChartsComponent({
   chartData,
   config,
 }: ChartsComponentProps) {
-  const chartTypes = ["bar", "line", "area"];
   const [activeChartType, setActiveChartType] = useState<string>(config.type);
 
   if (!chartData) return null;

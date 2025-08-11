@@ -30,11 +30,6 @@ export function AreaChartComponent({ config, data }: AreaChartProps) {
     upperDomain,
   } = useChartLogic(data, config);
 
-  const shouldStack = config.seriesKey || dataKeysToRender.length > 1;
-  const RADIUS_BOTTOM: [number, number, number, number] = [0, 0, 8, 8];
-  const RADIUS_TOP: [number, number, number, number] = [8, 8, 0, 0];
-  const RADIUS_NONE: [number, number, number, number] = [0, 0, 0, 0];
-
   return (
     <div className="w-full space-y-4">
       <FilterSelect
@@ -76,20 +71,6 @@ export function AreaChartComponent({ config, data }: AreaChartProps) {
             cursor={false}
           />
           {dataKeysToRender.map((key, index) => {
-            const isFirstBar = index === 0;
-            const isLastBar = index === dataKeysToRender.length - 1;
-
-            // Determine radius based on stacking and position
-            const radius = shouldStack
-              ? dataKeysToRender.length === 1
-                ? 8
-                : isFirstBar
-                  ? RADIUS_BOTTOM
-                  : isLastBar
-                    ? RADIUS_TOP
-                    : RADIUS_NONE
-              : 8;
-
             return (
               <Area
                 key={index}
