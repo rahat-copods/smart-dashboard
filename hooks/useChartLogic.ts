@@ -11,14 +11,14 @@ const sanitizeKey = (key: string): string => {
 
 export function useChartLogic<T extends Record<string, any>>(
   rawData: T[],
-  config: ChartVisual,
+  config: ChartVisual
 ) {
   // Identify unique values for the filter dropdown if filterKey is provided
   const uniqueFilterValues = useMemo(() => {
     if (!config.filterKey) return [];
 
     return Array.from(
-      new Set(rawData.map((item) => item[config.filterKey!] as string)),
+      new Set(rawData.map((item) => item[config.filterKey!] as string))
     ).sort();
   }, [rawData, config.filterKey]);
 
@@ -37,7 +37,7 @@ export function useChartLogic<T extends Record<string, any>>(
     } else if (!isPivoted && config.seriesKey) {
       // For non-pivoted data, extract unique series values and sanitize
       return Array.from(
-        new Set(rawData.map((item) => item[config.seriesKey!] as string)),
+        new Set(rawData.map((item) => item[config.seriesKey!] as string))
       )
         .sort()
         .map(sanitizeKey);
@@ -53,7 +53,7 @@ export function useChartLogic<T extends Record<string, any>>(
     // Apply filter if filterKey and a selectedFilterValue are present
     if (config.filterKey && selectedFilterValue) {
       processedData = processedData.filter(
-        (item) => item[config.filterKey!] === selectedFilterValue,
+        (item) => item[config.filterKey!] === selectedFilterValue
       );
     }
 
@@ -65,7 +65,8 @@ export function useChartLogic<T extends Record<string, any>>(
         // Ensure all valueKey columns have numeric values and sanitize keys
         config.valueKey.forEach((key) => {
           const sanitizedKey = sanitizeKey(key);
-          formattedItem[sanitizedKey] = parseFloat(formatCellValue(item[key])) || 0;
+          formattedItem[sanitizedKey] =
+            parseFloat(formatCellValue(item[key])) || 0;
         });
 
         return formattedItem;
@@ -89,8 +90,21 @@ export function useChartLogic<T extends Record<string, any>>(
     } else {
       // For non-pivoted data, use the existing transformation logic
       const transformedMap = new Map<string, Record<string, any>>();
+      let sortedData = [...processedData];
+      if (config.sortKey) {
+        sortedData.sort((a, b) => {
+          const aVal = a[config.sortKey!];
+          const bVal = b[config.sortKey!];
 
-      processedData.forEach((item) => {
+          if (typeof aVal === "string" && typeof bVal === "string") {
+            return aVal.localeCompare(bVal);
+          }
+
+          return (aVal as number) - (bVal as number);
+        });
+      }
+
+      sortedData.forEach((item) => {
         const currentXAxisValue = item[config.xAxis.key] as string;
         const sanitizedXAxisKey = sanitizeKey(config.xAxis.key);
 
@@ -131,19 +145,7 @@ export function useChartLogic<T extends Record<string, any>>(
         });
       }
 
-      // Sort by month_num if it was added during transformation
-      const sortedData = Array.from(transformedMap.values()).sort((a, b) => {
-        if (a.month_num !== undefined && b.month_num !== undefined) {
-          return (a.month_num as number) - (b.month_num as number);
-        }
-
-        // Fallback to string comparison if month_num is not available
-        return String(a[sanitizeKey(config.xAxis.key)]).localeCompare(
-          String(b[sanitizeKey(config.xAxis.key)]),
-        );
-      });
-
-      return sortedData;
+      return Array.from(transformedMap.values());
     }
   }, [
     rawData,
@@ -166,8 +168,10 @@ export function useChartLogic<T extends Record<string, any>>(
       const originalKey = isPivoted
         ? config.valueKey[seriesKeys.indexOf(seriesVal)] || seriesVal
         : seriesVal === "value"
-        ? "value"
-        : rawData.find((item) => sanitizeKey(item[config.seriesKey || ""]) === seriesVal)?.[config.seriesKey || ""] || seriesVal;
+          ? "value"
+          : rawData.find(
+              (item) => sanitizeKey(item[config.seriesKey || ""]) === seriesVal
+            )?.[config.seriesKey || ""] || seriesVal;
 
       chartConf[seriesVal] = {
         label:
@@ -177,7 +181,14 @@ export function useChartLogic<T extends Record<string, any>>(
     });
 
     return chartConf;
-  }, [seriesKeys, config.yAxis.label, config.valueKey, config.seriesKey, rawData, isPivoted]);
+  }, [
+    seriesKeys,
+    config.yAxis.label,
+    config.valueKey,
+    config.seriesKey,
+    rawData,
+    isPivoted,
+  ]);
 
   // Determine which data keys to render as bars
   const dataKeysToRender = seriesKeys;
@@ -191,14 +202,15 @@ export function useChartLogic<T extends Record<string, any>>(
         // Format x-axis data key for display
         const sanitizedXAxisKey = sanitizeKey(config.xAxis.key);
         formattedItem[sanitizedXAxisKey] = formatCellValue(
-          item[sanitizedXAxisKey],
+          item[sanitizedXAxisKey]
         );
 
         // Format the value keys for display
         dataKeysToRender.forEach((key) => {
           if (
             typeof item[key] === "number" ||
-            (typeof item[key] === "string" && !isNaN(parseFloat(formatCellValue(item[key]))))
+            (typeof item[key] === "string" &&
+              !isNaN(parseFloat(formatCellValue(item[key]))))
           ) {
             formattedItem[key] = parseFloat(formatCellValue(item[key]));
           } else {
@@ -208,7 +220,7 @@ export function useChartLogic<T extends Record<string, any>>(
 
         return formattedItem;
       }),
-    [transformedData, config.xAxis.key, dataKeysToRender],
+    [transformedData, config.xAxis.key, dataKeysToRender]
   );
 
   // Calculate upper domain
@@ -217,7 +229,7 @@ export function useChartLogic<T extends Record<string, any>>(
     const upperDomains = keys.map((key) => {
       return (
         Math.ceil(
-          Math.max(...transformedData.map((d) => Number(d[key]) || 0)) / 10,
+          Math.max(...transformedData.map((d) => Number(d[key]) || 0)) / 10
         ) * 10
       );
     });
@@ -225,7 +237,7 @@ export function useChartLogic<T extends Record<string, any>>(
     return Math.max(...upperDomains);
   }, [transformedData, dataKeysToRender]);
 
-    const summedUpperDomain = useMemo(() => {
+  const summedUpperDomain = useMemo(() => {
     const summedValues = transformedData.map((d) => {
       return dataKeysToRender.reduce((sum, key) => {
         return sum + (Number(d[key]) || 0);
@@ -243,6 +255,6 @@ export function useChartLogic<T extends Record<string, any>>(
     formattedChartData,
     dataKeysToRender,
     upperDomain,
-    summedUpperDomain
+    summedUpperDomain,
   };
 }
