@@ -73,10 +73,10 @@ export function useChartLogic<T extends Record<string, any>>(
       });
 
       // Sort by sortKey if provided, otherwise maintain original order
-      if (config.sortKey) {
+      if (config.sort?.sortKey) {
         result.sort((a, b) => {
-          const aVal = a[config.sortKey!];
-          const bVal = b[config.sortKey!];
+          const aVal = a[config.sort?.sortKey!];
+          const bVal = b[config.sort?.sortKey!];
 
           if (typeof aVal === "string" && typeof bVal === "string") {
             return aVal.localeCompare(bVal);
@@ -91,15 +91,14 @@ export function useChartLogic<T extends Record<string, any>>(
       // For non-pivoted data, use the existing transformation logic
       const transformedMap = new Map<string, Record<string, any>>();
       let sortedData = [...processedData];
-      if (config.sortKey) {
+      if (config.sort) {
+        const {sortKey, sortOrder} = config.sort;
         sortedData.sort((a, b) => {
-          const aVal = a[config.sortKey!];
-          const bVal = b[config.sortKey!];
-
+          const aVal = a[sortKey];
+          const bVal = b[sortKey];
           if (typeof aVal === "string" && typeof bVal === "string") {
             return aVal.localeCompare(bVal);
           }
-
           return (aVal as number) - (bVal as number);
         });
       }
@@ -153,7 +152,7 @@ export function useChartLogic<T extends Record<string, any>>(
     config.valueKey,
     config.seriesKey,
     config.filterKey,
-    config.sortKey,
+    config.sort?.sortKey,
     selectedFilterValue,
     isPivoted,
     seriesKeys,
