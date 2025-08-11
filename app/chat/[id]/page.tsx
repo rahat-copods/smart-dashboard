@@ -160,8 +160,12 @@ export default function ChatPage() {
   }, [chatId, messages, sendQuery, user]);
 
   // Auto-scroll to bottom when messages change
+  const scrolledToBottom = useRef(false);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!scrolledToBottom.current && messages.length > 0) {
+      scrolledToBottom.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   const handleSubmit = (message: string) => {
