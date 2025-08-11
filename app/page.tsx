@@ -112,9 +112,6 @@ export default function HomePage() {
                     <SelectItem value="user03">
                       Hospital Management — Jan 2023-Dec 2023
                     </SelectItem>
-                    <SelectItem value="user04">
-                      Healthcare Patient — May 2019-Jun 2024
-                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

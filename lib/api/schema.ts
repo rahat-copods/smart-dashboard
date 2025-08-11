@@ -1,7 +1,7 @@
 export const userSchemas: any = {
   user01: {
     user_id: "user01",
-    db_url: "postgresql://postgres:admin@localhost:5432/sample",
+    db_url: `${process.env.POSTGRES_URL}/dvdrental`,
     schema: {
       actor: {
         columns: [
@@ -728,297 +728,9 @@ export const userSchemas: any = {
       },
     },
   },
-  user04: {
-    user_id: "user04",
-    db_url:
-      "0a341aea90d1d61c9cc1042185afcd977b83de661659e8522ff3818733325de3cc8b79d47a5322ae753f952996b050180b8aae29275a88a16da244b049722768:7b5113ee2544d15ed20f1cd03b462fae",
-    schema: {
-      patients: {
-        columns: [
-          {
-            name: "age",
-            type: "INTEGER",
-          },
-          {
-            name: "Discharge Date",
-            type: "DATE",
-          },
-          {
-            name: "Billing Amount",
-            type: "NUMERIC",
-          },
-          {
-            name: "Date of Admission",
-            type: "DATE",
-          },
-          {
-            name: "doctor",
-            type: "TEXT",
-          },
-          {
-            name: "hospital",
-            type: "TEXT",
-          },
-          {
-            name: "Insurance Provider",
-            type: "TEXT",
-          },
-          {
-            name: "Room Number",
-            type: "TEXT",
-          },
-          {
-            name: "Admission Type",
-            type: "TEXT",
-          },
-          {
-            name: "medication",
-            type: "TEXT",
-          },
-          {
-            name: "name",
-            type: "TEXT",
-          },
-          {
-            name: "Test Results",
-            type: "TEXT",
-          },
-          {
-            name: "gender",
-            type: "TEXT",
-          },
-          {
-            name: "Blood Type",
-            type: "TEXT",
-          },
-          {
-            name: "Medical Condition",
-            type: "TEXT",
-          },
-        ],
-        relationships: [],
-      },
-    },
-  },
-  user03: {
-    user_id: "user03",
-    db_url: "postgresql://postgres:admin@localhost:5432/hospital",
-    schema: {
-      appointments: {
-        columns: [
-          {
-            name: "appointment_date",
-            type: "DATE",
-          },
-          {
-            name: "appointment_time",
-            type: "TIME WITHOUT TIME ZONE",
-          },
-          {
-            name: "doctor_id",
-            type: "TEXT",
-          },
-          {
-            name: "appointment_id",
-            type: "TEXT",
-          },
-          {
-            name: "status",
-            type: "TEXT",
-          },
-          {
-            name: "reason_for_visit",
-            type: "TEXT",
-          },
-          {
-            name: "patient_id",
-            type: "TEXT",
-          },
-        ],
-        relationships: [
-          {
-            column: "patient_id",
-            foreign_table: "patients",
-            foreign_column: "patient_id",
-          },
-          {
-            column: "doctor_id",
-            foreign_table: "doctors",
-            foreign_column: "doctor_id",
-          },
-        ],
-      },
-      patients: {
-        columns: [
-          {
-            name: "registration_date",
-            type: "DATE",
-          },
-          {
-            name: "date_of_birth",
-            type: "DATE",
-          },
-          {
-            name: "last_name",
-            type: "TEXT",
-          },
-          {
-            name: "gender",
-            type: "CHARACTER",
-          },
-          {
-            name: "contact_number",
-            type: "TEXT",
-          },
-          {
-            name: "address",
-            type: "TEXT",
-          },
-          {
-            name: "insurance_provider",
-            type: "TEXT",
-          },
-          {
-            name: "insurance_number",
-            type: "TEXT",
-          },
-          {
-            name: "patient_id",
-            type: "TEXT",
-          },
-          {
-            name: "email",
-            type: "TEXT",
-          },
-          {
-            name: "first_name",
-            type: "TEXT",
-          },
-        ],
-        relationships: [],
-      },
-      doctors: {
-        columns: [
-          {
-            name: "years_experience",
-            type: "INTEGER",
-          },
-          {
-            name: "first_name",
-            type: "TEXT",
-          },
-          {
-            name: "last_name",
-            type: "TEXT",
-          },
-          {
-            name: "specialization",
-            type: "TEXT",
-          },
-          {
-            name: "phone_number",
-            type: "TEXT",
-          },
-          {
-            name: "hospital_branch",
-            type: "TEXT",
-          },
-          {
-            name: "doctor_id",
-            type: "TEXT",
-          },
-          {
-            name: "email",
-            type: "TEXT",
-          },
-        ],
-        relationships: [],
-      },
-      treatments: {
-        columns: [
-          {
-            name: "cost",
-            type: "NUMERIC",
-          },
-          {
-            name: "treatment_date",
-            type: "DATE",
-          },
-          {
-            name: "treatment_id",
-            type: "TEXT",
-          },
-          {
-            name: "appointment_id",
-            type: "TEXT",
-          },
-          {
-            name: "treatment_type",
-            type: "TEXT",
-          },
-          {
-            name: "description",
-            type: "TEXT",
-          },
-        ],
-        relationships: [
-          {
-            column: "appointment_id",
-            foreign_table: "appointments",
-            foreign_column: "appointment_id",
-          },
-        ],
-      },
-      billing: {
-        columns: [
-          {
-            name: "bill_date",
-            type: "DATE",
-          },
-          {
-            name: "amount",
-            type: "NUMERIC",
-          },
-          {
-            name: "treatment_id",
-            type: "TEXT",
-          },
-          {
-            name: "bill_id",
-            type: "TEXT",
-          },
-          {
-            name: "payment_status",
-            type: "TEXT",
-          },
-          {
-            name: "payment_method",
-            type: "TEXT",
-          },
-          {
-            name: "patient_id",
-            type: "TEXT",
-          },
-        ],
-        relationships: [
-          {
-            column: "patient_id",
-            foreign_table: "patients",
-            foreign_column: "patient_id",
-          },
-          {
-            column: "treatment_id",
-            foreign_table: "treatments",
-            foreign_column: "treatment_id",
-          },
-        ],
-      },
-    },
-  },
   user02: {
     user_id: "user02",
-    db_url:
-      "a919f04a5fe3c9b78f41378324f6c10cef38d5c510be57a5c8c51168941eed6ee065d209851678bd2fc6d8ff5027cf39b415c8690dd671dd556f2c6e45e08b1f:53a9d8459fb8456dd37209179aa159d7",
+    db_url: `${process.env.POSTGRES_URL}/clothing`,
     schema: {
       public_table: {
         columns: [],
@@ -1396,6 +1108,221 @@ export const userSchemas: any = {
             column: "shippingaddressid",
             foreign_table: "address",
             foreign_column: "id",
+          },
+        ],
+      },
+    },
+  },
+  user03: {
+    user_id: "user03",
+    db_url: `${process.env.POSTGRES_URL}/postgres`,
+    schema: {
+      appointments: {
+        columns: [
+          {
+            name: "appointment_date",
+            type: "DATE",
+          },
+          {
+            name: "appointment_time",
+            type: "TIME WITHOUT TIME ZONE",
+          },
+          {
+            name: "doctor_id",
+            type: "TEXT",
+          },
+          {
+            name: "appointment_id",
+            type: "TEXT",
+          },
+          {
+            name: "status",
+            type: "TEXT",
+          },
+          {
+            name: "reason_for_visit",
+            type: "TEXT",
+          },
+          {
+            name: "patient_id",
+            type: "TEXT",
+          },
+        ],
+        relationships: [
+          {
+            column: "patient_id",
+            foreign_table: "patients",
+            foreign_column: "patient_id",
+          },
+          {
+            column: "doctor_id",
+            foreign_table: "doctors",
+            foreign_column: "doctor_id",
+          },
+        ],
+      },
+      patients: {
+        columns: [
+          {
+            name: "registration_date",
+            type: "DATE",
+          },
+          {
+            name: "date_of_birth",
+            type: "DATE",
+          },
+          {
+            name: "last_name",
+            type: "TEXT",
+          },
+          {
+            name: "gender",
+            type: "CHARACTER",
+          },
+          {
+            name: "contact_number",
+            type: "TEXT",
+          },
+          {
+            name: "address",
+            type: "TEXT",
+          },
+          {
+            name: "insurance_provider",
+            type: "TEXT",
+          },
+          {
+            name: "insurance_number",
+            type: "TEXT",
+          },
+          {
+            name: "patient_id",
+            type: "TEXT",
+          },
+          {
+            name: "email",
+            type: "TEXT",
+          },
+          {
+            name: "first_name",
+            type: "TEXT",
+          },
+        ],
+        relationships: [],
+      },
+      doctors: {
+        columns: [
+          {
+            name: "years_experience",
+            type: "INTEGER",
+          },
+          {
+            name: "first_name",
+            type: "TEXT",
+          },
+          {
+            name: "last_name",
+            type: "TEXT",
+          },
+          {
+            name: "specialization",
+            type: "TEXT",
+          },
+          {
+            name: "phone_number",
+            type: "TEXT",
+          },
+          {
+            name: "hospital_branch",
+            type: "TEXT",
+          },
+          {
+            name: "doctor_id",
+            type: "TEXT",
+          },
+          {
+            name: "email",
+            type: "TEXT",
+          },
+        ],
+        relationships: [],
+      },
+      treatments: {
+        columns: [
+          {
+            name: "cost",
+            type: "NUMERIC",
+          },
+          {
+            name: "treatment_date",
+            type: "DATE",
+          },
+          {
+            name: "treatment_id",
+            type: "TEXT",
+          },
+          {
+            name: "appointment_id",
+            type: "TEXT",
+          },
+          {
+            name: "treatment_type",
+            type: "TEXT",
+          },
+          {
+            name: "description",
+            type: "TEXT",
+          },
+        ],
+        relationships: [
+          {
+            column: "appointment_id",
+            foreign_table: "appointments",
+            foreign_column: "appointment_id",
+          },
+        ],
+      },
+      billing: {
+        columns: [
+          {
+            name: "bill_date",
+            type: "DATE",
+          },
+          {
+            name: "amount",
+            type: "NUMERIC",
+          },
+          {
+            name: "treatment_id",
+            type: "TEXT",
+          },
+          {
+            name: "bill_id",
+            type: "TEXT",
+          },
+          {
+            name: "payment_status",
+            type: "TEXT",
+          },
+          {
+            name: "payment_method",
+            type: "TEXT",
+          },
+          {
+            name: "patient_id",
+            type: "TEXT",
+          },
+        ],
+        relationships: [
+          {
+            column: "patient_id",
+            foreign_table: "patients",
+            foreign_column: "patient_id",
+          },
+          {
+            column: "treatment_id",
+            foreign_table: "treatments",
+            foreign_column: "treatment_id",
           },
         ],
       },
