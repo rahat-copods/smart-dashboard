@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,10 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export default function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -49,8 +45,8 @@ export default function LoginForm({
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm" onSubmit={handleSubmit}>
-        <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Login to your account</CardTitle>
@@ -59,7 +55,7 @@ export default function LoginForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="flex flex-col gap-6">
                   <div className="grid gap-3">
                     <Label htmlFor="email">Email</Label>
