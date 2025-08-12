@@ -6,7 +6,11 @@ import { ChartVisual } from "@/lib/api/types";
 
 // Utility function to sanitize column names by replacing spaces with underscores
 const sanitizeKey = (key: string): string => {
-  return key.replace(/\s+/g, "_");
+  if (isNaN(parseFloat(key))) {
+    return key.replace(/\s+/g, "_");
+  }
+
+  return key;
 };
 
 export function useChartLogic<T extends Record<string, any>>(
