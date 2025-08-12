@@ -1,67 +1,90 @@
 "use client";
 
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+
+import { FilterSelect } from "./filterSelect";
+
 import {
-  ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartConfig as LineChartConfig } from "@/types/visuals";
-import { formatCellValue } from "@/lib/utils";
+import { ChartVisual as LineChartConfig } from "@/lib/api/types";
+import { useChartLogic } from "@/hooks/useChartLogic";
 
 interface LineChartProps {
-  chartData: any[];
+  data: any[];
   config: LineChartConfig;
 }
-export function LineChartComponent({ config, chartData }: LineChartProps) {
-  const chartConfig = config.dataSeries satisfies ChartConfig;
-  const formattedChartData = chartData.map((item) => {
-    const formattedItem = { ...item };
-    config.components.forEach((line) => {
-      formattedItem[line.dataKey] = formatCellValue(item[line.dataKey]);
-    });
-    return formattedItem;
-  });
 
-  const upperDomain = Math.max(
-    ...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)
-  );
+export function LineChartComponent({ config, data }: LineChartProps) {
+  const {
+    selectedFilterValue,
+    setSelectedFilterValue,
+    uniqueFilterValues,
+    chartConfig,
+    formattedChartData,
+    dataKeysToRender,
+    upperDomain,
+  } = useChartLogic(data, config);
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-      <LineChart accessibilityLayer data={formattedChartData}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey={config.xAxis.dataKey}
-          tickLine={false}
-          tickMargin={8}
-          axisLine={false}
-        />
-        <YAxis
-          dataKey={config.yAxis.dataKey}
-          tickLine={false}
-          axisLine={false}
-          tickMargin={10}
-          domain={[0, upperDomain + upperDomain * 0.1]}
-        />
-        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-        <ChartLegend content={<ChartLegendContent />} />
-        {config.components.map((line, index) => (
-          <Line
-            key={index}
-            dataKey={line.dataKey}
-            type="natural"
-            stroke={line.fill}
-            strokeWidth={2}
-            dot={{
-              fill: line.fill,
+    <div className="w-full space-y-4">
+      <FilterSelect
+        config={config}
+        filterOptions={uniqueFilterValues}
+        selectedFilter={selectedFilterValue}
+        onFilterChange={setSelectedFilterValue}
+      />
+
+      <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
+        <LineChart accessibilityLayer data={formattedChartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            axisLine={false}
+            dataKey={config.xAxis.key as string}
+            label={{
+              value: config.xAxis.label ?? "",
+              angle: 0,
+              position: "bottom",
             }}
+            tickLine={false}
+            tickMargin={10}
           />
-        ))}
-      </LineChart>
-    </ChartContainer>
+          <YAxis
+            axisLine={false}
+            dataKey={config.yAxis.key}
+            domain={[0, upperDomain]}
+            label={{
+              value: config.yAxis.label ?? "",
+              angle: -90,
+              position: "left",
+              offset: 0,
+            }}
+            tickLine={false}
+            tickMargin={10}
+          />
+          <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
+          <ChartLegend content={<ChartLegendContent className="mt-2" />} />
+
+          {dataKeysToRender.map((key, index) => {
+            return (
+              <Line
+                key={index}
+                dataKey={key}
+                dot={{
+                  fill: `var(--color-${key as string})`,
+                }}
+                stroke={`var(--color-${key as string})`}
+                strokeWidth={2}
+                type="natural"
+              />
+            );
+          })}
+        </LineChart>
+      </ChartContainer>
+    </div>
   );
 }

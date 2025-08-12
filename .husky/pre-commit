@@ -1,0 +1,5 @@
+
+npm run lint || {
+  echo "Linting failed. Please fix the issues before committing."
+  exit 1
+}

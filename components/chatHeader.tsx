@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { Database } from "lucide-react"
+import { Database } from "lucide-react";
 
 interface ChatHeaderProps {
-  title: string
+  title: string;
 }
 
 export function ChatHeader({ title }: ChatHeaderProps) {
@@ -14,5 +14,5 @@ export function ChatHeader({ title }: ChatHeaderProps) {
         <span className="font-semibold text-foreground">{title}</span>
       </div>
     </header>
-  )
+  );
 }

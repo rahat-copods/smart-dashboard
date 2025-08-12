@@ -1,271 +1,222 @@
-export const queryParsingSchema = {
-  type: "object",
-  properties: {
-    userQuery: {
-      type: "string",
-      description: "The original user query",
-    },
-    queryIntent: {
-      type: "string",
-      description: "What the user is trying to accomplish in simple terms",
-    },
-    keySubjects: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          subject: {
-            type: "string",
-            description: "Important subject/entity from the query",
-          },
-          weight: {
-            type: "number",
-            minimum: 0,
-            maximum: 10,
-            description: "Importance weight (0-10, 10 being most important)",
-          },
-          context: {
-            type: "string",
-            description: "Why this subject is important in the query",
-          },
-        },
-        required: ["subject", "weight", "context"],
-      },
-      description:
-        "Key subjects identified in the query with importance weights",
-    },
-    primaryFocus: {
-      type: "string",
-      description: "The main thing the user cares about most",
-    },
-    contextInfluence: {
-      type: ["string", "null"],
-      description:
-        "How previous conversation context affects understanding of this query",
-    },
-    summary: {
-      type: "string",
-      description: "Brief summary of what the user is asking for",
-    },
-  },
-  required: [
-    "userQuery",
-    "queryIntent",
-    "keySubjects",
-    "primaryFocus",
-    "summary",
-  ],
-  additionalProperties: false,
-};
+import { z } from "zod";
 
-export const sqlGenerationSchema = {
-  type: "object",
-  properties: {
-    sqlQuery: {
-      type: ["string", "null"],
-      description: "The generated SQL query (null if error occurred)",
-    },
-    isPartial: {
-      type: ["boolean", "null"],
-      description:
-        "Whether the SQL query is incomplete or partial (null if error occurred)",
-    },
-    partialReason: {
-      type: ["string", "null"],
-      description:
-        "Reason why the query is partial, if applicable (null if not partial or error occurred)",
-    },
-    error: {
-      type: ["string", "null"],
-      description:
-        "Error message when query cannot be generated due to schema mismatch or incompatible request",
-    },
-    suggestions: {
-      type: "array",
-      description:
-        "A list of 3–4 natural language follow-up questions that could be asked next, based on the current question and response — e.g., filtering further, comparing results, or digging deeper into related metrics.",
-      items: {
-        type: "string",
-      },
-    },
-  },
-  required: ["sqlQuery", "isPartial", "partialReason", "error", "suggestions"],
-  additionalProperties: false,
-};
+export const VisualConfigSchema = z.object({
+  xAxis: z
+    .object({
+      dimension: z.string().describe("Column/field for x-axis"),
+      type: z
+        .enum(["categorical", "temporal", "numeric"])
+        .describe("Data type of x-axis"),
+      label: z.string().describe("Human-readable label for x-axis"),
+    })
+    .describe("X-axis configuration"),
 
-// Chart Configuration Schema - Supporting 6 chart types with shadcn/recharts integration
-const dataSeries = {
-  type: "object",
-  description:
-    "Configuration for each data series from the SQL query, mapping to shadcn ChartConfig structure. Each property key corresponds to a data column from the SQL query result. This object contains multiple data series configurations, with one object per output column that represents chart data.",
-  additionalProperties: {
-    type: "object",
-    description:
-      "Configuration for a single data series, defining its label and color. The property key should match the corresponding column name from the SQL query output.",
-    properties: {
-      label: {
-        type: "string",
-        description:
-          "The display label for the data series, derived from the SQL query column name or a user-friendly version (e.g., 'Desktop' for column 'desktop').",
-      },
-      color: {
-        type: "string",
-        description:
-          "The color for the data series, specified as CSS variable should be one of: var(--chart-1), var(--chart-2), var(--chart-3), var(--chart-4), or var(--chart-5), used to generate 'var(--color-<key>)' for the component's fill.",
-        enum: [
-          "var(--chart-1)",
-          "var(--chart-2)",
-          "var(--chart-3)",
-          "var(--chart-4)",
-          "var(--chart-5)",
-        ],
-      },
-    },
-    required: ["label", "color"],
-    additionalProperties: false,
-  },
-  minProperties: 1,
-};
+  yAxis: z
+    .object({
+      dimension: z
+        .string()
+        .describe("Column/field for y-axis (usually numeric)"),
+      type: z.enum(["numeric"]).describe("Data type of y-axis"),
+      label: z.string().describe("Human-readable label for y-axis"),
+    })
+    .describe("Y-axis configuration"),
 
-const xAxis = {
-  type: "object",
-  description:
-    "Configuration for the <XAxis> component, specifying the data key for x-axis values.",
-  properties: {
-    dataKey: {
-      type: "string",
-      description:
-        "The key in chartData objects used for x-axis values (e.g., 'month'), derived from the SQL query output. Must correspond to a column in the query results.",
-    },
-  },
-  required: ["dataKey"],
-  additionalProperties: false,
-};
+  categoricalDimensions: z
+    .array(
+      z.object({
+        dimension: z.string().describe("Column/field for categorical grouping"),
+        visualElement: z
+          .enum(["color", "size", "shape", "pattern"])
+          .describe("How to represent this dimension visually"),
+        label: z.string().describe("Human-readable label for this dimension"),
+      }),
+    )
+    .max(2)
+    .describe("Additional categorical dimensions (max 2)"),
 
-const yAxis = {
-  type: "object",
-  description:
-    "Configuration for the <YAxis> component, specifying the data key for y-axis values.",
-  properties: {
-    dataKey: {
-      type: "string",
-      description:
-        "The key in chartData objects used for y-axis values (e.g., 'cost or count'), derived from the SQL query output. Must correspond to a column in the query results.",
-    },
-  },
-  required: ["dataKey"],
-  additionalProperties: false,
-};
+  filters: z
+    .array(
+      z.object({
+        dimension: z.string().describe("Column/field to filter"),
+        condition: z
+          .string()
+          .describe("Filter condition (e.g., 'top 5', 'Q4 2024', '> 1000')"),
+      }),
+    )
+    .describe("Applied filters for this visualization"),
 
-const chartComponent = {
-  type: "object",
-  description:
-    "Configuration for a single chart component (Bar, Line, Area), tied to a data series key from chartData.",
-  properties: {
-    dataKey: {
-      type: "string",
-      description:
-        "The key in chartData objects used for the component's data values (e.g., 'desktop', 'mobile'), matching a key in dataSeries. Must correspond to a column in the SQL query output.",
-    },
-    fill: {
-      type: "string",
-      description:
-        "The fill color for the component, derived from the dataSeries' color, formatted as a CSS variable (e.g., 'var(--color-desktop)') to reference the corresponding dataSeries key's color.",
-      enum: [
-        "var(--chart-1)",
-        "var(--chart-2)",
-        "var(--chart-3)",
-        "var(--chart-4)",
-        "var(--chart-5)",
-      ],
-    },
-  },
-  required: ["dataKey", "fill"],
-  additionalProperties: false,
-};
+  title: z.string().describe("Suggested title for this visualization"),
+  description: z
+    .string()
+    .describe("Brief description of what this visual shows"),
+});
 
-const graphComponent = {
-  type: "object",
-  description:
-    "Configuration for graph components (Pie, Radar, Radial) with specialized properties.",
-  properties: {
-    dataKey: {
-      type: "string",
-      description:
-        "The key in chartData objects used for the component's data values, matching a key in dataSeries. Must correspond to a column in the SQL query output.",
-    },
-    categoryKey: {
-      type: ["string", "null"],
-      description:
-        "The key for category/label data (used in pie charts for slice labels), derived from SQL query output.",
-    },
-    fill: {
-      type: "string",
-      description:
-        "The fill color for the component, using shadcn CSS variables.",
-      enum: [
-        "var(--chart-1)",
-        "var(--chart-2)",
-        "var(--chart-3)",
-        "var(--chart-4)",
-        "var(--chart-5)",
-      ],
-    },
-  },
-  required: ["dataKey", "fill"],
-  additionalProperties: false,
-};
+export const KeySubjectSchema = z.object({
+  subject: z.string().describe("Important subject/entity from the query"),
+  weight: z
+    .number()
+    .min(0)
+    .max(10)
+    .describe("Importance weight (0-10, 10 being most important)"),
+  context: z.string().describe("Why this subject is important in the query"),
+});
 
-// Chart configuration using oneOf for conditional logic
-const singleChartConfig = {
-  type: "object",
-  description:
-    "Configuration for a single chart visualization, mapping SQL query result columns to chart series with labels, colors, and component data keys.",
-  oneOf: [
-    {
-      type: "object",
-      description:
-        "Bar chart configuration - suitable for categorical data comparisons, discrete values, or when showing data distribution across categories.",
-      properties: {
-        type: {
-          type: "string",
-          const: "chart",
-          description: "Chart category identifier",
-        },
-        dataSeries: dataSeries,
-        components: {
-          type: "array",
-          description:
-            "Configuration for chart components, dynamically generated based on the data series in chartData.",
-          items: chartComponent,
-        },
-        xAxis: xAxis,
-        yAxis: yAxis,
-      },
-      required: [
-        "type",
-        "dataSeries",
-        "components",
-        "xAxis",
-        "yAxis",
-      ],
-      additionalProperties: false,
-    },
-    // TODO adding the graph type over here
-  ],
-};
+export const QueryParsingSchema = z.object({
+  userQuery: z.string().describe("The original user query"),
+  queryIntent: z
+    .string()
+    .describe("What the user is trying to accomplish in simple terms"),
+  keySubjects: z
+    .array(KeySubjectSchema)
+    .describe("Key subjects identified in the query with importance weights"),
+  primaryFocus: z.string().describe("The main thing the user cares about most"),
+  contextInfluence: z
+    .string()
+    .nullable()
+    .describe(
+      "How previous conversation context affects understanding of this query",
+    ),
+  summary: z.string().describe("Brief summary of what the user is asking for"),
+  // visualConfigs: z
+  //   .array(VisualConfigSchema)
+  //   .min(1)
+  //   .describe(
+  //     "Array of visualization configurations. Single item if ≤4 dimensions, multiple items if complex query requires splitting"
+  //   ),
+  reasoning: z
+    .string()
+    .describe(
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)",
+    ),
+});
 
-export const chartConfigSchema = {
-  type: "object",
-  properties: {
-    visuals: {
-      type: "array",
-      description:
-        "An array of one or more chart configurations, each defining a specific visualization to represent the SQL query results. Multiple configurations are used when data contains unrelated groups that require separate visualizations. Each configuration maps SQL query result columns to chart series with labels, colors, and component data keys.",
-      items: singleChartConfig,
-      minItems: 1,
-    },
-  },
-  required: ["visuals"],
-  additionalProperties: false,
-};
+export const SqlGenerationSchema = z.object({
+  sqlQuery: z
+    .string()
+    .nullable()
+    .describe("The generated SQL query (null if error occurred)"),
+  isPartial: z
+    .boolean()
+    .nullable()
+    .describe(
+      "Whether the SQL query is incomplete or partial (null if error occurred)",
+    ),
+  partialReason: z
+    .string()
+    .nullable()
+    .describe(
+      "Reason why the query is partial, if applicable (null if not partial or error occurred)",
+    ),
+  error: z
+    .string()
+    .nullable()
+    .describe(
+      "Error message when query cannot be generated due to schema mismatch or incompatible request",
+    ),
+  suggestions: z
+    .array(z.string())
+    .describe(
+      "A list of 3–4 natural language follow-up questions that could be asked next, based on the current question and response — e.g., filtering further, comparing results, or digging deeper into related metrics.",
+    ),
+  reasoning: z
+    .string()
+    .describe(
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)",
+    ),
+});
+
+export const ErrorReasonSchema = z.object({
+  errorReason: z
+    .string()
+    .describe(
+      "brief explanation of why the request failed or could not be processed (40-50 words) in Markdown format",
+    ),
+});
+
+export const SummarySchema = z.object({
+  summary: z
+    .string()
+    .describe(
+      "A Markdown format Summary for the conversion of the user query to SQL (150-200 words)",
+    ),
+});
+
+export const InsightsSchema = z.object({
+  insights: z
+    .string()
+    .describe("A Markdown format Insights for the data provided by user"),
+  suggestions: z
+    .array(z.string())
+    .describe(
+      "A list of 2-3 natural language follow-up questions that could be asked next, based on the insights provided — e.g., filtering further, comparing results, or digging deeper into related metrics.",
+    ),
+});
+
+//#region Chart Config Schema
+
+export const SortingSchema = z
+  .object({
+    sortKey: z
+      .string()
+      .describe(
+        "The key from the data objects representing the column to use for sort order of the data series. Must match exact SQL SELECT column name.",
+      ),
+    sortOrder: z
+      .enum(["asc", "desc"])
+      .describe("The sort order for the data series"),
+  })
+  .describe("Configuration for sort and order when data needs to be sorted");
+
+// Level 2: Axis Configuration
+export const AxisSchema = z.object({
+  key: z
+    .string()
+    .describe("Must match exact SQL SELECT column name used for axis values"),
+  label: z.string().describe("Human-readable label for the axis"),
+});
+
+export const ChartVisualSchema = z.object({
+  type: z.enum(["bar", "line", "area"]).describe("Chart category identifier"),
+  title: z.string().describe("Chart title"),
+  description: z
+    .string()
+    .describe("Chart description explaining what it shows"),
+  filterKey: z
+    .string()
+    .nullable()
+    .describe(
+      "Optional key to filter the data by. If provided, a dropdown will appear to allow users to select a specific category to display. Must match exact SQL SELECT column name.",
+    ),
+  seriesKey: z
+    .string()
+    .nullable()
+    .describe(
+      "Optional key whose unique values will form different series (e.g., for stacked bars). If provided, the chart will pivot the data to create separate bars/segments for each unique value of this key. Must match exact SQL SELECT column name.",
+    ),
+  xAxis: AxisSchema.describe("Configuration for the X-axis"),
+  yAxis: AxisSchema.describe("Configuration for the Y-axis"),
+  valueKey: z
+    .array(z.string())
+    .describe(
+      "The key from the data objects representing the numerical value to be plotted (e.g., the height of the bars). Must match exact SQL SELECT column name.",
+    ),
+  isPivoted: z.boolean().describe("Whether the data is pivoted or not"),
+  sort: SortingSchema.nullable().describe(
+    "Configuration for sort and order when data needs to be sorted",
+  ),
+});
+
+// Level 1: Main Chart Config Schema
+export const ChartConfigSchema = z.object({
+  visuals: z
+    .array(ChartVisualSchema)
+    .min(1)
+    .describe(
+      "An array of one or more chart configurations, each defining a specific visualization to represent the SQL query results.",
+    ),
+  reasoning: z
+    .string()
+    .describe(
+      "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)",
+    ),
+});

@@ -1,99 +1,100 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ChatCompletionMessageParam } from "openai/resources/index";
+
 import { AIClient } from "@/lib/api/aiClient";
 import { getInsightsPrompt } from "@/lib/api/systemPrompts";
 import { userSchemas } from "@/lib/api/schema";
-import { ChatCompletionMessageParam } from "openai/resources/index";
-
-type StreamMarkdown = (
-  text: string,
-  type: "status" | "content" | "partialResult" | "error"
-) => void;
+import { InsightsResult, StreamCallback } from "@/lib/api/types";
+import { InsightsSchema } from "@/lib/api/outputSchema";
 
 async function generateDataInsights(
   aiClient: AIClient,
   schema: string,
   messages: ChatCompletionMessageParam[],
-  streamMarkdown: StreamMarkdown
-) {
-  streamMarkdown("Generating summary...", "status");
+  streamCallback: StreamCallback,
+): Promise<InsightsResult> {
+  streamCallback("Generating summary...", "status");
 
   const systemPrompt = getInsightsPrompt(schema);
-  const summaryStream = await aiClient.streamGenerate([
-    {
-      role: "system",
-      content: systemPrompt,
-    },
-    ...messages
-  ]);
 
-  let summaryData = "";
-  for await (const chunk of summaryStream) {
-    const content = chunk.choices[0]?.delta?.content || "";
-    summaryData += content;
-    streamMarkdown(content, "content");
-  }
+  const insights = await aiClient.streamGenerate(
+    [
+      {
+        role: "system",
+        content: systemPrompt,
+      },
+      ...messages,
+    ],
+    streamCallback,
+    InsightsSchema,
+    "insights",
+  );
 
-  streamMarkdown("Summary generated", "status");
-  streamMarkdown(JSON.stringify({ summary: summaryData }), "partialResult");
-  return summaryData;
+  streamCallback("Summary generated", "status");
+
+  return insights;
 }
 
 export async function POST(req: NextRequest) {
   const { userId, messages } = await req.json();
+  const AI_API_KEY = process.env.AI_API_KEY;
+  const AI_BASE_URL = process.env.AI_BASE_URL;
+  const AI_MODEL_NAME = process.env.AI_MODEL_NAME;
 
+  if (!AI_API_KEY || !AI_BASE_URL || !AI_MODEL_NAME) {
+    return new NextResponse("missing env key", {
+      status: 400,
+    });
+  }
   if (!userId || !messages) {
     return new NextResponse("Input data is required", {
       status: 400,
     });
   }
 
-  const aiClient = new AIClient();
+  const aiClient = new AIClient(AI_API_KEY, AI_BASE_URL, AI_MODEL_NAME);
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const encoder = new TextEncoder();
-      const streamMarkdown: StreamMarkdown = (
+      const streamCallback: StreamCallback = (
         text: string,
-        type: "status" | "content" | "partialResult" | "error"
-      ) =>
+        type: "status" | "content" | "error" | "usage",
+      ) => {
         controller.enqueue(
-          encoder.encode(JSON.stringify({ type, text }) + "\n")
+          encoder.encode(JSON.stringify({ type, text }) + "\n"),
         );
+      };
 
       try {
         const userSchema = JSON.stringify(userSchemas[userId]?.schema);
-        const summary = await generateDataInsights(
+        const insights = await generateDataInsights(
           aiClient,
           userSchema,
           messages,
-          streamMarkdown
+          streamCallback,
         );
 
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
               type: "result",
-              text: JSON.stringify({
-                summary,
-                error: null,
-              }),
-            })
-          )
+              text: JSON.stringify(insights),
+            }),
+          ),
         );
         controller.close();
       } catch (error: any) {
         const errorMessage = error.message || "Unknown error";
-        streamMarkdown(`Error: ${errorMessage}\n`, "status");
+
+        streamCallback(`Error: ${errorMessage}\n`, "error");
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
               type: "error",
-              text: JSON.stringify({
-                summary: null,
-                error: errorMessage,
-              }),
-            })
-          )
+              text: errorMessage,
+            }),
+          ),
         );
         controller.close();
       }

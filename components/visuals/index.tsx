@@ -1,41 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  LineChart,
+  BarChart,
+  AreaChart,
+  Table,
+  Database,
+  RadarIcon,
+} from "lucide-react";
+
+import { BarChartComponent } from "./barCharts";
+import { LineChartComponent } from "./lineChart";
+import DataTableComponent from "./dataTableComponent";
+import { AreaChartComponent } from "./areaChart";
+
+import { ChartVisual } from "@/lib/api/types";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import {
-  LineChart,
-  BarChart,
-  AreaChart,
-  Table,
-  MoreVertical,
-  Database,
-} from "lucide-react";
-import type { ChartConfig } from "@/types/visuals";
-import { BarChartComponent } from "./barCharts";
-import { LineChartComponent } from "./lineChart";
-import DataTableComponent from "./dataTableComponent";
-import { AreaChartComponent } from "./areaChart";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+
+const chartOptions = [
+  { type: "bar", label: "Bar Chart", icon: BarChart },
+  { type: "line", label: "Line Chart", icon: LineChart },
+  { type: "area", label: "Area Chart", icon: AreaChart },
+  // { type: "radar", label: "Radar Chart", icon: RadarIcon },
+  { type: "table", label: "Data Table", icon: Table },
+];
 
 interface ChartsComponentProps {
   chartData: any[] | null;
-  config: ChartConfig;
+  config: ChartVisual;
 }
 
 export default function ChartsComponent({
   chartData,
   config,
 }: ChartsComponentProps) {
-  const chartTypes = ["bar", "line", "area", "table"];
-  const [activeChartType, setActiveChartType] = useState<string>(
-    chartTypes[Math.floor(Math.random() * chartTypes.length)]
-  );
+  const [activeChartType, setActiveChartType] = useState<string>(config.type);
 
   if (!chartData) return null;
 
@@ -53,9 +60,9 @@ export default function ChartsComponent({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="outline"
-                size="icon"
                 aria-label="Select chart type"
+                size="icon"
+                variant="outline"
               >
                 {activeChartType === "bar" && <BarChart className="h-4 w-4" />}
                 {activeChartType === "line" && (
@@ -64,46 +71,36 @@ export default function ChartsComponent({
                 {activeChartType === "area" && (
                   <AreaChart className="h-4 w-4" />
                 )}
+                {activeChartType === "radar" && (
+                  <RadarIcon className="h-4 w-4" />
+                )}
                 {activeChartType === "table" && <Table className="h-4 w-4" />}
-                {/* <MoreVertical className="h-4 w-4" /> */}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setActiveChartType("bar")}>
-                <BarChart className="mr-2 h-4 w-4" /> Bar Chart
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveChartType("line")}>
-                <LineChart className="mr-2 h-4 w-4" /> Line Chart
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveChartType("area")}>
-                <AreaChart className="mr-2 h-4 w-4" /> Area Chart
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveChartType("table")}>
-                <Table className="mr-2 h-4 w-4" /> Data Table
-              </DropdownMenuItem>
+              {chartOptions.map(({ type, label, icon: Icon }) => (
+                <DropdownMenuItem
+                  key={type}
+                  onClick={() => setActiveChartType(type)}
+                >
+                  <Icon className="mr-2 h-4 w-4" /> {label}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        <TabsContent value="bar" className="mt-0">
-          {activeChartType === "bar" && (
-            <BarChartComponent config={config} chartData={chartData} />
-          )}
+        <TabsContent className="mt-0" value="bar">
+          <BarChartComponent config={config} data={chartData} />
         </TabsContent>
-        <TabsContent value="line" className="mt-0">
-          {activeChartType === "line" && (
-            <LineChartComponent config={config} chartData={chartData} />
-          )}
+        <TabsContent className="mt-0" value="line">
+          <LineChartComponent config={config} data={chartData} />
         </TabsContent>
-        <TabsContent value="area" className="mt-0">
-          {activeChartType === "area" && (
-            <AreaChartComponent config={config} chartData={chartData} />
-          )}
+        <TabsContent className="mt-0" value="area">
+          <AreaChartComponent config={config} data={chartData} />
         </TabsContent>
-        <TabsContent value="table" className="mt-0">
-          {activeChartType === "table" && (
-            <DataTableComponent data={chartData} />
-          )}
+        <TabsContent className="mt-0" value="table">
+          <DataTableComponent data={chartData} />
         </TabsContent>
       </Tabs>
     </div>

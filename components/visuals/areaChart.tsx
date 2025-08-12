@@ -1,79 +1,92 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
+import { FilterSelect } from "./filterSelect";
+
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartConfig as AreaChartConfig } from "@/types/visuals";
-import { formatCellValue } from "@/lib/utils";
+import { ChartVisual as AreaChartConfig } from "@/lib/api/types";
+import { useChartLogic } from "@/hooks/useChartLogic";
 
 interface AreaChartProps {
-  chartData: any[];
+  data: any[];
   config: AreaChartConfig;
 }
-export function AreaChartComponent({ config, chartData }: AreaChartProps) {
-  const chartConfig = config.dataSeries satisfies ChartConfig;
-  const formattedChartData = chartData.map((item) => {
-    const formattedItem = { ...item };
-    config.components.forEach((line) => {
-      formattedItem[line.dataKey] = formatCellValue(item[line.dataKey]);
-    });
-    return formattedItem;
-  });
 
-  const upperDomain = Math.max(
-    ...chartData.map((d) => Number(d[config.yAxis.dataKey]) || 0)
-  );
+export function AreaChartComponent({ config, data }: AreaChartProps) {
+  const {
+    selectedFilterValue,
+    setSelectedFilterValue,
+    uniqueFilterValues,
+    chartConfig,
+    formattedChartData,
+    dataKeysToRender,
+    upperDomain,
+  } = useChartLogic(data, config);
+
   return (
-    <ChartContainer config={chartConfig}>
-      <AreaChart accessibilityLayer data={formattedChartData}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey={config.xAxis.dataKey}
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-        />
-        <YAxis
-          dataKey={config.yAxis.dataKey}
-          tickLine={false}
-          axisLine={false}
-          tickMargin={10}
-          domain={[0, upperDomain+ upperDomain * 0.1]}
-        />
-        <ChartTooltip
-          cursor={false}
-          content={<ChartTooltipContent indicator="line" />}
-        />
-        {config.components.map((area, index) => (
-          <Area
-            key={index}
-            dataKey={area.dataKey}
-            type="natural"
-            fill={area.fill}
-            fillOpacity={0.4}
-            stroke={area.fill}
-            stackId={index}
-            dot={{ fill: area.fill }}
+    <div className="w-full space-y-4">
+      <FilterSelect
+        config={config}
+        filterOptions={uniqueFilterValues}
+        selectedFilter={selectedFilterValue}
+        onFilterChange={setSelectedFilterValue}
+      />
+
+      <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
+        <AreaChart accessibilityLayer data={formattedChartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            axisLine={false}
+            dataKey={config.xAxis.key as string}
+            label={{
+              value: config.xAxis.label ?? "",
+              angle: 0,
+              position: "bottom",
+            }}
+            tickLine={false}
+            tickMargin={10}
           />
-        ))}
-        <ChartLegend content={<ChartLegendContent />} />
-      </AreaChart>
-    </ChartContainer>
+          <YAxis
+            axisLine={false}
+            dataKey={config.yAxis.key}
+            domain={[0, upperDomain]}
+            label={{
+              value: config.yAxis.label ?? "",
+              angle: -90,
+              position: "left",
+              offset: 0,
+            }}
+            tickLine={false}
+            tickMargin={10}
+          />
+          <ChartTooltip
+            content={<ChartTooltipContent indicator="line" />}
+            cursor={false}
+          />
+          {dataKeysToRender.map((key, index) => {
+            return (
+              <Area
+                key={index}
+                dataKey={key}
+                dot={{ fill: `var(--color-${key as string})` }}
+                fill={`var(--color-${key as string})`}
+                fillOpacity={0.1}
+                stackId={index}
+                stroke={`var(--color-${key as string})`}
+                type="natural"
+              />
+            );
+          })}
+          <ChartLegend content={<ChartLegendContent className="mt-2" />} />
+        </AreaChart>
+      </ChartContainer>
+    </div>
   );
 }

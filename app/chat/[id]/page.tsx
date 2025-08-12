@@ -1,205 +1,259 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState, useCallback } from "react"
-import { useParams } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { ChatHeader } from "@/components/chatHeader"
-import { MessageBubble } from "@/components/messageBubble"
-import { MessageInput } from "@/components/messageInput"
-import { InsightsSidebar } from "@/components/insightsSidebar"
-import type { AssistantMessage, ChatMessage } from "@/types/chat"
-import { ChatStorage } from "@/hooks/chatStorage"
-import { useChat } from "@/hooks/useChat"
+import type { AssistantMessage, ChatMessage } from "@/types/chat";
+
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
+
+import { ChatHeader } from "@/components/chatHeader";
+import { MessageBubble } from "@/components/messageBubble";
+import { MessageInput } from "@/components/messageInput";
+import { InsightsSidebar } from "@/components/insightsSidebar";
+import { ChatStorage } from "@/hooks/chatStorage";
+import { useChat } from "@/hooks/useChat";
 
 export default function ChatPage() {
-  const params = useParams()
-  const chatId = params.id as string
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [user, setUser] = useState("")
-  const [chatTitle, setChatTitle] = useState("")
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeAssistantMessage, setActiveAssistantMessage] = useState<ChatMessage | null>(null)
-  const [activeMessageIndex, setActiveMessageIndex] = useState<number>(-1)
+  const params = useParams();
+  const chatId = params.id as string;
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [user, setUser] = useState("");
+  const [chatTitle, setChatTitle] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeMessage, setActiveMessage] = useState<AssistantMessage | null>(
+    null,
+  );
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const { sendQuery, isStreaming, streamedContent, streamingStatus } = useChat(chatId, messages, setMessages)
+  const {
+    sendQuery,
+    isStreaming,
+    streamedContent,
+    streamingStatus,
+    insightContent,
+    isInsightStreaming,
+    generateInsights,
+    usageMetrics,
+  } = useChat(chatId, messages, setMessages);
 
-  // Load chat messages on mount
-  useEffect(() => {
-    if (chatId) {
-      const chat = ChatStorage.getChat(chatId)
-      if (chat) {
-        console.log(chat, "chat")
-        setMessages(chat.messages)
-        setChatTitle(chat.title)
-        setUser(chat.user)
+  // Function to set message ref
+  const setMessageRef = useCallback(
+    (messageId: string, element: HTMLDivElement | null) => {
+      if (element) {
+        messageRefs.current.set(messageId, element);
+      } else {
+        messageRefs.current.delete(messageId);
       }
+    },
+    [],
+  );
+
+  // Set up intersection observer for assistant messages
+  useEffect(() => {
+    const assistantMessages = messages.filter(
+      (msg) => msg.role === "assistant",
+    ) as AssistantMessage[];
+
+    if (assistantMessages.length === 0) {
+      setActiveMessage(null);
+
+      return;
     }
-  }, [chatId])
 
-  // Auto-start processing for new chats
-  const hasStartedProcessing = useRef(false)
-  useEffect(() => {
-    if (chatId && messages.length === 1 && messages[0].role === "user" && !hasStartedProcessing.current) {
-      hasStartedProcessing.current = true
-      const userQuestion = messages[0].question
-      if (userQuestion && user) {
-        sendQuery(userQuestion, user)
-      }
+    // Clean up existing observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
     }
-  }, [chatId, messages, sendQuery, user])
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
-
-  // Improved scroll-based message detection
-  useEffect(() => {
-    if (!messagesContainerRef.current) return
-
-    const observer = new IntersectionObserver(
+    // Create new observer
+    observerRef.current = new IntersectionObserver(
       (entries) => {
-        // Find assistant messages that are more than 50% visible
-        let bestCandidate: {
-          message: ChatMessage
-          index: number
-          ratio: number
-        } | null = null
+        // Find the entry with the highest intersection ratio
+        const mostVisibleEntry = entries.reduce((prev, current) => {
+          return current.intersectionRatio > prev.intersectionRatio
+            ? current
+            : prev;
+        });
 
-        entries.forEach((entry) => {
-          // Only consider entries that are more than 50% visible
-          if (entry.intersectionRatio > 0.5) {
-            const messageIndex = Number.parseInt(entry.target.getAttribute("data-message-index") || "-1")
-            const message = messages[messageIndex]
+        // Only update if the intersection ratio is above threshold
+        if (mostVisibleEntry.intersectionRatio > 0.3) {
+          const messageId =
+            mostVisibleEntry.target.getAttribute("data-message-id");
 
-            if (message && message.role === "assistant") {
-              // If this is the first candidate or has a higher intersection ratio
-              if (!bestCandidate || entry.intersectionRatio > bestCandidate.ratio) {
-                bestCandidate = {
-                  message,
-                  index: messageIndex,
-                  ratio: entry.intersectionRatio,
-                }
-              }
+          if (messageId) {
+            const message = assistantMessages.find(
+              (msg) => msg.id === messageId,
+            );
+
+            if (message) {
+              setActiveMessage(message);
             }
-          }
-        })
-
-        // Update active message if we found a suitable candidate
-        if (bestCandidate && bestCandidate.index !== activeMessageIndex) {
-          setActiveAssistantMessage(bestCandidate.message)
-          setActiveMessageIndex(bestCandidate.index)
-
-          // Auto-open sidebar when there's an assistant message visible
-          if (!isSidebarOpen) {
-            setIsSidebarOpen(true)
           }
         }
       },
       {
         root: messagesContainerRef.current,
-        // Use 0px margins to get accurate intersection ratios
-        rootMargin: "0px",
-        // Use more granular thresholds including 0.5 (50%)
-        threshold: [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0],
+        rootMargin: "-20% 0px -20% 0px",
+        threshold: [0, 0.1, 0.3, 0.5, 0.7, 1.0],
       },
-    )
+    );
 
-    // Observe all message elements
-    messageRefs.current.forEach((element) => {
-      if (element) {
-        observer.observe(element)
+    // Observe all assistant message elements
+    // let observedCount = 0;
+
+    assistantMessages.forEach((message) => {
+      const element = messageRefs.current.get(message.id);
+
+      if (element && observerRef.current) {
+        observerRef.current.observe(element);
+        // observedCount++;
       }
-    })
+    });
 
+    // Set initial active message if none is set
+    if (!activeMessage && assistantMessages.length > 0) {
+      setActiveMessage(assistantMessages[assistantMessages.length - 1]);
+    }
+
+    // Cleanup function
     return () => {
-      observer.disconnect()
-    }
-  }, [messages, activeMessageIndex, isSidebarOpen])
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [messages]);
 
-  // Update active message when streaming content changes (for the last message)
+  // Load chat messages on mount
   useEffect(() => {
-    if (isStreaming && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1]
-      if (lastMessage.role === "assistant") {
-        setActiveAssistantMessage(lastMessage)
-        setActiveMessageIndex(messages.length - 1)
+    if (chatId) {
+      const chat = ChatStorage.getChat(chatId);
+
+      if (chat) {
+        setMessages(chat.messages);
+        setChatTitle(chat.title);
+        setUser(chat.user);
       }
     }
-  }, [messages, streamedContent, isStreaming])
+  }, [chatId]);
+
+  // Auto-start processing for new chats
+  const hasStartedProcessing = useRef(false);
+
+  useEffect(() => {
+    if (
+      chatId &&
+      messages.length === 1 &&
+      messages[0].role === "user" &&
+      !hasStartedProcessing.current
+    ) {
+      hasStartedProcessing.current = true;
+      const userQuestion = messages[0].question;
+
+      if (userQuestion && user) {
+        sendQuery(userQuestion, user);
+      }
+    }
+  }, [chatId, messages, sendQuery, user]);
+
+  // Auto-scroll to bottom when messages change
+  const scrolledToBottom = useRef(false);
+
+  useEffect(() => {
+    if (!scrolledToBottom.current && messages.length > 0) {
+      scrolledToBottom.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const handleSubmit = (message: string) => {
-    sendQuery(message, user)
-  }
-
-  const setMessageRef = useCallback((index: number, element: HTMLDivElement | null) => {
-    if (element) {
-      messageRefs.current.set(index, element)
-    } else {
-      messageRefs.current.delete(index)
-    }
-  }, [])
+    sendQuery(message, user);
+  };
 
   if (!messages.length) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
-    )
+    );
   }
 
   const isLastMessage = (index: number) => {
-    return index === messages.length - 1
-  }
+    return index === messages.length - 1;
+  };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 w-full">
+    <div className="flex flex-col h-screen w-full">
       <ChatHeader title={chatTitle} />
+
       <div className="flex flex-1 min-h-0">
         {/* Main Content Area */}
-        <div className={`flex flex-col flex-1 min-h-0 transition-all duration-300 ${isSidebarOpen ? "mr-80" : "mr-0"}`}>
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
+        <div
+          className={`flex flex-col min-h-0 transition-all duration-300 w-4/5`}
+        >
+          {/* Messages Container - FIXED HEIGHT */}
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto overflow-x-hidden"
+            style={
+              {
+                // height: "calc(100vh - 120px)",
+                // maxHeight: "calc(100vh - 120px)",
+              }
+            }
+          >
             <div className="p-4 space-y-6 pb-6">
               {messages.map((message, index) => (
-                <div
-                  key={index}
-                  ref={(el) => setMessageRef(index, el)}
-                  data-message-index={index}
-                  // Add some padding to ensure proper intersection detection
-                  className="py-2"
-                >
-                  <MessageBubble
-                    message={message}
-                    userId={user}
-                    showSuggestions={isLastMessage(index) && message.role === "assistant" && !isStreaming}
-                    onSuggestionClick={handleSubmit}
-                    isStreaming={isLastMessage(index) ? isStreaming : false}
-                    streamedContent={isLastMessage(index) ? streamedContent : ""}
-                    streamingStatus={isLastMessage(index) ? streamingStatus : ""}
-                    isActive={index === activeMessageIndex}
-                  />
-                </div>
+                <MessageBubble
+                  key={message.id + index}
+                  ref={
+                    message.role === "assistant"
+                      ? (el: HTMLDivElement | null) =>
+                          setMessageRef(message.id, el)
+                      : undefined
+                  }
+                  isStreaming={isLastMessage(index) ? isStreaming : false}
+                  message={message}
+                  showSuggestions={
+                    isLastMessage(index) &&
+                    message.role === "assistant" &&
+                    !isStreaming
+                  }
+                  streamedContent={isLastMessage(index) ? streamedContent : ""}
+                  streamingStatus={isLastMessage(index) ? streamingStatus : ""}
+                  onSuggestionClick={handleSubmit}
+                />
               ))}
               <div ref={messagesEndRef} />
             </div>
           </div>
-          <MessageInput onSubmit={handleSubmit} disabled={isStreaming} placeholder="Ask a follow-up question..." />
+
+          {/* Message Input - Fixed at bottom */}
+          <div className="flex-shrink-0 border-t bg-background">
+            <MessageInput
+              disabled={isStreaming}
+              placeholder="Ask a follow-up question..."
+              onSubmit={handleSubmit}
+            />
+          </div>
         </div>
 
         {/* Insights Sidebar */}
         <InsightsSidebar
+          generateInsights={generateInsights}
+          insightContent={insightContent}
+          isInsightStreaming={isInsightStreaming}
           isOpen={isSidebarOpen}
+          isStreaming={isStreaming}
+          message={activeMessage}
+          usageMetrics={usageMetrics}
+          userId={user}
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          message={activeAssistantMessage as AssistantMessage}
-          messageIndex={activeMessageIndex}
-          isStreaming={isStreaming && activeMessageIndex === messages.length - 1}
-          streamedContent={activeMessageIndex === messages.length - 1 ? streamedContent : ""}
         />
       </div>
     </div>
-  )
+  );
 }

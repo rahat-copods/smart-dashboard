@@ -2,8 +2,13 @@ import { ChartConfig as DataSeries } from "@/components/ui/chart";
 
 // Interface for a single <Bar> component configuration
 interface ChartComponents {
-  dataKey: string; 
-  fill: "var(--chart-1)"| "var(--chart-2)"| "var(--chart-3)"| "var(--chart-4)"| "var(--chart-5)";
+  dataKey: string;
+  fill:
+    | "var(--chart-1)"
+    | "var(--chart-2)"
+    | "var(--chart-3)"
+    | "var(--chart-4)"
+    | "var(--chart-5)";
 }
 
 // Interface for x-axis configuration

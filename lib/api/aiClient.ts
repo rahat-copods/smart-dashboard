@@ -1,37 +1,62 @@
-import { OpenAI } from 'openai';
-import { ChatCompletionMessageParam } from 'openai/resources/index';
+import { OpenAI } from "openai";
+import {
+  ChatCompletionMessageParam,
+  CompletionUsage,
+} from "openai/resources/index";
+import { zodResponseFormat } from "openai/helpers/zod";
+
+import { createStreamingParser } from "./streamingUtils";
+import { StreamCallback } from "./types";
 
 export class AIClient {
   private client: OpenAI;
-
-  constructor() {
+  private model: string;
+  constructor(apiKey: string, url: string, model: string) {
     this.client = new OpenAI({
-      apiKey: process.env.AI_API_KEY,
-      baseURL: process.env.AI_BASE_URL,
+      apiKey: apiKey,
+      baseURL: url,
     });
+    this.model = model;
   }
 
-  async streamGenerate(messages: ChatCompletionMessageParam[], outputSchema?: { [key: string]: unknown; }) {
-    const model = process.env.AI_MODEL || 'grok-3-mini';
+  async streamGenerate(
+    messages: ChatCompletionMessageParam[],
+    streamCallback: StreamCallback,
+    outputSchema?: any,
+    fieldToExtract: string = "reasoning",
+  ): Promise<any> {
+    console.log("starting AI Stream");
     const stream = await this.client.chat.completions.create({
-      model,
+      model: this.model,
       messages,
-      temperature: 0.2, 
-      top_p: 0.5,
+      temperature: 0.1,
+      top_p: 0.1,
       stream: true,
-      ...(outputSchema ? {
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "sql_query_response",
-            strict: true,
-            schema: outputSchema,
-          },
-        },
-      } : {}),
+      stream_options: { include_usage: true },
+      ...(outputSchema
+        ? {
+            response_format: zodResponseFormat(outputSchema, "query_parsing"),
+          }
+        : {}),
     });
 
-    // Return async iterator for streaming chunks
-    return stream;
+    let fullData = "";
+    let parser = createStreamingParser(fieldToExtract, streamCallback);
+
+    for await (const chunk of stream) {
+      if (chunk.choices.length > 0) {
+        const content = chunk.choices[0]?.delta?.content || "";
+
+        if (content) {
+          fullData += content;
+          parser.processChunk(content);
+        }
+      } else if ("usage" in chunk) {
+        streamCallback(JSON.stringify(chunk.usage as CompletionUsage), "usage");
+      }
+    }
+    console.log("Stream completed");
+
+    return JSON.parse(fullData);
   }
 }
