@@ -23,25 +23,25 @@ export async function GET() {
     headers: { "Content-Type": "application/json" },
   });
 }
+
 export async function POST() {
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
-    async start(controller) {
-      const chunks = [
-        "Streaming test started...\n",
-        "First chunk...\n",
-        "Second chunk...\n",
-        "Third chunk...\n",
-        "Streaming test complete.\n",
-      ];
+    start(controller) {
+      controller.enqueue(encoder.encode("Starting...\n"));
 
-      for (const chunk of chunks) {
-        controller.enqueue(encoder.encode(chunk));
-        await new Promise((res) => setTimeout(res, 500)); // Simulate delay
-      }
+      let i = 0;
+      const interval = setInterval(() => {
+        i++;
+        controller.enqueue(encoder.encode(`Chunk ${i}\n`));
 
-      controller.close();
+        if (i >= 10) {
+          clearInterval(interval);
+          controller.enqueue(encoder.encode("Done!\n"));
+          controller.close();
+        }
+      }, 1000);
     },
   });
 

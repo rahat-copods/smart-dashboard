@@ -1,37 +1,30 @@
-import { NextResponse } from "next/server";
-import { Client } from "pg";
-
 export const runtime = "nodejs";
 
-export async function GET() {
-  const dbUrl = process.env.POSTGRES_URL;
+export async function POST() {
+  const encoder = new TextEncoder();
 
-  if (!dbUrl) {
-    return NextResponse.json(
-      { error: "POSTGRES_URL is not set in environment" },
-      { status: 500 },
-    );
-  }
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode("Starting...\n"));
 
-  let result: any;
+      let i = 0;
+      const interval = setInterval(() => {
+        i++;
+        controller.enqueue(encoder.encode(`Chunk ${i}\n`));
 
-  try {
-    const client = new Client({ connectionString: `${dbUrl}/postgres` });
+        if (i >= 10) {
+          clearInterval(interval);
+          controller.enqueue(encoder.encode("Done!\n"));
+          controller.close();
+        }
+      }, 1000);
+    },
+  });
 
-    await client.connect();
-
-    // Minimal query to check connectivity
-    const res = await client.query("SELECT NOW() as current_time");
-
-    result = res.rows[0];
-
-    await client.end();
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: `DB connection failed: ${err.message}` },
-      { status: 500 },
-    );
-  }
-
-  return NextResponse.json({ success: true, result });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Transfer-Encoding": "chunked",
+    },
+  });
 }

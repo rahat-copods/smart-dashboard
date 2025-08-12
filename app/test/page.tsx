@@ -39,19 +39,31 @@ export default function TestEnvPage() {
 
   const testDb = async () => {
     setDbData(null);
-    const res = await fetch("/api/test-db");
-    const data = await res.json();
+    const res = await fetch("/api/test-db", { method: "POST" });
+      if (!res.body) {
+      setStreamOutput("No stream body received");
 
-    setDbData(data);
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) break;
+      setStreamOutput((prev) => prev + decoder.decode(value, { stream: true }));
+    }
   };
 
   return (
     <div style={{ padding: 20 }}>
       <h1>Env, Streaming & DB Test</h1>
       <div className="flex gap-2">
-        <Button onClick={testStream}>Test Streaming</Button>
+        <Button onClick={testStream}>Test Streaming non-node</Button>
         <Button onClick={checkEnv}>Check Env Vars</Button>
-        <Button onClick={testDb}>Test DB Connection</Button>
+        <Button onClick={testDb}>Test Streaming node runtime</Button>
       </div>
 
       {streamOutput && (
