@@ -19,6 +19,7 @@ export function middleware(request: NextRequest) {
     "/api/register",
     "/api/forgot-password",
     "/api/reset-password",
+    "/api/auth/check",
   ];
 
   // Check if the current path is a public route
