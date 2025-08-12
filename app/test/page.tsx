@@ -40,7 +40,8 @@ export default function TestEnvPage() {
   const testDb = async () => {
     setDbData(null);
     const res = await fetch("/api/test-db", { method: "POST" });
-      if (!res.body) {
+
+    if (!res.body) {
       setStreamOutput("No stream body received");
 
       return;
