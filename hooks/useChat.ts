@@ -70,12 +70,66 @@ export const useChat = (
       let accumulatedContent = "";
       let startTime: number | null = null;
       let timerId: NodeJS.Timeout | null = null;
-
+      let isAccumulatingResult = false;
+      let accumulatedResult = "";
       const formatExecutionTime = (ms: number): string => {
         const seconds = Math.floor(ms / 1000);
         const milliseconds = Math.floor((ms % 1000) / 10);
 
         return `${seconds}.${milliseconds.toString().padStart(2, "0")}`;
+      };
+
+      const processAccumulatedResult = () => {
+        if (!accumulatedResult) return;
+        try {
+          const parsed: StreamResponse = JSON.parse(accumulatedResult);
+          const result = JSON.parse(parsed.text);
+
+          setMessages((prev) => {
+            const updated = [...prev];
+            const lastIndex = updated.length - 1;
+
+            if (updated[lastIndex] && updated[lastIndex].role === "assistant") {
+              updated[lastIndex] = {
+                ...updated[lastIndex],
+                ...result,
+                streamedContent: accumulatedContent,
+              };
+            }
+
+            return updated;
+          });
+          ChatStorage.updateLastMessage(chatId, {
+            ...result,
+            streamedContent: accumulatedContent,
+          });
+        } catch (error) {
+          console.error("Error parsing accumulated result:", error);
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to parse accumulated result";
+
+          setMessages((prev) => {
+            const updated = [...prev];
+            const lastIndex = updated.length - 1;
+
+            if (updated[lastIndex] && updated[lastIndex].role === "assistant") {
+              updated[lastIndex] = {
+                ...updated[lastIndex],
+                error: errorMessage,
+                streamedContent: accumulatedContent,
+              };
+            }
+
+            return updated;
+          });
+
+          ChatStorage.updateLastMessage(chatId, {
+            error: errorMessage,
+            streamedContent: accumulatedContent,
+          });
+        }
       };
 
       try {
@@ -109,11 +163,26 @@ export const useChat = (
         while (true) {
           const { done, value } = await reader.read();
 
-          if (done) break;
+          if (done) {
+            // Process any accumulated result when stream is done
+            if (isAccumulatingResult) {
+              processAccumulatedResult();
+            }
+            break;
+          }
           const chunk = decoder.decode(value);
           const lines = chunk.split("\n").filter((line) => line.trim());
 
           for (const line of lines) {
+            if (isAccumulatingResult) {
+              accumulatedResult += line;
+              continue;
+            }
+            if (line.startsWith(`{"type":"result","text"`)) {
+              isAccumulatingResult = true;
+              accumulatedResult += line;
+              continue;
+            }
             try {
               const parsed: StreamResponse = JSON.parse(line);
 
