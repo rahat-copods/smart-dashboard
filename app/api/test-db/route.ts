@@ -16,7 +16,7 @@ export async function GET() {
   let result: any;
 
   try {
-    const client = new Client({ connectionString: dbUrl });
+    const client = new Client({ connectionString: `${dbUrl}/postgres` });
 
     await client.connect();
 

@@ -1,18 +1,21 @@
 export async function GET() {
-  const vars = [
-    "AI_MODEL_NAME",
-    "AI_BASE_URL",
-    "AI_API_KEY",
-    "ADMIN_USERNAME",
-    "ADMIN_PASSWORD",
-    "AUTH_TOKEN",
-    "POSTGRES_URL",
-  ];
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+  const authToken = process.env.AUTH_TOKEN;
+  const envVars = {
+    ADMIN_USERNAME: username,
+    ADMIN_PASSWORD: password,
+    AUTH_TOKEN: authToken,
+    AI_API_KEY: process.env.AI_API_KEY,
+    AI_BASE_URL: process.env.AI_BASE_URL,
+    AI_MODEL_NAME: process.env.AI_MODEL_NAME,
+    DATABASE_URL: process.env.DATABASE_URL,
+  };
 
-  const results = vars.map((key) => ({
-    key,
-    exists: process.env[key] !== undefined && process.env[key] !== "",
-    value: process.env[key] ? "[REDACTED]" : null, // Don't leak actual values
+  const results = Object.entries(envVars).map(([keyname, value]) => ({
+    keyname,
+    exists: value !== undefined && value !== "",
+    value: value ? "[REDACTED]" : null, // never leak actual value
   }));
 
   return new Response(JSON.stringify({ envCheck: results }, null, 2), {
@@ -20,7 +23,6 @@ export async function GET() {
     headers: { "Content-Type": "application/json" },
   });
 }
-
 export async function POST() {
   const encoder = new TextEncoder();
 

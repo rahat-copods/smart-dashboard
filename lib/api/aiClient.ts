@@ -25,6 +25,7 @@ export class AIClient {
     outputSchema?: any,
     fieldToExtract: string = "reasoning",
   ): Promise<any> {
+    console.log("starting AI Stream");
     const stream = await this.client.chat.completions.create({
       model: this.model,
       messages,
@@ -54,6 +55,7 @@ export class AIClient {
         streamCallback(JSON.stringify(chunk.usage as CompletionUsage), "usage");
       }
     }
+    console.log("Stream completed");
 
     return JSON.parse(fullData);
   }
