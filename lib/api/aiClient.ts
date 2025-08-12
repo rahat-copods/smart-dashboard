@@ -11,12 +11,12 @@ import { StreamCallback } from "./types";
 export class AIClient {
   private client: OpenAI;
   private model: string;
-  constructor() {
+  constructor(apiKey: string, url: string, model: string) {
     this.client = new OpenAI({
-      apiKey: process.env.AI_API_KEY,
-      baseURL: process.env.AI_BASE_URL,
+      apiKey: apiKey,
+      baseURL: url,
     });
-    this.model = process.env.AI_MODEL_NAME as string;
+    this.model = model;
   }
 
   async streamGenerate(

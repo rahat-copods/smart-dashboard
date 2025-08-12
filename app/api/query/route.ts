@@ -202,9 +202,12 @@ export async function POST(req: NextRequest) {
     });
   }
   const POSTGRES_URL = process.env.POSTGRES_URL;
+  const AI_API_KEY = process.env.AI_API_KEY;
+  const AI_BASE_URL = process.env.AI_BASE_URL;
+  const AI_MODEL_NAME = process.env.AI_MODEL_NAME;
 
-  if (!POSTGRES_URL) {
-    return new NextResponse("Postgres URL not found", {
+  if (!POSTGRES_URL || !AI_API_KEY || !AI_BASE_URL || !AI_MODEL_NAME) {
+    return new NextResponse("missing env key", {
       status: 400,
     });
   }
@@ -218,7 +221,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const aiClient = new AIClient();
+  const aiClient = new AIClient(AI_API_KEY, AI_BASE_URL, AI_MODEL_NAME);
   const schemaString = JSON.stringify(userSchema);
 
   const stream = new ReadableStream<Uint8Array>({

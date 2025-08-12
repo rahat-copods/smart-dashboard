@@ -9,7 +9,7 @@ export async function GET() {
     AI_API_KEY: process.env.AI_API_KEY,
     AI_BASE_URL: process.env.AI_BASE_URL,
     AI_MODEL_NAME: process.env.AI_MODEL_NAME,
-    DATABASE_URL: process.env.DATABASE_URL,
+    POSTGRES_URL: process.env.POSTGRES_URL,
   };
 
   const results = Object.entries(envVars).map(([keyname, value]) => ({

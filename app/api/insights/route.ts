@@ -37,14 +37,22 @@ async function generateDataInsights(
 
 export async function POST(req: NextRequest) {
   const { userId, messages } = await req.json();
+  const AI_API_KEY = process.env.AI_API_KEY;
+  const AI_BASE_URL = process.env.AI_BASE_URL;
+  const AI_MODEL_NAME = process.env.AI_MODEL_NAME;
 
+  if (!AI_API_KEY || !AI_BASE_URL || !AI_MODEL_NAME) {
+    return new NextResponse("missing env key", {
+      status: 400,
+    });
+  }
   if (!userId || !messages) {
     return new NextResponse("Input data is required", {
       status: 400,
     });
   }
 
-  const aiClient = new AIClient();
+  const aiClient = new AIClient(AI_API_KEY, AI_BASE_URL, AI_MODEL_NAME);
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
