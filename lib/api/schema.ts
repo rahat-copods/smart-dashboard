@@ -1,7 +1,7 @@
 export const userSchemas: any = {
   user01: {
     user_id: "user01",
-    db_url: `${process.env.POSTGRES_URL}/dvdrental`,
+    db_url: `/dvdrental`,
     schema: {
       actor: {
         columns: [
@@ -730,7 +730,7 @@ export const userSchemas: any = {
   },
   user02: {
     user_id: "user02",
-    db_url: `${process.env.POSTGRES_URL}/clothing`,
+    db_url: `/clothing`,
     schema: {
       public_table: {
         columns: [],
@@ -1115,7 +1115,7 @@ export const userSchemas: any = {
   },
   user03: {
     user_id: "user03",
-    db_url: `${process.env.POSTGRES_URL}/postgres`,
+    db_url: `/postgres`,
     schema: {
       appointments: {
         columns: [

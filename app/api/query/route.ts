@@ -195,8 +195,21 @@ async function summarizeConversation(
 
 export async function POST(req: NextRequest) {
   const { userId, messages } = await req.json();
+
+  if (!userId || !messages) {
+    return new NextResponse("User ID and message is required", {
+      status: 400,
+    });
+  }
+  const POSTGRES_URL = process.env.POSTGRES_URL;
+
+  if (!POSTGRES_URL) {
+    return new NextResponse("Postgres URL not found", {
+      status: 400,
+    });
+  }
   const userSchema = userSchemas[userId]?.schema;
-  const dbUrl = userSchemas[userId]?.db_url;
+  const dbUrl = POSTGRES_URL + userSchemas[userId]?.db_url;
   const userQuery = messages[messages.length - 1].content;
 
   if (!userSchema || !dbUrl) {
