@@ -9,6 +9,7 @@ import {
   Brain,
   Eye,
 } from "lucide-react";
+import { useState } from "react";
 
 import MarkdownRenderer from "./markdownRenderer";
 
@@ -19,6 +20,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
 import { UsageMetrics } from "@/types";
 
 // Helper function to parse markdown into card sections
@@ -99,8 +101,16 @@ export function InsightsSidebar({
   isStreaming,
   usageMetrics,
 }: InsightsSidebarProps) {
+  const [dataConsentChecked, setDataConsentChecked] = useState(false);
+
   const handleInsightClick = () => {
-    if (!message || !message.data || !message.data.length) return;
+    if (
+      !message ||
+      !message.data ||
+      !message.data.length ||
+      !dataConsentChecked
+    )
+      return;
     generateInsights(userId, message.data, message.id);
   };
 
@@ -108,6 +118,9 @@ export function InsightsSidebar({
     ? insightContent
     : message?.insights?.insights || "";
   const parsedCards = parseMarkdownIntoCards(contentToDisplay);
+
+  const isGenerateDisabled =
+    isInsightStreaming || !message?.data?.length || !dataConsentChecked;
 
   return (
     <>
@@ -169,13 +182,36 @@ export function InsightsSidebar({
                   </div>
                 </div>
               )}
-              <Button
-                className="w-full"
-                disabled={isInsightStreaming || !message?.data?.length}
-                onClick={handleInsightClick}
-              >
-                {isInsightStreaming ? "Generating..." : "Generate Insights"}
-              </Button>
+
+              {!message?.insights?.insights && (
+                <div className="space-y-2">
+                  <Button
+                    className="w-full"
+                    disabled={isGenerateDisabled}
+                    onClick={handleInsightClick}
+                  >
+                    {isInsightStreaming ? "Generating..." : "Generate Insights"}
+                  </Button>
+                  <div className="flex items-start space-x-2 ">
+                    <Checkbox
+                      checked={dataConsentChecked}
+                      id="data-consent"
+                      onCheckedChange={(checked) =>
+                        setDataConsentChecked(checked === true)
+                      }
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        className="text-xs text-muted-foreground font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        htmlFor="data-consent"
+                      >
+                        I consent to my data being analyzed by AI to generate
+                        insights and reports.
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
               {parsedCards.length > 0 ? (
                 <Accordion collapsible className="w-full" type="single">
                   {parsedCards.map((card, index) => (
