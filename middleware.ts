@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
     "/api/forgot-password",
     "/api/reset-password",
     "/api/query",
-    "/api/insight",
+    "/api/insights",
   ];
 
   // Check if the current path is a public route
