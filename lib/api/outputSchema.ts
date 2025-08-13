@@ -1,56 +1,5 @@
 import { z } from "zod";
 
-export const VisualConfigSchema = z.object({
-  xAxis: z
-    .object({
-      dimension: z.string().describe("Column/field for x-axis"),
-      type: z
-        .enum(["categorical", "temporal", "numeric"])
-        .describe("Data type of x-axis"),
-      label: z.string().describe("Human-readable label for x-axis"),
-    })
-    .describe("X-axis configuration"),
-
-  yAxis: z
-    .object({
-      dimension: z
-        .string()
-        .describe("Column/field for y-axis (usually numeric)"),
-      type: z.enum(["numeric"]).describe("Data type of y-axis"),
-      label: z.string().describe("Human-readable label for y-axis"),
-    })
-    .describe("Y-axis configuration"),
-
-  categoricalDimensions: z
-    .array(
-      z.object({
-        dimension: z.string().describe("Column/field for categorical grouping"),
-        visualElement: z
-          .enum(["color", "size", "shape", "pattern"])
-          .describe("How to represent this dimension visually"),
-        label: z.string().describe("Human-readable label for this dimension"),
-      }),
-    )
-    .max(2)
-    .describe("Additional categorical dimensions (max 2)"),
-
-  filters: z
-    .array(
-      z.object({
-        dimension: z.string().describe("Column/field to filter"),
-        condition: z
-          .string()
-          .describe("Filter condition (e.g., 'top 5', 'Q4 2024', '> 1000')"),
-      }),
-    )
-    .describe("Applied filters for this visualization"),
-
-  title: z.string().describe("Suggested title for this visualization"),
-  description: z
-    .string()
-    .describe("Brief description of what this visual shows"),
-});
-
 export const KeySubjectSchema = z.object({
   subject: z.string().describe("Important subject/entity from the query"),
   weight: z
@@ -77,12 +26,6 @@ export const QueryParsingSchema = z.object({
       "How previous conversation context affects understanding of this query",
     ),
   summary: z.string().describe("Brief summary of what the user is asking for"),
-  // visualConfigs: z
-  //   .array(VisualConfigSchema)
-  //   .min(1)
-  //   .describe(
-  //     "Array of visualization configurations. Single item if ≤4 dimensions, multiple items if complex query requires splitting"
-  //   ),
   reasoning: z
     .string()
     .describe(
@@ -112,6 +55,12 @@ export const SqlGenerationSchema = z.object({
     .nullable()
     .describe(
       "Error message when query cannot be generated due to schema mismatch or incompatible request",
+    ),
+  explanation: z
+    .string()
+    .nullable()
+    .describe(
+      "Markdown format Contextual information explaining the details about database structure for explanation queries (null if not needed)",
     ),
   suggestions: z
     .array(z.string())
@@ -211,6 +160,7 @@ export const ChartConfigSchema = z.object({
   visuals: z
     .array(ChartVisualSchema)
     .min(1)
+    .nullable()
     .describe(
       "An array of one or more chart configurations, each defining a specific visualization to represent the SQL query results.",
     ),

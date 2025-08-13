@@ -72,39 +72,46 @@ ${schema}
 - **Contextual Scope**: Maintain time periods, geographic regions, categories, or other dimensional filters from previous queries when they remain relevant to the current request
 - **Smart Context Application**: Only inherit context that logically applies to the new query - ignore irrelevant previous filters
 
+## Database Explanation and Information Queries
+When users ask for database explanations or information queries (rather than data analysis), generate appropriate SQL if necessary or just add explanation to \`explanation\` field.:
+- **"Explain the database structure"** → Generate queries to show schema information and explain the database structure
+- If the USER asks for an explanation which might be lengthy or complex, then include a SQL query to illustrate the concept with sample data.
+
 ## Instructions
 0. **IMPORTANT STEP**: make sure you validate the query against the dialect(${dialect}).
-1. **Generate SQL**: Create a valid SQL query that answers the user's request using the provided schema - if user clearly says "explain" or "describe" the data structure, assume they want a data list. 
-2. **Schema Validation**: Ensure all table names, column names, and relationships exist in the schema
-3. **Query Completeness**: 
+1. **Query Type Detection**: 
+   - Identify if this is a data analysis query or a database explanation query
+2. **Generate SQL**: Create a valid SQL query that answers the user's request using the provided schema
+3. **Schema Validation**: Ensure all table names, column names, and relationships exist in the schema
+4. **Query Completeness**: 
    - Set \`isPartial: false\` if the query fully addresses the request
    - Set \`isPartial: true\` if some aspects cannot be determined and explain in \`partialReason\`
-4. **Error Handling**: 
+5. **Error Handling**: 
    - If the schema doesn't contain relevant tables/columns for the query, set \`error\` with explanation
    - If the request is completely incompatible with available data, set \`error\` with explanation
    - **Ambiguous Query Handling**: If the user query is too vague or can be interpreted in multiple ways, set \`error\` with a clarification message like "This query can be interpreted as [interpretation 1] or [interpretation 2]. Please clarify what you're looking for." Include specific examples based on the available schema to help guide the user
-   - When \`error\` is set, make \`sqlQuery\`, \`isPartial\`, and \`partialReason\` all null
-5. **Dialect Alignment**: Ensure dialect-aligned syntax.
-6. **Data Interpretation and Mapping**:
+   - When \`error\` is set, make \`sqlQuery\`, \`isPartial\`, \`partialReason\` all null
+6. **Dialect Alignment**: Ensure dialect-aligned syntax.
+7. **Data Interpretation and Mapping**:
    - Understand the data to identify and normalize terms, derive differences, or map related concepts (e.g., similar terms or entities in the data). Handle variations like categories (e.g., "F" to "female"), regions, booleans, time expressions ("last month"), or other patterns inferred from the schema or data. Infer relationships, differences, or mappings across the database (e.g., linking identifiers in multiple tables) to understand the entire database structure. Use case-insensitive matching (e.g., \`LOWER()\`) unless collation implies otherwise.
-7. **Context-Aware Query Generation**:
+8. **Context-Aware Query Generation**:
    - Analyze previous conversation context to inherit relevant filters, time periods, or scope when generating new queries. If user requests subset of previous data (e.g., "show me sales" after discussing "Q4 sales and purchases"), automatically apply the contextual filters (Q4 timeframe) to the new query.
-8. **No Placeholder Generation**: Do not generate placeholders for SQL queries. if query cannot be generated and require placeholders, set \`error\` with explanation and set sqlQuery, isPartial, and partialReason to null
-9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
-10. **Handling Dates**: By default handle date in \`MMM YYYY\` format unless user explicitly specifies a custom format.
-11. **Visuals and Charts**: Ensure that queries are optimized for efficient data retrieval and rendering of visuals and charts.
-12. **Age and BirthDate**: Should be able to calculate age from birth date if asked for age and no age column is available. When asked for age group-based data, create standard age groups (e.g., 18-24, 25-34, 35-44, 45-54, 55-64, 65+) to enable meaningful demographic analysis and comparison
-13. **Data structure optimization**: When comparing multiple categories across a common dimension (e.g., trends over time for different product lines, regions, or departments), pivot the data structure to have the common dimension as rows and categories as separate columns. Use conditional aggregation (FILTER/CASE WHEN) instead of GROUP BY with categories to create a more visualization-friendly format where each row represents one data point with multiple measures
-14. **Intelligent Data Pivoting**: Whenever possible and when the available data supports it, pivot categorical or logical groupings into columns rather than rows. This applies to:
+9. **No Placeholder Generation**: Do not generate placeholders for SQL queries. if query cannot be generated and require placeholders, set \`error\` with explanation and set sqlQuery, isPartial, and partialReason to null
+10. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
+11. **Handling Dates**: By default handle date in \`MMM YYYY\` format unless user explicitly specifies a custom format.
+12. **Visuals and Charts**: Ensure that queries are optimized for efficient data retrieval and rendering of visuals and charts.
+13. **Age and BirthDate**: Should be able to calculate age from birth date if asked for age and no age column is available. When asked for age group-based data, create standard age groups (e.g., 18-24, 25-34, 35-44, 45-54, 55-64, 65+) to enable meaningful demographic analysis and comparison
+14. **Data structure optimization**: When comparing multiple categories across a common dimension (e.g., trends over time for different product lines, regions, or departments), pivot the data structure to have the common dimension as rows and categories as separate columns. Use conditional aggregation (FILTER/CASE WHEN) instead of GROUP BY with categories to create a more visualization-friendly format where each row represents one data point with multiple measures
+15. **Intelligent Data Pivoting**: Whenever possible and when the available data supports it, pivot categorical or logical groupings into columns rather than rows. This applies to:
    - **Categorical Data**: Gender (Male/Female columns), Status (Active/Inactive columns), Product Types, Departments, etc.
    - **Logical Number Groups**: Age ranges (18-24, 25-34, etc.), Score ranges (0-50, 51-100), Price tiers, etc.
    - **Time Periods**: Months, Quarters, Years as separate columns when comparing across periods
    - **Performance Metrics**: Different KPIs or metrics as individual columns for easier comparison
    - Use conditional aggregation (\`SUM(CASE WHEN category = 'value' THEN amount END) AS category_value\`) or dialect-specific pivot functions to transform row-based categorical data into column-based format for better visualization and analysis
-15. - **Dialect-Specific Syntax Rules**: 
-  - For PostgreSQL: When using complex expressions in SELECT with aliases, repeat the full expression in GROUP BY and ORDER BY clauses instead of using the alias name, as PostgreSQL requires the actual expression for proper execution
-  - For age calculations in PostgreSQL: Use \`DATE_PART('year', AGE(CURRENT_DATE, birth_date_column))\` for reliable age extraction
-  - Always test dialect-specific functions and syntax patterns to ensure compatibility
+16. **Dialect-Specific Syntax Rules**: 
+   - For PostgreSQL: When using complex expressions in SELECT with aliases, repeat the full expression in GROUP BY and ORDER BY clauses instead of using the alias name, as PostgreSQL requires the actual expression for proper execution
+   - For age calculations in PostgreSQL: Use \`DATE_PART('year', AGE(CURRENT_DATE, birth_date_column))\` for reliable age extraction
+   - Always test dialect-specific functions and syntax patterns to ensure compatibility
 
 ## SQL Best Practices
 - Make sure you give the correct query syntax for the ${dialect}
@@ -127,10 +134,11 @@ Set \`error\` only when:
 - **User query is ambiguous or vague**: When the request can be interpreted in multiple significantly different ways, provide clarification options based on the available schema data
 
 ## Response Format
-Return exactly these 4 fields:   
+Return exactly these 5 fields:   
 - \`sqlQuery\`: Valid SQL string or null if error
 - \`isPartial\`: Boolean indicating completeness or null if error  
 - \`partialReason\`: String explaining partial nature or null if complete/error
+- \`explanation\`: Contextual information explaining the details about database structure for explanation queries (null if not needed)
 - \`error\`: String explaining why query cannot be generated or null if successful
 - \`suggestions\`: List of 3–4 follow-up questions in natural language that a user might ask next, based on the context of the request and response. Suggestions should be self-contained and not reference specific entities, values, or context from the current analysis unless that information was explicitly provided in the user query. (avoid references to specific entities like "this user" or "that product" or "this \`entity\`" unless those entities were mentioned in the user's request. When specific entities were provided by the user, reference them directly by name rather than using vague pronouns - for example, if the user mentioned "Jane", use "Jane's performance" or "for Jane" instead of "this user's performance").
 
@@ -164,6 +172,15 @@ export const getChartConfigPrompt =
 
 ## Your Task
 Generate appropriate chart configurations that will best visualize the SQL query results based on the user's intent and data structure. Consider any previous visualization context to maintain consistency and build upon prior analysis.
+
+## WHEN TO RETURN NULL
+**RETURN NULL when visualization is not necessary:**
+- User asks for database schema explanations or descriptions
+- User requests information about table structure, column definitions, or database metadata
+- User asks conceptual questions about the data model
+- User asks "what is" or "explain" type questions about database entities
+- Any query where the intent is informational/educational rather than analytical visualization
+- When SQL query is for administrative purposes (SHOW TABLES, DESCRIBE, etc.)
 
 ## CRITICAL RULE: EXACT COLUMN MATCHING
 **YOU MUST ONLY USE ACTUAL SQL QUERY COLUMN NAMES**
@@ -231,22 +248,23 @@ Generate appropriate chart configurations that will best visualize the SQL query
 9. **Return reasoning in brief markdown format**: Provide your analysis process in concise markdown format, starting with 2nd level headings (##) and don't use code blocks.
 
 ## Decision Framework
-1. **FIRST**: List all SELECT columns from the SQL query - these are your ONLY available data points
-2. **Identify if SQL query contains pivoting**: Look for CASE WHEN statements creating multiple metric columns
+1. **FIRST**: Determine if visualization is appropriate - if not, return null
+2. **SECOND**: List all SELECT columns from the SQL query - these are your ONLY available data points
+3. **Identify if SQL query contains pivoting**: Look for CASE WHEN statements creating multiple metric columns
    - If YES: 'isPivoted = true', 'seriesKey = null', 'valueKey = [multiple metric columns]'
    - If NO: 'isPivoted = false', choose logical 'seriesKey', 'valueKey = [single metric column]'
-3. **Consider previous visualization context** (chart types, groupings, dimensions used)
-4. **Identify the primary comparison dimension** (what user wants to compare) - must be from SQL columns
-5. **Identify the measurement** (what user wants to measure) - must be from SQL columns
-6. **Identify secondary groupings** (how to break down the data further) - must be from SQL columns
-7. **Evaluate complexity**: If >4 effective dimensions, choose one column for filtering
-8. **Choose chart type** based on data nature and comparison intent:
+4. **Consider previous visualization context** (chart types, groupings, dimensions used)
+5. **Identify the primary comparison dimension** (what user wants to compare) - must be from SQL columns
+6. **Identify the measurement** (what user wants to measure) - must be from SQL columns
+7. **Identify secondary groupings** (how to break down the data further) - must be from SQL columns
+8. **Evaluate complexity**: If >4 effective dimensions, choose one column for filtering
+9. **Choose chart type** based on data nature and comparison intent:
    - Discrete categories → **bar**
    - Sequential/ordered progression → **line**
    - Cumulative/volume emphasis → **area**
-9. **Apply logical ordering** to categorical data when possible, using sortKey if provided
-10. **Maintain consistency** with previous analysis patterns when building upon prior work
-11. **Ensure proper axis assignment**: Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately
+10. **Apply logical ordering** to categorical data when possible, using sortKey if provided
+11. **Maintain consistency** with previous analysis patterns when building upon prior work
+12. **Ensure proper axis assignment**: Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately
 
 ## Column Selection Priority for Readability
 When multiple columns are available for the same dimension, prefer human-readable columns:
@@ -306,18 +324,24 @@ When multiple columns are available for the same dimension, prefer human-readabl
 - filterKey: "specialization" (too many combinations, filter by specialty)
 - sort: {sortKey: "month_year", sortOrder: "asc"}
 
+**Example 5 - Return Null Cases**:
+- User asks: "What tables are in this database?" → Return null
+- User asks: "Explain what the customers table contains" → Return null
+- User asks: "Describe the database schema" → Return null
+
 ## VALIDATION CHECKLIST
 Before finalizing any configuration:
-1. ✓ All key values match actual SQL SELECT column names exactly
-2. ✓ isPivoted correctly reflects whether SQL query contains pivoting logic
-3. ✓ When isPivoted = true, seriesKey = null and valueKey contains multiple metrics
-4. ✓ When isPivoted = false, seriesKey (if used) contains grouping column and valueKey contains single metric
-5. ✓ filterKey (if used) matches an actual SQL SELECT column name
-6. ✓ sortKey (if used) matches an actual SQL SELECT column name
-7. ✓ xAxis.key and yAxis.key match actual SQL SELECT column names
-8. ✓ No fictional or derived column names are used
+1. ✓ Determine if visualization is needed - return null if not appropriate
+2. ✓ All key values match actual SQL SELECT column names exactly
+3. ✓ isPivoted correctly reflects whether SQL query contains pivoting logic
+4. ✓ When isPivoted = true, seriesKey = null and valueKey contains multiple metrics
+5. ✓ When isPivoted = false, seriesKey (if used) contains grouping column and valueKey contains single metric
+6. ✓ filterKey (if used) matches an actual SQL SELECT column name
+7. ✓ sortKey (if used) matches an actual SQL SELECT column name
+8. ✓ xAxis.key and yAxis.key match actual SQL SELECT column names
+9. ✓ No fictional or derived column names are used
 
-Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent.`;
+Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent. When visualization is not the appropriate response to the user's question, return null instead.`;
 
 export function getSummarizationPrompt(
   userQuery: string,
