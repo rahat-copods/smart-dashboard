@@ -133,7 +133,7 @@ export const useChat = (
       };
 
       try {
-        const response = await fetch("/api/query", {
+        const response = await fetch("https://smart-dashboard-two.vercel.app/api/query", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
