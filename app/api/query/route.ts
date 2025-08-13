@@ -254,6 +254,7 @@ export async function POST(req: NextRequest) {
           sqlQuery: null,
           isPartial: null,
           partialReason: null,
+          explanation: null,
           suggestions: [],
         };
         let dbResult = null;
@@ -338,26 +339,26 @@ export async function POST(req: NextRequest) {
             controller.close();
 
             return;
-          }
+          } else if (sqlResult.sqlQuery) {
+            dbResult = await executeSqlQuery(
+              sqlResult.sqlQuery,
+              dbUrl,
+              streamCallback,
+            );
 
-          dbResult = await executeSqlQuery(
-            sqlResult.sqlQuery as string,
-            dbUrl,
-            streamCallback,
-          );
+            // Store this attempt's query and error
+            previousAttempts.push({
+              query: sqlResult.sqlQuery,
+              error:
+                dbResult.error ||
+                (dbResult.rowCount === 0 ? "0 rows returned" : null),
+            });
 
-          // Store this attempt's query and error
-          previousAttempts.push({
-            query: sqlResult.sqlQuery,
-            error:
-              dbResult.error ||
-              (dbResult.rowCount === 0 ? "0 rows returned" : null),
-          });
-
-          if (dbResult.data || dbResult.rowCount > 0) {
-            break;
-          } else if (attempt < maxAttempts) {
-            streamCallback(`Retrying`, "status");
+            if (dbResult.data || dbResult.rowCount > 0) {
+              break;
+            } else if (attempt < maxAttempts) {
+              streamCallback(`Retrying`, "status");
+            }
           }
         }
         console.log("\nstep 2 complete");
