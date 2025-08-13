@@ -43,7 +43,7 @@ export default function RootLayout({
           fontSans.variable,
         )}
       >
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+        <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="relative flex flex-col h-screen">
             <main className=" mx-auto w-full px-3 flex-grow">
               <SidebarProvider defaultOpen={true}>
