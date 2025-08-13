@@ -133,25 +133,29 @@ export const useChat = (
       };
 
       try {
-        const response = await fetch("https://smart-dashboard-two.vercel.app/api/query", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/query`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId,
+              messages: [
+                ...messages.map((msg) => ({
+                  role: msg.role,
+                  content:
+                    msg.role === "user"
+                      ? msg.question
+                      : (msg.summary ??
+                        "no summary, most likely failed message"),
+                })),
+                { role: "user", content: question },
+              ],
+            }),
           },
-          body: JSON.stringify({
-            userId,
-            messages: [
-              ...messages.map((msg) => ({
-                role: msg.role,
-                content:
-                  msg.role === "user"
-                    ? msg.question
-                    : (msg.summary ?? "no summary, most likely failed message"),
-              })),
-              { role: "user", content: question },
-            ],
-          }),
-        });
+        );
 
         if (!response.body) {
           throw new Error("No response body");
@@ -372,30 +376,34 @@ export const useChat = (
       let accumulatedInsight = "";
 
       try {
-        const response = await fetch("/api/insights", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/insights`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId,
+              messages: [
+                ...messages.map((msg) => ({
+                  role: msg.role,
+                  content:
+                    msg.role === "user"
+                      ? msg.question
+                      : (msg.summary ??
+                        "no summary, most likely failed message"),
+                })),
+                {
+                  role: "user",
+                  content:
+                    "Please give me insights for this data \n" +
+                    JSON.stringify(data),
+                },
+              ],
+            }),
           },
-          body: JSON.stringify({
-            userId,
-            messages: [
-              ...messages.map((msg) => ({
-                role: msg.role,
-                content:
-                  msg.role === "user"
-                    ? msg.question
-                    : (msg.summary ?? "no summary, most likely failed message"),
-              })),
-              {
-                role: "user",
-                content:
-                  "Please give me insights for this data \n" +
-                  JSON.stringify(data),
-              },
-            ],
-          }),
-        });
+        );
 
         if (!response.body) {
           throw new Error("No response body");
