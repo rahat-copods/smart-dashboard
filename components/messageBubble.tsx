@@ -115,8 +115,6 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
     }
 
     if (isAssistant) {
-      console.log("message", message);
-
       return (
         <>
           <div
