@@ -66,7 +66,7 @@ export const SqlGenerationSchema = z.object({
     .array(z.string())
     .describe(
       "A list of 3–4 natural language follow-up questions that could be asked next, based on the current question and response — e.g., filtering further, comparing results, or digging deeper into related metrics.",
-    ).nonempty(),
+    ),
   reasoning: z
     .string()
     .describe(
