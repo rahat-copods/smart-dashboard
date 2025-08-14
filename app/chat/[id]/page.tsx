@@ -6,9 +6,9 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-import { ChatHeader } from "@/components/chatHeader";
-import { MessageBubble } from "@/components/messageBubble";
-import { MessageInput } from "@/components/messageInput";
+import { ChatHeader } from "@/components/chat/chatHeader";
+import { MessageBubble } from "@/components/chat/messageBubble";
+import { MessageInput } from "@/components/chat/messageInput";
 import { InsightsSidebar } from "@/components/insightsSidebar";
 import { ChatStorage } from "@/hooks/chatStorage";
 import { useChat } from "@/hooks/useChat";

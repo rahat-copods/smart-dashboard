@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/appSidebar";
 
 interface ChatLayoutProps {
   children: ReactNode;

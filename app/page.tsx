@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChatHeader } from "@/components/chatHeader";
+import { ChatHeader } from "@/components/chat/chatHeader";
 import { ChatStorage } from "@/hooks/chatStorage";
 import { ChatMessage } from "@/types/chat";
 

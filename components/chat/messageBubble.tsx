@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { useState, forwardRef } from "react";
 
-import ChartsComponent from "./visuals";
-import DataTableComponent from "./visuals/dataTableComponent";
-import MarkdownRenderer from "./markdownRenderer";
+import ChartsComponent from "../visuals";
+import DataTableComponent from "../visuals/dataTableComponent";
+import MarkdownRenderer from "../markdownRenderer";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
