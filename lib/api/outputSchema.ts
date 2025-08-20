@@ -117,12 +117,14 @@ export const SortingSchema = z
   .describe("Configuration for sort and order when data needs to be sorted");
 
 // Level 2: Axis Configuration
-export const AxisSchema = z.object({
-  key: z
-    .string()
-    .describe("Must match exact SQL SELECT column name used for axis values"),
-  label: z.string().describe("Human-readable label for the axis"),
-});
+export const AxisSchema = z
+  .object({
+    key: z
+      .string()
+      .describe("Must match exact SQL SELECT column name used for axis values"),
+    label: z.string().describe("Human-readable label for the axis"),
+  })
+  .required();
 
 export const ChartVisualSchema = z.object({
   type: z.enum(["bar", "line", "area"]).describe("Chart category identifier"),
@@ -142,8 +144,12 @@ export const ChartVisualSchema = z.object({
     .describe(
       "Optional key whose unique values will form different series (e.g., for stacked bars). If provided, the chart will pivot the data to create separate bars/segments for each unique value of this key. Must match exact SQL SELECT column name.",
     ),
-  xAxis: AxisSchema.describe("Configuration for the X-axis").required(),
-  yAxis: AxisSchema.describe("Configuration for the Y-axis").required(),
+  xAxis: AxisSchema.describe(
+    "Configuration for the X-axis **REQUIRED**",
+  ).required(),
+  yAxis: AxisSchema.describe(
+    "Configuration for the Y-axis **REQUIRED**",
+  ).required(),
   valueKey: z
     .array(z.string())
     .describe(
