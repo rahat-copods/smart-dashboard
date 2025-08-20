@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 import { ChatStorage } from "@/hooks/chatStorage";
 import { AssistantMessage, UserMessage, ChatMessage } from "@/types/chat";
@@ -30,7 +31,7 @@ export const useChat = (
   const sendQuery = useCallback(
     async (question: string, userId: string) => {
       const userMessage: UserMessage = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         role: "user",
         question,
         timestamp: new Date(),
@@ -44,7 +45,7 @@ export const useChat = (
       }
 
       const assistantMessage: AssistantMessage = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         role: "assistant",
         timestamp: new Date(),
         query: null,

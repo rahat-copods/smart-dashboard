@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from "uuid";
+
 import { AssistantMessage, Chat, UserMessage } from "@/types/chat";
 
 export class ChatStorage {
@@ -49,7 +51,7 @@ export class ChatStorage {
 
   static createChat(title: string, userId: string): Chat {
     const newChat: Chat = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       title: title.length > 50 ? title.slice(0, 47) + "..." : title,
       user: userId,
       messages: [],
