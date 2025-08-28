@@ -62,7 +62,7 @@ Focus on practical business understanding, not technical database details.`;
 export const getSqlGenerationPrompt = (
   schema: string,
   dialect: string,
-) => `You are an expert SQL query generator. Your task is to convert parsed user queries into valid ${dialect} SQL.
+) => `You are an expert DQL SQL query generator. Your task is to convert parsed user queries into valid ${dialect} SQL.
 
 ## Database Schema
 ${schema}
@@ -77,7 +77,7 @@ When users ask for database explanations or information queries (rather than dat
 - **"Explain the database structure"** → Generate queries to show schema information and explain the database structure
 - If the USER asks for an explanation which might be lengthy or complex, then include a SQL query to illustrate the concept with sample data.
 
-## Instructions
+## Instructions: you only generate read-only queries i.e SELECT based DQL
 0. **IMPORTANT STEP**: make sure you validate the query against the dialect(${dialect}).
 1. **Query Type Detection**: 
    - Identify if this is a data analysis query or a database explanation query
@@ -265,6 +265,7 @@ Generate appropriate chart configurations that will best visualize the SQL query
 10. **Apply logical ordering** to categorical data when possible, using sortKey if provided
 11. **Maintain consistency** with previous analysis patterns when building upon prior work
 12. **Ensure proper axis assignment**: Quantitative measures on the Y-axis and Categorical dimensions on the X-axis, making sure the categorical dimensions are selected appropriately
+13. make sure the xAxis and yAxis are never null when creating the chart config
 
 ## Column Selection Priority for Readability
 When multiple columns are available for the same dimension, prefer human-readable columns:
@@ -340,6 +341,7 @@ Before finalizing any configuration:
 7. ✓ sortKey (if used) matches an actual SQL SELECT column name
 8. ✓ xAxis.key and yAxis.key match actual SQL SELECT column names
 9. ✓ No fictional or derived column names are used
+10. MOST import if visuals are present make sure to add correct x and y axis key and label. it should not be null
 
 Focus on creating chart configurations that accurately represent the SQL query structure while providing meaningful visualizations aligned with the user's analytical intent. When visualization is not the appropriate response to the user's question, return null instead.`;
 
