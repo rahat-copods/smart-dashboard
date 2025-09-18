@@ -123,7 +123,7 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <ChatHeader title="Smart Dashboard" />
+      <ChatHeader title="Smart Insights" />
 
       <div className="flex items-center justify-center min-h-full p-8">
         <div className="w-full max-w-2xl space-y-8">
@@ -131,7 +131,7 @@ export default function HomePage() {
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center space-x-3">
               <Database className="w-12 h-12 text-primary" />
-              <h1 className="text-4xl font-bold">Smart Dashboard</h1>
+              <h1 className="text-4xl font-bold">Smart Insights</h1>
             </div>
             <p className="text-xl text-muted-foreground">
               Ask questions about your data in natural language

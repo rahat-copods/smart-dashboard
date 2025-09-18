@@ -95,7 +95,7 @@ export function AppSidebar({ ...props }) {
             {!isCollapsed && (
               <div className="flex flex-col">
                 <span className="text-sm font-semibold tracking-tight">
-                  Smart Dashboard
+                  Smart Insights
                 </span>
                 <span className="text-xs text-muted-foreground">
                   AI Assistant
