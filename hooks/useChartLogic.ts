@@ -78,10 +78,10 @@ export function useChartLogic<T extends Record<string, any>>(
       });
 
       // Sort by sortKey if provided, otherwise maintain original order
-      if (config.sort?.sortKey) {
+      if (config.sortKey) {
         result.sort((a, b) => {
-          const aVal = a[config.sort?.sortKey!];
-          const bVal = b[config.sort?.sortKey!];
+          const aVal = a[config.sortKey!];
+          const bVal = b[config.sortKey!];
 
           if (typeof aVal === "string" && typeof bVal === "string") {
             return aVal.localeCompare(bVal);
@@ -97,8 +97,8 @@ export function useChartLogic<T extends Record<string, any>>(
       const transformedMap = new Map<string, Record<string, any>>();
       let sortedData = [...processedData];
 
-      if (config.sort) {
-        const { sortKey } = config.sort;
+      if (config.sortKey) {
+        const sortKey = config.sortKey;
 
         sortedData.sort((a, b) => {
           const aVal = a[sortKey];
@@ -113,8 +113,8 @@ export function useChartLogic<T extends Record<string, any>>(
       }
 
       sortedData.forEach((item) => {
-        const currentXAxisValue = item[config.xAxis.key] as string;
-        const sanitizedXAxisKey = sanitizeKey(config.xAxis.key);
+        const currentXAxisValue = item[config.xAxisKey] as string;
+        const sanitizedXAxisKey = sanitizeKey(config.xAxisKey);
 
         if (!transformedMap.has(currentXAxisValue)) {
           transformedMap.set(currentXAxisValue, {
@@ -157,11 +157,11 @@ export function useChartLogic<T extends Record<string, any>>(
     }
   }, [
     rawData,
-    config.xAxis.key,
+    config.xAxisKey,
     config.valueKey,
     config.seriesKey,
     config.filterKey,
-    config.sort?.sortKey,
+    config.sortKey,
     selectedFilterValue,
     isPivoted,
     seriesKeys,
@@ -183,7 +183,7 @@ export function useChartLogic<T extends Record<string, any>>(
 
       chartConf[seriesVal] = {
         label:
-          seriesVal === "value" ? config.yAxis.label || "Value" : originalKey,
+          seriesVal === "value" ? config.yAxisLabel || "Value" : originalKey,
         color: `var(--chart-${(index % 5) + 1})`,
       };
     });
@@ -191,7 +191,7 @@ export function useChartLogic<T extends Record<string, any>>(
     return chartConf;
   }, [
     seriesKeys,
-    config.yAxis.label,
+    config.yAxisLabel,
     config.valueKey,
     config.seriesKey,
     rawData,
@@ -208,7 +208,7 @@ export function useChartLogic<T extends Record<string, any>>(
         const formattedItem: Record<string, any> = { ...item };
 
         // Format x-axis data key for display
-        const sanitizedXAxisKey = sanitizeKey(config.xAxis.key);
+        const sanitizedXAxisKey = sanitizeKey(config.xAxisKey);
 
         formattedItem[sanitizedXAxisKey] = formatCellValue(
           item[sanitizedXAxisKey],
@@ -229,7 +229,7 @@ export function useChartLogic<T extends Record<string, any>>(
 
         return formattedItem;
       }),
-    [transformedData, config.xAxis.key, dataKeysToRender],
+    [transformedData, config.xAxisKey, dataKeysToRender],
   );
 
   // Calculate upper domain

@@ -124,55 +124,55 @@ export const AxisSchema = z.object({
   label: z.string().describe("Human-readable label for the axis"),
 });
 
-export const ChartVisualSchema = z.object({
-  type: z.enum(["bar", "line", "area"]).describe("Chart category identifier"),
-  title: z.string().describe("Chart title"),
-  description: z
-    .string()
-    .describe("Chart description explaining what it shows"),
-  filterKey: z
-    .string()
-    .nullable()
-    .describe(
-      "Optional key to filter the data by. If provided, a dropdown will appear to allow users to select a specific category to display. Must match exact SQL SELECT column name.",
-    ),
-  seriesKey: z
-    .string()
-    .nullable()
-    .describe(
-      "Optional key whose unique values will form different series (e.g., for stacked bars). If provided, the chart will pivot the data to create separate bars/segments for each unique value of this key. Must match exact SQL SELECT column name.",
-    ),
-  xAxis: z
-    .object({
-      key: z
-        .string()
-        .describe(
-          "Must match exact SQL SELECT column name used for X axis values",
-        ),
-      label: z.string().describe("Human-readable label for the X axis"),
-    })
-    .required(),
-  yAxis: z
-    .object({
-      key: z
-        .string()
-        .describe(
-          "Must match exact SQL SELECT column name used for Y axis values",
-        ),
-      label: z.string().describe("Human-readable label for the Y axis"),
-    })
-    .required(),
-  valueKey: z
-    .array(z.string())
-    .describe(
-      "The key from the data objects representing the numerical value to be plotted (e.g., the height of the bars). Must match exact SQL SELECT column name.",
-    )
-    .nonempty(),
-  isPivoted: z.boolean().describe("Whether the data is pivoted or not"),
-  sort: SortingSchema.nullable().describe(
-    "Configuration for sort and order when data needs to be sorted",
-  ),
-});
+// export const ChartVisualSchema = z.object({
+//   type: z.enum(["bar", "line", "area"]).describe("Chart category identifier"),
+//   title: z.string().describe("Chart title"),
+//   description: z
+//     .string()
+//     .describe("Chart description explaining what it shows"),
+//   filterKey: z
+//     .string()
+//     .nullable()
+//     .describe(
+//       "Optional key to filter the data by. If provided, a dropdown will appear to allow users to select a specific category to display. Must match exact SQL SELECT column name.",
+//     ),
+//   seriesKey: z
+//     .string()
+//     .nullable()
+//     .describe(
+//       "Optional key whose unique values will form different series (e.g., for stacked bars). If provided, the chart will pivot the data to create separate bars/segments for each unique value of this key. Must match exact SQL SELECT column name.",
+//     ),
+//   xAxis: z
+//     .object({
+//       key: z
+//         .string()
+//         .describe(
+//           "Must match exact SQL SELECT column name used for X axis values",
+//         ),
+//       label: z.string().describe("Human-readable label for the X axis"),
+//     })
+//     .required(),
+//   yAxis: z
+//     .object({
+//       key: z
+//         .string()
+//         .describe(
+//           "Must match exact SQL SELECT column name used for Y axis values",
+//         ),
+//       label: z.string().describe("Human-readable label for the Y axis"),
+//     })
+//     .required(),
+//   valueKey: z
+//     .array(z.string())
+//     .describe(
+//       "The key from the data objects representing the numerical value to be plotted (e.g., the height of the bars). Must match exact SQL SELECT column name.",
+//     )
+//     .nonempty(),
+//   isPivoted: z.boolean().describe("Whether the data is pivoted or not"),
+//   sort: SortingSchema.nullable().describe(
+//     "Configuration for sort and order when data needs to be sorted",
+//   ),
+// });
 
 // Level 1: Main Chart Config Schema
 // export const ChartConfigSchema = z.object({
@@ -189,6 +189,65 @@ export const ChartVisualSchema = z.object({
 //       "Brief analysis and decision-making process in markdown format, starting with 2nd level headings (##)",
 //     ),
 // });
+
+export const ChartVisualSchema = z.object({
+  type: z.enum(["bar", "line", "area"]).describe("Chart category identifier"),
+  title: z.string().describe("Chart title"),
+  description: z
+    .string()
+    .describe("Chart description explaining what it shows"),
+
+  // X-Axis Configuration (flattened)
+  xAxisKey: z
+    .string()
+    .describe("Must match exact SQL SELECT column name used for X axis values"),
+  xAxisLabel: z.string().describe("Human-readable label for the X axis"),
+
+  // Y-Axis Configuration (flattened)
+  yAxisKey: z
+    .string()
+    .describe("Must match exact SQL SELECT column name used for Y axis values"),
+  yAxisLabel: z.string().describe("Human-readable label for the Y axis"),
+
+  // Value Configuration
+  valueKey: z
+    .array(z.string())
+    .describe(
+      "The key from the data objects representing the numerical value to be plotted (e.g., the height of the bars). Must match exact SQL SELECT column name.",
+    )
+    .nonempty(),
+
+  // Optional Filter Configuration (flattened)
+  filterKey: z
+    .string()
+    .nullable()
+    .describe(
+      "Optional key to filter the data by. If provided, a dropdown will appear to allow users to select a specific category to display. Must match exact SQL SELECT column name.",
+    ),
+
+  // Optional Series Configuration (flattened)
+  seriesKey: z
+    .string()
+    .nullable()
+    .describe(
+      "Optional key whose unique values will form different series (e.g., for stacked bars). If provided, the chart will pivot the data to create separate bars/segments for each unique value of this key. Must match exact SQL SELECT column name.",
+    ),
+
+  // Pivot Configuration
+  isPivoted: z.boolean().describe("Whether the data is pivoted or not"),
+
+  // Sort Configuration (flattened)
+  sortKey: z
+    .string()
+    .nullable()
+    .describe(
+      "The key from the data objects representing the column to use for sort order of the data series. Must match exact SQL SELECT column name.",
+    ),
+  sortOrder: z
+    .enum(["asc", "desc"])
+    .nullable()
+    .describe("The sort order for the data series"),
+});
 
 export const ChartConfigSchema = z.object({
   visuals: z

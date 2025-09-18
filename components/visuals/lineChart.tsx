@@ -50,9 +50,9 @@ export function LineChartComponent({ config, data }: LineChartProps) {
             <CartesianGrid vertical={false} />
             <XAxis
               axisLine={false}
-              dataKey={config.xAxis.key ?? ""}
+              dataKey={config.xAxisKey ?? ""}
               label={{
-                value: config.xAxis.label ?? "",
+                value: config.xAxisLabel ?? "",
                 angle: 0,
                 position: "bottom",
               }}
@@ -61,10 +61,10 @@ export function LineChartComponent({ config, data }: LineChartProps) {
             />
             <YAxis
               axisLine={false}
-              dataKey={config.yAxis.key ?? ""}
+              dataKey={config.yAxisKey ?? ""}
               domain={[0, upperDomain]}
               label={{
-                value: config.yAxis.label ?? "",
+                value: config.yAxisLabel ?? "",
                 angle: -90,
                 position: "left",
                 offset: 0,
