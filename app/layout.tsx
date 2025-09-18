@@ -45,10 +45,10 @@ export default function RootLayout({
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="relative flex flex-col h-screen">
-            <main className=" mx-auto w-full px-3 flex-grow">
+            <main className="mx-auto w-full">
               <SidebarProvider defaultOpen={true}>
                 <AppSidebar currentChatId={currentChatId} />
-                <SidebarInset className="flex flex-col min-h-screen w-full items-center">
+                <SidebarInset className="flex flex-col min-h-screen w-full items-center overflow-hidden">
                   {children}
                 </SidebarInset>
               </SidebarProvider>
