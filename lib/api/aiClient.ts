@@ -56,6 +56,7 @@ export class AIClient {
       }
     }
     console.log("Stream completed");
+    console.log(JSON.parse(fullData));
 
     return JSON.parse(fullData);
   }
