@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Client } from "pg";
 
 import { DbResult } from "./types";
 
@@ -6,11 +6,10 @@ export async function executeQuery(
   query: string,
   dbUrl: string,
 ): Promise<DbResult> {
-  const pool = new Pool({ connectionString: dbUrl });
-  let client;
+  const client = new Client({ connectionString: dbUrl });
 
   try {
-    client = await pool.connect();
+    await client.connect();
     const queryResult = await client.query(query);
     const results = queryResult.rows;
 
@@ -18,7 +17,6 @@ export async function executeQuery(
   } catch (error: any) {
     return { data: null, rowCount: 0, error: error.message };
   } finally {
-    if (client) client.release();
-    await pool.end();
+    await client.end();
   }
 }
