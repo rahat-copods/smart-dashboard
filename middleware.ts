@@ -22,6 +22,7 @@ export function middleware(request: NextRequest) {
     "/api/auth/check",
     "/api/query",
     "/api/insights",
+    "/api/keep-db-alive",
   ];
 
   // Check if the current path is a public route
